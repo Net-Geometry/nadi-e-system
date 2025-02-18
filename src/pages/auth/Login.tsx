@@ -11,7 +11,7 @@ const Login = () => {
         <div className="bg-white/80 backdrop-blur-lg shadow-xl rounded-2xl p-8 space-y-6 border border-gray-100">
           <div className="text-center space-y-2">
             <h2 className="text-2xl font-bold text-gray-900">
-              Welcome back Mustaqeem
+              Welcome back
             </h2>
             <p className="text-sm text-gray-600">
               Sign in to access your account
