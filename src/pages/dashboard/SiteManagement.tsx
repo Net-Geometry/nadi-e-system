@@ -1,84 +1,102 @@
-
-import { useEffect, useState } from "react";
-import { SidebarProvider } from "@/components/ui/sidebar";
-import { DashboardSidebar } from "@/components/layout/DashboardSidebar";
-import { DashboardNavbar } from "@/components/layout/DashboardNavbar";
-import { usePermissions } from "@/hooks/use-permissions";
-import { SettingsLoading } from "@/components/settings/SettingsLoading";
-import { SettingsHeader } from "@/components/settings/SettingsHeader";
-import { SystemSettings } from "@/components/settings/SystemSettings";
+import { DashboardLayout } from "@/components/layout/DashboardLayout";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Box, Package, Settings, DollarSign, Plus, CheckCircle, Clock, PauseCircle, XCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { SiteManagementHeader } from "@/components/settings/SiteManagementHeader";
+import { SiteList } from "@/components/site/SiteList";
+import { useState } from "react";
+import { useAuth } from "@/hooks/useAuth"; 
+import { SiteFormDialog } from "@/components/site/SiteFormDialog";
+import { fetchSites } from "@/components/site/component/site-utils";
 
-const SiteManagement = () => {
-  const { data: permissions = [] } = usePermissions();
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const canManageSettings = permissions.some(p => p.name === 'manage_settings');
+const SiteDashboard = () => {
+  const { user } = useAuth();  //get user auth value
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  useEffect(() => {
-    const checkSuperAdmin = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) return;
-
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('id', user.id)
-          .single();
-
-        setIsSuperAdmin(profile?.user_type === 'super_admin');
-      } catch (error) {
-        console.error('Error checking super admin status:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    checkSuperAdmin();
-  }, []);
-
-  if (isLoading) {
-    return <SettingsLoading />;
-  }
-
-  // Allow access if user is either super_admin or has manage_settings permission
-  if (!isSuperAdmin && !canManageSettings) {
-    return (
-      <SidebarProvider>
-        <div className="min-h-screen flex w-full">
-          <DashboardSidebar />
-          <main className="flex-1 p-8">
-            <div className="text-center">
-              <h2 className="text-xl font-semibold text-gray-700">
-                You don't have permission to access site management
-              </h2>
-            </div>
-          </main>
-        </div>
-      </SidebarProvider>
-    );
-  }
+  const { data: siteStats, isLoading } = useQuery({
+    queryKey: ['site-stats'],
+    queryFn: fetchSites,
+  });
 
   return (
-    <SidebarProvider>
-      <div className="min-h-screen flex w-full bg-background">
-        <DashboardSidebar />
-        <div className="flex-1 flex flex-col ml-[240px]">
-          <DashboardNavbar />
-          <main className="flex-1 p-8 overflow-auto bg-gray-50 dark:bg-gray-900">
-            <div className="container mx-auto max-w-6xl">
-              <SiteManagementHeader />
-              <div className="space-y-8">
-                {/* <SiteManagement /> */}
-              </div>
-            </div>
-          </main>
+    <DashboardLayout>
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Site Management</h1>
+            <p className="text-muted-foreground mt-2">
+              Track and manage site
+            </p>
+          </div>
+          <Button onClick={() => setIsDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Site
+          </Button>
         </div>
+        <div className="flex flex-col md:flex-row flex-wrap gap-4">
+          <Card className="flex-1 min-w-[200px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Total Site
+              </CardTitle>
+              <Box className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{siteStats?.length || 0}</div>
+            </CardContent>
+          </Card>
+          <Card className="flex-1 min-w-[200px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                In Operation
+              </CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 1).length || 0}</div>
+            </CardContent>
+          </Card>
+          <Card className="flex-1 min-w-[200px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                In Progress
+              </CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 2).length || 0}</div>
+            </CardContent>
+          </Card>
+          <Card className="flex-1 min-w-[200px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Temporarily Close
+              </CardTitle>
+              <PauseCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 3).length || 0}</div>
+            </CardContent>
+          </Card>
+          <Card className="flex-1 min-w-[200px]">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Permanently Close
+              </CardTitle>
+              <XCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 4).length || 0}</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <SiteList />
+        <SiteFormDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
       </div>
-    </SidebarProvider>
+    </DashboardLayout>
   );
 };
 
-export default SiteManagement;
+export default SiteDashboard;
