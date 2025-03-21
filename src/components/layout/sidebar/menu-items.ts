@@ -136,4 +136,7 @@ export const complianceItems = [
 
 export const siteManagementItems = [
   { title: "Site Management", icon: Building, path: "/site-management/main" },
+  { title: "Site Detail", icon: Building, path: "/site" },
 ];
+
+

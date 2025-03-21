@@ -27,6 +27,7 @@ import WorkflowDashboard from "@/pages/dashboard/workflow/WorkflowDashboard";
 import WorkflowConfiguration from "@/pages/dashboard/workflow/WorkflowConfiguration";
 import SiteManagement from "@/pages/dashboard/site/SiteManagement";
 import SiteDetails from "@/pages/dashboard/site/SiteDetail";
+import Site from "@/pages/dashboard/site/Site";
 
 export const moduleRoutes: RouteObject[] = [
   // HR Routes
@@ -263,6 +264,14 @@ export const moduleRoutes: RouteObject[] = [
     element: (
       // <ProtectedRoute requiredPermission="view_site_details">
         <SiteDetails />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/site",
+    element: (
+      // <ProtectedRoute requiredPermission="view_site_details">
+        <Site />
       // </ProtectedRoute>
     ),
   },
