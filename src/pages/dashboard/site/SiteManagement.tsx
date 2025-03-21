@@ -1,6 +1,6 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building2, CheckCircle, Clock, PauseCircle, XCircle, Plus } from "lucide-react";
+import { Building2, CheckCircle, Clock, PauseCircle, XCircle, Plus, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
@@ -68,74 +68,83 @@ const SiteDashboard = () => {
     enabled: !!organizationId,
   });
 
-  if (!shouldRender) {
-    return null;
+  const handleViewDetailsClick = () => {
+    navigate(`/site/approval`);
+  };
+
+  if (parsedMetadata?.user_type === "super_admin" || organizationId || parsedMetadata?.user_type?.startsWith("tp")) {
+    return (
+      <DashboardLayout>
+        <div className="space-y-6">
+          <div className="flex justify-between items-center">
+            <div>
+              <h1 className="text-3xl font-bold">Site Management</h1>
+              <p className="text-muted-foreground mt-2">Track and manage site</p>
+            </div>
+            <div className="flex justify-between items-center gap-4">
+              <Button onClick={() => handleViewDetailsClick()} variant="secondary">
+                <Bell className="h-4 w-4 mr-2" /> Closure Approval
+              </Button>
+              <Button onClick={() => setIsDialogOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" /> Add Site
+              </Button>
+            </div>
+          </div>
+          <div className="flex flex-col md:flex-row flex-wrap gap-4">
+            <Card className="flex-1 min-w-[200px]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Total Site</CardTitle>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{siteStats?.length || 0}</div>
+              </CardContent>
+            </Card>
+            <Card className="flex-1 min-w-[200px]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">In Operation</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 1).length || 0}</div>
+              </CardContent>
+            </Card>
+            <Card className="flex-1 min-w-[200px]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">In Progress</CardTitle>
+                <Clock className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 2).length || 0}</div>
+              </CardContent>
+            </Card>
+            <Card className="flex-1 min-w-[200px]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Temporarily Close</CardTitle>
+                <PauseCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 3).length || 0}</div>
+              </CardContent>
+            </Card>
+            <Card className="flex-1 min-w-[200px]">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Permanently Close</CardTitle>
+                <XCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 4).length || 0}</div>
+              </CardContent>
+            </Card>
+          </div>
+          <SiteList />
+          <SiteFormDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+        </div>
+      </DashboardLayout>
+    );
   }
 
-  return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold">Site Management</h1>
-            <p className="text-muted-foreground mt-2">Track and manage site</p>
-          </div>
-          <Button onClick={() => setIsDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Add Site
-          </Button>
-        </div>
-        <div className="flex flex-col md:flex-row flex-wrap gap-4">
-          <Card className="flex-1 min-w-[200px]">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Total Site</CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{siteStats?.length || 0}</div>
-            </CardContent>
-          </Card>
-          <Card className="flex-1 min-w-[200px]">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">In Operation</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 1).length || 0}</div>
-            </CardContent>
-          </Card>
-          <Card className="flex-1 min-w-[200px]">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">In Progress</CardTitle>
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 2).length || 0}</div>
-            </CardContent>
-          </Card>
-          <Card className="flex-1 min-w-[200px]">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Temporarily Close</CardTitle>
-              <PauseCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 3).length || 0}</div>
-            </CardContent>
-          </Card>
-          <Card className="flex-1 min-w-[200px]">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Permanently Close</CardTitle>
-              <XCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{siteStats?.filter(site => site.active_status === 4).length || 0}</div>
-            </CardContent>
-          </Card>
-        </div>
-        <SiteList />
-        <SiteFormDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
-      </div>
-    </DashboardLayout>
-  );
+  return <div>You do not have access to this page.</div>;
 };
 
 export default SiteDashboard;

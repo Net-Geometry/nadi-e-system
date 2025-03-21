@@ -13,11 +13,19 @@ interface OrganizationMemberProps {
 export const OrganizationMember = ({ orgUser, onRemove }: OrganizationMemberProps) => {
   const userProfile = orgUser.profiles;
   
+  // Get the first two characters of user's name for avatar fallback
+  const getNameInitials = () => {
+    if (userProfile?.full_name) {
+      return userProfile.full_name.charAt(0).toUpperCase();
+    }
+    return "U";
+  };
+  
   return (
     <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/30 transition-colors">
       <div className="flex items-center space-x-3">
         <Avatar>
-          <AvatarFallback>{userProfile?.full_name?.substring(0, 2) || "U"}</AvatarFallback>
+          <AvatarFallback>{getNameInitials()}</AvatarFallback>
         </Avatar>
         <div>
           <div className="font-medium">{userProfile?.full_name || "Unknown User"}</div>
