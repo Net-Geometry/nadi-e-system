@@ -1,20 +1,20 @@
-import { useParams } from "react-router-dom";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import SiteDetail from "@/components/site/SiteDetail";
 import { SettingsLoading } from "@/components/settings/SettingsLoading";
+import { useSiteId } from "@/hooks/use-site-id";
 
-const SiteDetails = () => {
-  const { id } = useParams<{ id: string }>();
+const Site = () => {
+  const siteId = useSiteId();
 
-  if (!id) {
+  if (!siteId) {
     return <SettingsLoading />;
   }
 
   return (
     <DashboardLayout>
-      <SiteDetail siteId={id} />
+      <SiteDetail siteId={siteId} />
     </DashboardLayout>
   );
 };
 
-export default SiteDetails;
+export default Site;

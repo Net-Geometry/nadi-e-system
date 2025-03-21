@@ -30,6 +30,7 @@ import SiteDetails from "@/pages/dashboard/site/SiteDetail";
 import SiteClosureApproval from "@/pages/dashboard/site/SiteClosureApproval";
 import InventoryDashboard from "@/pages/dashboard/inventory/InventoryDashboard";
 import InventorySettings from "@/pages/dashboard/inventory/InventorySettings";
+import Site from "@/pages/dashboard/site/Site";
 
 export const moduleRoutes: RouteObject[] = [
   // HR Routes
@@ -283,6 +284,14 @@ export const moduleRoutes: RouteObject[] = [
     element: (
       // <ProtectedRoute requiredPermission="view_site_details">
       <SiteDetails />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/site",
+    element: (
+      // <ProtectedRoute requiredPermission="view_site_details">
+        <Site />
       // </ProtectedRoute>
     ),
   },

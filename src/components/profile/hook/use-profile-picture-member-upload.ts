@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
+import { BUCKET_NAME_PROFILEIMAGE, supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import useMemberID from '@/hooks/use-member-id';
 
 const useProfilePictureUpload = () => {
@@ -79,7 +79,7 @@ const useProfilePictureUpload = () => {
                 if (insertError) throw insertError;
             }
 
-            return `${SUPABASE_URL}/storage/v1/object/public/profileimage/${filePath}`;
+            return `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME_PROFILEIMAGE}/${filePath}`;
         } catch (err) {
             setError(err.message);
             throw err;
