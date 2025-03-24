@@ -1,4 +1,3 @@
-
 import {
   LayoutDashboard,
   Settings,
@@ -82,6 +81,11 @@ export const claimItems = [
 export const assetItems = [
   { title: "Asset Dashboard", icon: Box, path: "/asset" },
   { title: "Asset Settings", icon: Cog, path: "/asset/settings" },
+];
+
+export const inventoryItems = [
+  { title: "Inventory Dashboard", icon: Box, path: "/inventory" },
+  { title: "Inventory Settings", icon: Cog, path: "/inventory/settings" },
 ];
 
 export const financeItems = [
