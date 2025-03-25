@@ -1,26 +1,19 @@
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Settings, Eye, EyeOff, Trash2, Search } from "lucide-react"; // Import Search icon
+import { Settings, Eye, EyeOff, Trash2, Search } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { MaintenanceFormDialog } from "./MaintenanceFormDialog";
-import { fetchSites, Site, toggleSiteActiveStatus, deleteSite, fetchPhase, fetchRegion, fetchSiteStatus } from "./component/site-utils"; // Import fetchPhase, fetchRegion, and fetchStatus
+import { fetchSites, Site, toggleSiteActiveStatus, deleteSite, fetchPhase, fetchRegion, fetchSiteStatus } from "./component/site-utils";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { SiteFormDialog } from "./SiteFormDialog"; // Import SiteFormDialog
-import { Input } from "@/components/ui/input"; // Import Input component
-import { PaginationComponent } from "../ui/PaginationComponent"; // Correct import path
+import { SiteFormDialog } from "./SiteFormDialog";
+import { Input } from "@/components/ui/input";
+import { PaginationComponent } from "../ui/PaginationComponent";
 import { useNavigate } from 'react-router-dom';
 import { Skeleton } from "../ui/skeleton";
-import { useUserMetadata } from "@/hooks/use-user-metadata"; // Import useUserMetadata
+import { useUserMetadata } from "@/hooks/use-user-metadata";
 
 export const SiteList = () => {
   const userMetadata = useUserMetadata();
@@ -33,7 +26,6 @@ export const SiteList = () => {
       : null;
   const isSuperAdmin = parsedMetadata?.user_type === "super_admin";
 
-  // Hooks must be called unconditionally
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [siteToDelete, setSiteToDelete] = useState<string | null>(null);
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
@@ -53,9 +45,9 @@ export const SiteList = () => {
   const { data: sites = [], isLoading } = useQuery({
     queryKey: ['sites', organizationId],
     queryFn: () => fetchSites(organizationId),
-    enabled: !!organizationId || isSuperAdmin, // Disable query if no access
+    enabled: !!organizationId || isSuperAdmin,
   });
-  console.log(sites);
+
   const { data: phases = [] } = useQuery({
     queryKey: ['phases'],
     queryFn: fetchPhase,
@@ -101,7 +93,7 @@ export const SiteList = () => {
     try {
       await deleteSite(siteToDelete);
       queryClient.invalidateQueries({ queryKey: ['sites'] });
-      queryClient.invalidateQueries({ queryKey: ['site-stats'] }); // Invalidate site-stats query
+      queryClient.invalidateQueries({ queryKey: ['site-stats'] });
       toast({
         title: "Site deleted",
         description: `The site has been successfully deleted.`,
@@ -140,7 +132,7 @@ export const SiteList = () => {
   };
 
   const getStatusBadge = (status: Site['nd_site_status']['eng']) => {
-    if (!status) return "Unknown"; // Handle null or undefined status
+    if (!status) return "Unknown";
     const variants: Record<string, "default" | "destructive" | "outline" | "secondary"> = {
       "In Operation": "default",
       "Permanently Close": "outline",
@@ -169,7 +161,6 @@ export const SiteList = () => {
   const startItem = (currentPage - 1) * itemsPerPage + 1;
   const endItem = Math.min(currentPage * itemsPerPage, filteredSites.length);
 
-  // Access control logic moved to the return statement
   if (!isSuperAdmin && !organizationId) {
     return <div>You do not have access to view this list.</div>;
   }
@@ -181,7 +172,7 @@ export const SiteList = () => {
           placeholder="Search by site name or code"
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          className="pl-10" // Add padding to the left for the icon
+          className="pl-10"
         />
         <Search className="absolute top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
         <div className="relative">
@@ -231,7 +222,7 @@ export const SiteList = () => {
                 <TableHead>Site Name</TableHead>
                 <TableHead>Phase</TableHead>
                 <TableHead>Region</TableHead>
-                {isSuperAdmin && <TableHead>DUSP TP</TableHead>} {/* Add DUSP TP column for super admin */}
+                {isSuperAdmin && <TableHead>DUSP TP</TableHead>}
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -254,7 +245,7 @@ export const SiteList = () => {
                   <TableCell>
                     <Skeleton className="h-4 w-24" />
                   </TableCell>
-                  {isSuperAdmin && <TableCell><Skeleton className="h-4 w-24" /></TableCell>} {/* Add DUSP TP column for super admin */}
+                  {isSuperAdmin && <TableCell><Skeleton className="h-4 w-24" /></TableCell>}
                   <TableCell>
                     <Skeleton className="h-4 w-20" />
                   </TableCell>
@@ -279,7 +270,7 @@ export const SiteList = () => {
                 <TableHead>Site Name</TableHead>
                 <TableHead>Phase</TableHead>
                 <TableHead>Region</TableHead>
-                {isSuperAdmin && <TableHead>TP (DUSP)</TableHead>} {/* Add DUSP TP column for super admin */}
+                {isSuperAdmin && <TableHead>TP (DUSP)</TableHead>}
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
@@ -332,7 +323,7 @@ export const SiteList = () => {
                         <Button
                           variant="outline"
                           size="icon"
-                          onClick={() => handleViewDetailsClick(site.id)} // Add view details button
+                          onClick={() => handleViewDetailsClick(site.id)}
                         >
                           <Search className="h-4 w-4" />
                         </Button>
@@ -386,7 +377,7 @@ export const SiteList = () => {
       <SiteFormDialog
         open={isEditDialogOpen}
         onOpenChange={handleEditDialogClose}
-        site={siteToEdit} // Pass the site to edit
+        site={siteToEdit}
       />
     </div>
   );

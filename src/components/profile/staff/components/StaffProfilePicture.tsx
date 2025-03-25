@@ -4,7 +4,7 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { User, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ProfilePictureUploadDialog from './ProfilePictureUploadDialog';
-import { supabase, SUPABASE_URL } from '@/integrations/supabase/client';
+import { BUCKET_NAME_PROFILEIMAGE, supabase, SUPABASE_URL } from '@/integrations/supabase/client';
 import { Skeleton } from '@/components/ui/skeleton';
 
 const StaffProfilePicture = () => {
@@ -30,7 +30,7 @@ const StaffProfilePicture = () => {
                 if (error && error.code !== 'PGRST116') throw error;
 
                 if (profile?.photo) {
-                    setProfilePicture(`${SUPABASE_URL}/storage/v1/object/public/profileimage/${profile.photo}`);
+                    setProfilePicture(`${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME_PROFILEIMAGE}/${profile.photo}`);
                 }
 
                 // Get the user name for the avatar fallback
