@@ -34,6 +34,7 @@ export interface SiteClosureRequest {
             name: string;
             type: string;
             parent_id?: {
+                id: string;
                 name: string;
             } | null; // Updated to handle object or null
         };
