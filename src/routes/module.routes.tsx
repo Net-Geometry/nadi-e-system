@@ -1,35 +1,35 @@
-import { RouteObject } from "react-router-dom";
-import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
-import HRDashboard from "@/pages/dashboard/hr/HRDashboard";
-import Employees from "@/pages/dashboard/hr/Employees";
+import AssetDetails from "@/pages/dashboard/asset/AssetDetails";
+import AssetManagement from "@/pages/dashboard/asset/AssetManagement";
+import AssetSettings from "@/pages/dashboard/asset/AssetSettings";
+import ClaimDashboard from "@/pages/dashboard/claim/ClaimDashboard";
+import ClaimSettings from "@/pages/dashboard/claim/ClaimSettings";
+import CommunityDashboard from "@/pages/dashboard/community/CommunityDashboard";
+import CommunityModeration from "@/pages/dashboard/community/CommunityModeration";
+import AuditLogs from "@/pages/dashboard/compliance/AuditLogs";
+import ComplianceReports from "@/pages/dashboard/compliance/ComplianceReports";
+import FinanceDashboard from "@/pages/dashboard/finance/FinanceDashboard";
+import FinanceSettings from "@/pages/dashboard/finance/FinanceSettings";
+import FinancialTransactions from "@/pages/dashboard/financial/Transactions";
+import Wallet from "@/pages/dashboard/financial/Wallet";
 import Attendance from "@/pages/dashboard/hr/Attendance";
+import Employees from "@/pages/dashboard/hr/Employees";
+import HRDashboard from "@/pages/dashboard/hr/HRDashboard";
 import Leave from "@/pages/dashboard/hr/Leave";
+import InventoryManagement from "@/pages/dashboard/inventory/InventoryManagement";
+import InventorySettings from "@/pages/dashboard/inventory/InventorySettings";
 import POSDashboard from "@/pages/dashboard/pos/POSDashboard";
 import Products from "@/pages/dashboard/pos/Products";
 import POSTransactions from "@/pages/dashboard/pos/Transactions";
-import ClaimDashboard from "@/pages/dashboard/claim/ClaimDashboard";
-import ClaimSettings from "@/pages/dashboard/claim/ClaimSettings";
-import AssetDashboard from "@/pages/dashboard/asset/AssetDashboard";
-import AssetSettings from "@/pages/dashboard/asset/AssetSettings";
-import FinanceDashboard from "@/pages/dashboard/finance/FinanceDashboard";
-import FinanceSettings from "@/pages/dashboard/finance/FinanceSettings";
 import ProgrammesDashboard from "@/pages/dashboard/programmes/ProgrammesDashboard";
 import ProgrammeSettings from "@/pages/dashboard/programmes/ProgrammeSettings";
 import ServiceInfo from "@/pages/dashboard/services/ServiceInfo";
 import ServiceTransactions from "@/pages/dashboard/services/Transactions";
-import CommunityDashboard from "@/pages/dashboard/community/CommunityDashboard";
-import CommunityModeration from "@/pages/dashboard/community/CommunityModeration";
-import Wallet from "@/pages/dashboard/financial/Wallet";
-import FinancialTransactions from "@/pages/dashboard/financial/Transactions";
-import AuditLogs from "@/pages/dashboard/compliance/AuditLogs";
-import ComplianceReports from "@/pages/dashboard/compliance/ComplianceReports";
-import WorkflowDashboard from "@/pages/dashboard/workflow/WorkflowDashboard";
-import WorkflowConfiguration from "@/pages/dashboard/workflow/WorkflowConfiguration";
-import SiteManagement from "@/pages/dashboard/site/SiteManagement";
-import SiteDetails from "@/pages/dashboard/site/SiteDetail";
 import SiteClosureApproval from "@/pages/dashboard/site/SiteClosureApproval";
-import InventoryDashboard from "@/pages/dashboard/inventory/InventoryDashboard";
-import InventorySettings from "@/pages/dashboard/inventory/InventorySettings";
+import SiteDetails from "@/pages/dashboard/site/SiteDetail";
+import SiteManagement from "@/pages/dashboard/site/SiteManagement";
+import WorkflowConfiguration from "@/pages/dashboard/workflow/WorkflowConfiguration";
+import WorkflowDashboard from "@/pages/workflow/Dashboard";
+import { RouteObject } from "react-router-dom";
 
 export const moduleRoutes: RouteObject[] = [
   // HR Routes
@@ -112,7 +112,15 @@ export const moduleRoutes: RouteObject[] = [
     path: "/asset",
     element: (
       // <ProtectedRoute requiredPermission="view_assets">
-      <AssetDashboard />
+      <AssetManagement />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/asset/detail/:id",
+    element: (
+      // <ProtectedRoute requiredPermission="view_assets">
+      <AssetDetails />
       // </ProtectedRoute>
     ),
   },
@@ -129,7 +137,7 @@ export const moduleRoutes: RouteObject[] = [
     path: "/inventory",
     element: (
       // <ProtectedRoute requiredPermission="view_assets">
-      <InventoryDashboard />
+      <InventoryManagement />
       // </ProtectedRoute>
     ),
   },

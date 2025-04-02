@@ -1,27 +1,27 @@
 import { Button, buttonVariants } from "@/components/ui/button";
-import { useAssets } from "@/hooks/use-assets";
+import { useInventories } from "@/hooks/use-inventories";
 import { History, Settings } from "lucide-react";
 import { Link } from "react-router-dom";
 
-export const AssetList = () => {
-  const { useAssetsQuery } = useAssets();
-  const { data: assets, isLoading, error } = useAssetsQuery();
+export const InventoryList = () => {
+  const { useInventoriesQuery } = useInventories();
+  const { data: inventories, isLoading, error } = useInventoriesQuery();
 
   if (error) {
-    console.error("Error fetching assets:", error);
-    return <div>Error fetching assets</div>;
+    console.error("Error fetching inventories:", error);
+    return <div>Error fetching inventories</div>;
   }
 
   if (isLoading) {
-    return <div>Loading assets...</div>;
+    return <div>Loading inventories...</div>;
   }
 
   return (
     <div className="space-y-4">
       <div className="rounded-md border p-4">
-        <h1 className="text-2xl font-bold mb-4">Asset List</h1>
+        <h1 className="text-2xl font-bold mb-4">Inventory List</h1>
         <div className="flex flex-col gap-2">
-          {assets.map((asset) => {
+          {inventories.map((asset) => {
             return (
               <div
                 key={asset.id}
@@ -43,7 +43,7 @@ export const AssetList = () => {
                       size: "icon",
                     })}
                     to={{
-                      pathname: "/asset/detail/" + asset.id,
+                      pathname: "/inventory/detail/" + asset.id,
                     }}
                   >
                     <Settings className="h-4 w-4" />
