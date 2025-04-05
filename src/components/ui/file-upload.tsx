@@ -1,4 +1,3 @@
-
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -12,6 +11,7 @@ interface FileUploadProps extends React.InputHTMLAttributes<HTMLInputElement> {
   maxSizeInMB?: number;
   buttonText?: string;
   showPreview?: boolean;
+  existingFile?: { url: string; name: string } | null;
   children?: React.ReactNode;
 }
 
@@ -25,6 +25,7 @@ export const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
       maxSizeInMB = 5,
       buttonText = "Upload File",
       showPreview = true,
+      existingFile = null,
       children,
       ...props
     },
@@ -36,7 +37,7 @@ export const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
       setError(null);
-      
+
       if (!event.target.files || event.target.files.length === 0) {
         return;
       }
@@ -45,7 +46,11 @@ export const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
 
       // Validate number of files
       if (filesArray.length > maxFiles) {
-        setError(`You can only upload up to ${maxFiles} file${maxFiles === 1 ? "" : "s"}`);
+        setError(
+          `You can only upload up to ${maxFiles} file${
+            maxFiles === 1 ? "" : "s"
+          }`
+        );
         return;
       }
 
@@ -59,7 +64,7 @@ export const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
       }
 
       setSelectedFiles(filesArray);
-      
+
       if (onFilesSelected) {
         onFilesSelected(filesArray);
       }
@@ -69,11 +74,11 @@ export const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
       const newFiles = [...selectedFiles];
       newFiles.splice(index, 1);
       setSelectedFiles(newFiles);
-      
+
       if (onFilesSelected) {
         onFilesSelected(newFiles);
       }
-      
+
       // Reset the input value to allow selecting the same file again
       if (inputRef.current) {
         inputRef.current.value = "";
@@ -97,7 +102,8 @@ export const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
         >
           <Upload className="h-10 w-10 mx-auto mb-2 text-muted-foreground" />
           <p className="text-sm text-muted-foreground mb-1">
-            Drag and drop your file{maxFiles > 1 ? "s" : ""} here, or click to browse
+            Drag and drop your file{maxFiles > 1 ? "s" : ""} here, or click to
+            browse
           </p>
           <p className="text-xs text-muted-foreground">
             {acceptedFileTypes ? `Accepted formats: ${acceptedFileTypes}` : ""}
@@ -118,6 +124,40 @@ export const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
         {error && (
           <p className="text-sm text-destructive font-medium">{error}</p>
         )}
+
+        {/* Show existing file if provided */}
+        {existingFile && !selectedFiles.length && (
+          <div className="space-y-2">
+            <p className="text-sm font-medium">Existing File:</p>
+            <div className="flex items-center p-2 border rounded-md bg-muted/30">
+              <File className="h-4 w-4 mr-2" />
+              <a
+                href={existingFile.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-500 underline flex-1 truncate"
+              >
+                {existingFile.name}
+              </a>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-7 w-7"
+                onClick={() => {
+                  setSelectedFiles([]); // Clear selected files
+                  if (inputRef.current) {
+                    inputRef.current.value = ""; // Reset input
+                  }
+                }}
+              >
+                <X className="h-4 w-4" />
+                <span className="sr-only">Remove file</span>
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Show selected files */}
 
         {showPreview && selectedFiles.length > 0 && (
           <div className="space-y-2">
@@ -148,11 +188,7 @@ export const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
           </div>
         )}
 
-        <Button 
-          type="button" 
-          onClick={triggerFileInput}
-          className="mt-2"
-        >
+        <Button type="button" onClick={triggerFileInput} className="mt-2">
           {children}
           {!children && buttonText}
         </Button>
