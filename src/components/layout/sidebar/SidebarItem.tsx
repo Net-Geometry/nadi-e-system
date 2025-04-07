@@ -1,4 +1,3 @@
-
 import { Link, useLocation } from "react-router-dom";
 import { LucideIcon } from "lucide-react";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
@@ -12,14 +11,16 @@ interface SidebarItemProps {
   icon: LucideIcon;
   isCollapsed?: boolean;
   isInWhiteBackground?: boolean;
+  iconColor?: string;
 }
 
-export const SidebarItem = ({ 
-  title, 
-  path, 
-  icon: Icon, 
+export const SidebarItem = ({
+  title,
+  path,
+  icon: Icon,
   isCollapsed,
-  isInWhiteBackground 
+  isInWhiteBackground,
+  iconColor = "#6E41E2",
 }: SidebarItemProps) => {
   const location = useLocation();
   const { isMobile } = useSidebar();
@@ -28,21 +29,33 @@ export const SidebarItem = ({
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild>
-        <Link 
+        <Link
           to={path}
           className={cn(
-            sidebarStyles.menuItem,
-            isActive && sidebarStyles.menuItemActive,
-            isCollapsed && !isMobile && "justify-center px-2",
-            isInWhiteBackground && "text-gray-700 hover:bg-gray-100 hover:text-gray-900"
+            "flex items-center gap-3 px-4 py-2.5 text-sm text-gray-600 dark:text-gray-200 rounded-md",
+            sidebarStyles.hoverTransition,
+            "hover:bg-gray-50 hover:scale-105 dark:hover:bg-gray-800/80",
+            isActive &&
+              "bg-gray-50 text-gray-900 font-medium dark:bg-gray-800/90 dark:text-white",
+            isCollapsed && !isMobile && "justify-center px-2"
           )}
           title={isCollapsed && !isMobile ? title : undefined}
         >
-          <Icon className={cn(
-            sidebarStyles.iconWrapper,
-            isInWhiteBackground && "text-gray-700"
-          )} />
-          {(!isCollapsed || isMobile) && <span className="break-words leading-tight truncate">{title}</span>}
+          <div className="relative flex items-center flex-shrink-0">
+            {isActive && (
+              <div
+                className={cn(
+                  "absolute -left-2 top-1/2 -translate-y-1/2 h-2 w-2 rounded-full",
+                  "bg-primary"
+                )}
+              />
+            )}
+          </div>
+          {(!isCollapsed || isMobile) && (
+            <span className="truncate leading-tight min-h-[1.25rem] line-clamp-2 text-left">
+              {title}
+            </span>
+          )}
         </Link>
       </SidebarMenuButton>
     </SidebarMenuItem>

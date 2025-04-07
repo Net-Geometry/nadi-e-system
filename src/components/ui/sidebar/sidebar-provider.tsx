@@ -1,4 +1,5 @@
 
 import { SidebarProvider as OriginalSidebarProvider } from "@/hooks/use-sidebar";
 
-export const SidebarProvider = OriginalSidebarProvider;
+// Export with a different name to avoid conflicts
+export { OriginalSidebarProvider as SidebarProvider };

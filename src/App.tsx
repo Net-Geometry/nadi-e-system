@@ -31,7 +31,7 @@ const LoadingSpinner = () => (
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+      <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
         <Router>
           <Suspense fallback={<LoadingSpinner />}>
             <Routes>
@@ -40,15 +40,18 @@ function App() {
               <Route path="/member-login" element={<MemberLogin />} />
               <Route path="/register" element={<Register />} />
               <Route path="/ui-components" element={<UIComponents />} />
-              
+
               {/* Example Pages */}
               <Route path="/examples/home" element={<HomeExample />} />
               <Route path="/examples/detail" element={<DetailExample />} />
               <Route path="/examples/settings" element={<SettingsExample />} />
-              
+
               {/* Add organization details route */}
-              <Route path="/admin/organizations/:id" element={<OrganizationDetails />} />
-              
+              <Route
+                path="/admin/organizations/:id"
+                element={<OrganizationDetails />}
+              />
+
               {/* Dashboard routes */}
               {dashboardRoutes.map((route) => (
                 <Route
@@ -61,32 +64,34 @@ function App() {
                   }
                 />
               ))}
-              
+
               {/* Member routes */}
-              {Array.isArray(memberRoutes) && memberRoutes.map((route) => (
-                <Route
-                  key={route.path}
-                  path={route.path}
-                  element={
-                    <Suspense fallback={<LoadingSpinner />}>
-                      {route.element}
-                    </Suspense>
-                  }
-                />
-              ))}
-              
+              {Array.isArray(memberRoutes) &&
+                memberRoutes.map((route) => (
+                  <Route
+                    key={route.path}
+                    path={route.path}
+                    element={
+                      <Suspense fallback={<LoadingSpinner />}>
+                        {route.element}
+                      </Suspense>
+                    }
+                  />
+                ))}
+
               {/* Module routes */}
-              {Array.isArray(moduleRoutes) && moduleRoutes.map((route) => (
-                <Route
-                  key={route.path}
-                  path={route.path}
-                  element={
-                    <Suspense fallback={<LoadingSpinner />}>
-                      {route.element}
-                    </Suspense>
-                  }
-                />
-              ))}
+              {Array.isArray(moduleRoutes) &&
+                moduleRoutes.map((route) => (
+                  <Route
+                    key={route.path}
+                    path={route.path}
+                    element={
+                      <Suspense fallback={<LoadingSpinner />}>
+                        {route.element}
+                      </Suspense>
+                    }
+                  />
+                ))}
             </Routes>
           </Suspense>
         </Router>

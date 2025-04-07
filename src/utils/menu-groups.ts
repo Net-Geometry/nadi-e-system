@@ -94,17 +94,4 @@ export const menuGroups = [
     route: "/compliance",
     items: complianceItems,
   },
-
-  // TO-DO: Remove this section
-  // {
-  //   label: "Administration",
-  //   items: [
-  //     {
-  //       title: "State Holidays",
-  //       path: "/dashboard/state-holidays",
-  //       icon: Calendar,
-  //       visibleTo: ["super_admin"]
-  //     }
-  //   ]
-  // },
 ];

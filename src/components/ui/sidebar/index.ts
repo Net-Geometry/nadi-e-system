@@ -1,6 +1,31 @@
-export * from './sidebar';
-export * from './sidebar-provider';
-export * from './sidebar-trigger';
-export * from './sidebar-content';
-export * from './sidebar-menu';
-export * from './sidebar-group';
+
+// Re-export components from sidebar.tsx
+export {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupAction,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarInput,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuBadge,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSkeleton,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarTrigger,
+  useSidebar
+} from './sidebar';
+
+// Export provider separately (using alias to avoid conflicts)
+export { SidebarProvider as SidebarContextProvider } from './sidebar-provider';

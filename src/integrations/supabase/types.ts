@@ -719,7 +719,15 @@ export type Database = {
           updated_at?: string | null
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_asset_type"
+            columns: ["type_id"]
+            isOneToOne: false
+            referencedRelation: "nd_asset_type"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       nd_asset_attachment: {
         Row: {
@@ -839,7 +847,15 @@ export type Database = {
           updated_at?: string | null
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_category"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "nd_asset_categories"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       nd_attendance_category: {
         Row: {
@@ -1971,7 +1987,7 @@ export type Database = {
           code?: string | null
           created_at?: string | null
           created_by?: string | null
-          id: number
+          id?: number
           logo?: string | null
           name?: string | null
           updated_at?: string | null
@@ -9213,6 +9229,12 @@ export type Database = {
           type: Database["public"]["Enums"]["notification_type"] | null
           user_id: string | null
         }
+      }
+      get_asset_categories: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          category: string
+        }[]
       }
       get_current_user_type: {
         Args: Record<PropertyKey, never>
