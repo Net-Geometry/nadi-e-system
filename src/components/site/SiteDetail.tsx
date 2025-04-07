@@ -14,7 +14,19 @@ import {
   TableCell,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Settings, Trash2, MapPin, Globe, Mail, Calendar, Users, Building, EyeOff, Eye, Plus } from "lucide-react";
+import {
+  Settings,
+  Trash2,
+  MapPin,
+  Globe,
+  Mail,
+  Calendar,
+  Users,
+  Building,
+  EyeOff,
+  Eye,
+  Plus,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import useSiteGeneralData from "@/hooks/use-site-general-data";
@@ -22,6 +34,8 @@ import useGeoData from "@/hooks/use-geo-data";
 import BillingFormDialog from "./BillingFormDialog";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
 import { useSiteBilling } from "./hook/use-site-billing";
+import { supabase } from "@/lib/supabase";
+import { BUCKET_NAME_UTILITIES } from "@/integrations/supabase/client";
 
 interface SiteDetailProps {
   siteId: string;
@@ -33,10 +47,32 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
   const [refreshBilling, setRefreshBilling] = useState(false); // Add this state
 
   const { data, loading, error } = useSiteProfile(siteId);
-  const { siteCode, loading: codeLoading, error: codeError } = useSiteCode(siteId);
-  const { data: addressData, loading: addressLoading, error: addressError } = useSiteAddress(siteId);
-  const { data: billingData, loading: billingLoading, error: billingError } = useSiteBilling(siteId, refreshBilling); // Pass refreshBilling state
-  const { siteStatus, technology, bandwidth, buildingType, space, zone, categoryArea, buildingLevel, socioEconomics } = useSiteGeneralData();
+  const {
+    siteCode,
+    loading: codeLoading,
+    error: codeError,
+  } = useSiteCode(siteId);
+  const {
+    data: addressData,
+    loading: addressLoading,
+    error: addressError,
+  } = useSiteAddress(siteId);
+  const {
+    data: billingData,
+    loading: billingLoading,
+    error: billingError,
+  } = useSiteBilling(siteId, refreshBilling); // Pass refreshBilling state
+  const {
+    siteStatus,
+    technology,
+    bandwidth,
+    buildingType,
+    space,
+    zone,
+    categoryArea,
+    buildingLevel,
+    socioEconomics,
+  } = useSiteGeneralData();
   const { regions, states, parliaments, duns, mukims, phases } = useGeoData();
   const [yearFilter, setYearFilter] = useState("");
   const [monthFilter, setMonthFilter] = useState("");
@@ -57,19 +93,88 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
     }
   }, [isDialogOpen]);
 
-  if (loading || codeLoading || addressLoading) return <Skeleton className="w-full h-96">Loading...</Skeleton>;
-  if (error || codeError || addressError) return <div className="p-4 text-destructive">Error: {error || codeError || addressError}</div>;
+  // Function to handle delete a record
+  const handleDelete = async (id: string) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this record?"
+    );
+    if (!confirmDelete) return;
+
+    try {
+      const { data: attachmentData, error: attachmentError } = await supabase
+        .from("nd_utilities_attachment") // Replace with your actual table name
+        .select("file_path")
+        .eq("utilities_id", id) // Assuming `utilities_id` links the file to the record
+        .single();
+
+      if (attachmentError) {
+        console.error("Error fetching file path:", attachmentError);
+        alert("Failed to fetch the associated file. Please try again.");
+        return;
+      }
+
+      const filePath = attachmentData?.file_path;
+
+      // Extract the part of the file path after "//"
+      const relativeFilePath = filePath?.split("//")[2];
+
+      console.log("File path translated :", relativeFilePath);
+
+      // Delete the file from storage if it exists
+      if (filePath) {
+        const { error: storageError } = await supabase.storage
+          .from(BUCKET_NAME_UTILITIES) // Replace with your storage bucket name
+          .remove([relativeFilePath]);
+
+        if (storageError) {
+          console.error("Error deleting file from storage:", storageError);
+          alert("Failed to delete the associated file. Please try again.");
+          return;
+        }
+      }
+
+      const { error } = await supabase
+        .from("nd_utilities")
+        .delete()
+        .eq("id", id);
+
+      if (error) {
+        console.error("Error deleting record:", error);
+        alert("An error occurred while deleting the record.");
+        return;
+      }
+
+      alert("Record and associated file deleted successfully.");
+      setRefreshBilling((prev) => !prev); // Toggle refreshBilling state to trigger re-fetch
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      alert("An unexpected error occurred. Please try again.");
+    }
+  };
+
+  if (loading || codeLoading || addressLoading)
+    return <Skeleton className="w-full h-96">Loading...</Skeleton>;
+  if (error || codeError || addressError)
+    return (
+      <div className="p-4 text-destructive">
+        Error: {error || codeError || addressError}
+      </div>
+    );
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div className="items-center">
           <h1 className="text-2xl font-bold">{data.fullname || "Site Name"}</h1>
-          <h3 className="text-muted-foreground">Site Code: <span className="text-black font-bold">{siteCode || "N/A"}</span></h3>
+          <h3 className="text-muted-foreground">
+            Site Code:{" "}
+            <span className="text-black font-bold">{siteCode || "N/A"}</span>
+          </h3>
           <div className="font-medium flex items-center gap-2">
-            <span className="text-muted-foreground">Status:  </span>
+            <span className="text-muted-foreground">Status: </span>
             <span className="font-medium flex items-center gap-2">
-              {siteStatus.find(status => status.id === data.active_status)?.eng || "N/A"}
+              {siteStatus.find((status) => status.id === data.active_status)
+                ?.eng || "N/A"}
               {data.is_active ? (
                 <Eye className="h-4 w-4" />
               ) : (
@@ -79,7 +184,12 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
           </div>
         </div>
         {parsedMetadata?.user_type?.startsWith("staff") && (
-          <Button onClick={() => { setSelectedBillingData(null); setIsDialogOpen(true); }}>
+          <Button
+            onClick={() => {
+              setSelectedBillingData(null);
+              setIsDialogOpen(true);
+            }}
+          >
             <Plus className="h-4 w-4 mr-2" />
             Add Billing
           </Button>
@@ -88,13 +198,17 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
 
       <div className="flex border-b">
         <button
-          className={`px-4 py-2 ${activeTab === "details" ? "border-b-2 border-blue-500" : ""}`}
+          className={`px-4 py-2 ${
+            activeTab === "details" ? "border-b-2 border-blue-500" : ""
+          }`}
           onClick={() => setActiveTab("details")}
         >
           Site Details
         </button>
         <button
-          className={`px-4 py-2 ${activeTab === "billing" ? "border-b-2 border-blue-500" : ""}`}
+          className={`px-4 py-2 ${
+            activeTab === "billing" ? "border-b-2 border-blue-500" : ""
+          }`}
           onClick={() => setActiveTab("billing")}
         >
           Billing
@@ -114,15 +228,24 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
               <CardContent className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Region:</span>
-                  <span className="font-medium">{regions.find(region => region.id === data.region_id)?.eng || "N/A"}</span>
+                  <span className="font-medium">
+                    {regions.find((region) => region.id === data.region_id)
+                      ?.eng || "N/A"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">State:</span>
-                  <span className="font-medium">{states.find(state => state.id === data.state_id)?.name || "N/A"}</span>
+                  <span className="font-medium">
+                    {states.find((state) => state.id === data.state_id)?.name ||
+                      "N/A"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Mukim:</span>
-                  <span className="font-medium">{mukims.find(mukim => mukim.id === data.mukim_id)?.name || "N/A"}</span>
+                  <span className="font-medium">
+                    {mukims.find((mukim) => mukim.id === data.mukim_id)?.name ||
+                      "N/A"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Coordinates:</span>
@@ -168,21 +291,31 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
               <CardContent className="space-y-2">
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Building Type:</span>
-                  <span className="font-medium">{buildingType.find(type => type.id === data.building_type_id)?.eng || "N/A"}</span>
+                  <span className="font-medium">
+                    {buildingType.find(
+                      (type) => type.id === data.building_type_id
+                    )?.eng || "N/A"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Building Area:</span>
                   <span className="font-medium">
-                    {data.building_area_id != null ? data.building_area_id.toLocaleString() + " sqft" : "N/A"}
+                    {data.building_area_id != null
+                      ? data.building_area_id.toLocaleString() + " sqft"
+                      : "N/A"}
                   </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">Rental:</span>
-                  <span className="font-medium">{data.building_rental_id ? "Yes" : "No"}</span>
+                  <span className="font-medium">
+                    {data.building_rental_id ? "Yes" : "No"}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-muted-foreground">OKU Friendly:</span>
-                  <span className="font-medium">{data.oku_friendly ? "Yes" : "No"}</span>
+                  <span className="font-medium">
+                    {data.oku_friendly ? "Yes" : "No"}
+                  </span>
                 </div>
               </CardContent>
             </Card>
@@ -211,15 +344,33 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
                   </TableHeader>
                   <TableBody>
                     <TableRow>
-                      <TableCell>{technology.find(tech => tech.id === data.technology)?.name || "N/A"}</TableCell>
-                      <TableCell>{bandwidth.find(band => band.id === data.bandwidth)?.name || "N/A"}</TableCell>
-                      <TableCell>{data.total_population?.toLocaleString() || "N/A"}</TableCell>
                       <TableCell>
-                        {data.socioeconomic_id && data.socioeconomic_id.length > 0
-                          ? data.socioeconomic_id.map(id => socioEconomics.find(se => se.id === id)?.eng || "N/A").join(", ")
+                        {technology.find((tech) => tech.id === data.technology)
+                          ?.name || "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {bandwidth.find((band) => band.id === data.bandwidth)
+                          ?.name || "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {data.total_population?.toLocaleString() || "N/A"}
+                      </TableCell>
+                      <TableCell>
+                        {data.socioeconomic_id &&
+                        data.socioeconomic_id.length > 0
+                          ? data.socioeconomic_id
+                              .map(
+                                (id) =>
+                                  socioEconomics.find((se) => se.id === id)
+                                    ?.eng || "N/A"
+                              )
+                              .join(", ")
                           : "N/A"}
                       </TableCell>
-                      <TableCell>{phases.find(phase => phase.id === data.phase_id)?.name || "N/A"}</TableCell>
+                      <TableCell>
+                        {phases.find((phase) => phase.id === data.phase_id)
+                          ?.name || "N/A"}
+                      </TableCell>
                       <TableCell>{data.cluster_id || "N/A"}</TableCell>
                       <TableCell>
                         {data.operate_date
@@ -243,9 +394,16 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
                   <TableBody>
                     <TableRow>
                       <TableHead className="w-1/4">Parliament RFID</TableHead>
-                      <TableCell>{parliaments.find(parliament => parliament.id === data.parliament_rfid)?.fullname || "N/A"}</TableCell>
+                      <TableCell>
+                        {parliaments.find(
+                          (parliament) => parliament.id === data.parliament_rfid
+                        )?.fullname || "N/A"}
+                      </TableCell>
                       <TableHead className="w-1/4">DUN RFID</TableHead>
-                      <TableCell>{duns.find(dun => dun.id === data.dun_rfid)?.name || "N/A"}</TableCell>
+                      <TableCell>
+                        {duns.find((dun) => dun.id === data.dun_rfid)?.name ||
+                          "N/A"}
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableHead>UST ID</TableHead>
@@ -257,17 +415,31 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
                       <TableHead>Space ID</TableHead>
                       <TableCell>
                         {data.space_id && data.space_id.length > 0
-                          ? data.space_id.map(id => space.find(s => s.id === id)?.eng || "N/A").join(", ")
+                          ? data.space_id
+                              .map(
+                                (id) =>
+                                  space.find((s) => s.id === id)?.eng || "N/A"
+                              )
+                              .join(", ")
                           : "N/A"}
                       </TableCell>
                       <TableHead>Zone ID</TableHead>
-                      <TableCell>{zone.find(z => z.id === data.zone_id)?.area || "N/A"}</TableCell>
+                      <TableCell>
+                        {zone.find((z) => z.id === data.zone_id)?.area || "N/A"}
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableHead>Area ID</TableHead>
-                      <TableCell>{categoryArea.find(area => area.id === data.area_id)?.name || "N/A"}</TableCell>
+                      <TableCell>
+                        {categoryArea.find((area) => area.id === data.area_id)
+                          ?.name || "N/A"}
+                      </TableCell>
                       <TableHead>Level ID</TableHead>
-                      <TableCell>{buildingLevel.find(level => level.id === data.level_id)?.eng || "N/A"}</TableCell>
+                      <TableCell>
+                        {buildingLevel.find(
+                          (level) => level.id === data.level_id
+                        )?.eng || "N/A"}
+                      </TableCell>
                     </TableRow>
                     <TableRow>
                       <TableHead>Created At</TableHead>
@@ -296,11 +468,15 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
             <CardContent className="space-y-2">
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Address Line 1:</span>
-                <span className="font-medium">{addressData.address1 || "N/A"}</span>
+                <span className="font-medium">
+                  {addressData.address1 || "N/A"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Address Line 2:</span>
-                <span className="font-medium">{addressData.address2 || "N/A"}</span>
+                <span className="font-medium">
+                  {addressData.address2 || "N/A"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">City:</span>
@@ -308,11 +484,16 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">Postal Code:</span>
-                <span className="font-medium">{addressData.postcode || "N/A"}</span>
+                <span className="font-medium">
+                  {addressData.postcode || "N/A"}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-muted-foreground">State:</span>
-                <span className="font-medium">{states.find(state => state.id === addressData.state_id)?.name || "N/A"}</span>
+                <span className="font-medium">
+                  {states.find((state) => state.id === addressData.state_id)
+                    ?.name || "N/A"}
+                </span>
               </div>
             </CardContent>
           </Card>
@@ -375,7 +556,11 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
                     <TableCell>{item.type_name}</TableCell>
                     <TableCell>
                       {item.file_path ? (
-                        <a href={item.file_path} target="_blank" rel="noopener noreferrer">
+                        <a
+                          href={item.file_path}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           View PDF
                         </a>
                       ) : (
@@ -386,7 +571,10 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
                       <Button
                         variant="outline"
                         size="icon"
-                        onClick={() => { setSelectedBillingData(item); setIsDialogOpen(true); }}
+                        onClick={() => {
+                          setSelectedBillingData(item);
+                          setIsDialogOpen(true);
+                        }}
                       >
                         <Settings className="h-4 w-4" />
                       </Button>
@@ -394,6 +582,7 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
                         variant="outline"
                         size="icon"
                         className="text-destructive"
+                        onClick={() => handleDelete(item.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
