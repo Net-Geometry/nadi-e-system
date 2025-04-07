@@ -27,6 +27,7 @@ import WorkflowDashboard from "@/pages/dashboard/workflow/WorkflowDashboard";
 import WorkflowConfiguration from "@/pages/dashboard/workflow/WorkflowConfiguration";
 import SiteManagement from "@/pages/dashboard/site/SiteManagement";
 import SiteDetails from "@/pages/dashboard/site/SiteDetail";
+import Site from "@/pages/dashboard/site/Site";
 import SiteClosureApproval from "@/pages/dashboard/site/SiteClosureApproval";
 import InventoryDashboard from "@/pages/dashboard/inventory/InventoryDashboard";
 import InventorySettings from "@/pages/dashboard/inventory/InventorySettings";
@@ -300,6 +301,14 @@ export const moduleRoutes: RouteObject[] = [
     element: (
       // <ProtectedRoute requiredPermission="view_site_details">
       <SiteClosureApproval />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/site",
+    element: (
+      // <ProtectedRoute requiredPermission="view_site_details">
+        <Site />
       // </ProtectedRoute>
     ),
   },
