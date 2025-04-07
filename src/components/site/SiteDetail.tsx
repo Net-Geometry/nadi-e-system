@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,19 +20,42 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import useSiteGeneralData from "@/hooks/use-site-general-data";
 import useGeoData from "@/hooks/use-geo-data";
 import BillingFormDialog from "./BillingFormDialog";
+import { useUserMetadata } from "@/hooks/use-user-metadata";
+import { useSiteBilling } from "./hook/use-site-billing";
 
 interface SiteDetailProps {
   siteId: string;
 }
 
 const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [selectedBillingData, setSelectedBillingData] = useState(null);
+  const [refreshBilling, setRefreshBilling] = useState(false); // Add this state
+
   const { data, loading, error } = useSiteProfile(siteId);
   const { siteCode, loading: codeLoading, error: codeError } = useSiteCode(siteId);
   const { data: addressData, loading: addressLoading, error: addressError } = useSiteAddress(siteId);
+  const { data: billingData, loading: billingLoading, error: billingError } = useSiteBilling(siteId, refreshBilling); // Pass refreshBilling state
   const { siteStatus, technology, bandwidth, buildingType, space, zone, categoryArea, buildingLevel, socioEconomics } = useSiteGeneralData();
   const { regions, states, parliaments, duns, mukims, phases } = useGeoData();
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [yearFilter, setYearFilter] = useState("");
+  const [monthFilter, setMonthFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
   const [activeTab, setActiveTab] = useState("details");
+  const userMetadata = useUserMetadata();
+  const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
+  const filteredBillingData = billingData.filter((item) => {
+    return (
+      (yearFilter ? item.year === parseInt(yearFilter) : true) &&
+      (monthFilter ? item.month === parseInt(monthFilter) : true) &&
+      (typeFilter ? item.type_name === typeFilter : true)
+    );
+  });
+  useEffect(() => {
+    if (!isDialogOpen) {
+      setRefreshBilling((prev) => !prev); // Toggle refreshBilling state to trigger re-fetch
+    }
+  }, [isDialogOpen]);
 
   if (loading || codeLoading || addressLoading) return <Skeleton className="w-full h-96">Loading...</Skeleton>;
   if (error || codeError || addressError) return <div className="p-4 text-destructive">Error: {error || codeError || addressError}</div>;
@@ -54,10 +78,12 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
             </span>
           </div>
         </div>
-        <Button onClick={() => setIsDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Billing
-        </Button>
+        {parsedMetadata?.user_type?.startsWith("staff") && (
+          <Button onClick={() => { setSelectedBillingData(null); setIsDialogOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Billing
+          </Button>
+        )}
       </div>
 
       <div className="flex border-b">
@@ -306,9 +332,87 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
 
       {activeTab === "billing" && (
         <div>
-          <BillingFormDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} siteId={siteId} />
+          <div className="space-y-6">
+            <div className="flex space-x-4">
+              <input
+                type="number"
+                placeholder="Year"
+                value={yearFilter}
+                onChange={(e) => setYearFilter(e.target.value)}
+                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              />
+              <input
+                type="number"
+                placeholder="Month"
+                value={monthFilter}
+                onChange={(e) => setMonthFilter(e.target.value)}
+                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              />
+              <input
+                type="text"
+                placeholder="Utility Type"
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+              />
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Year</TableHead>
+                  <TableHead>Month</TableHead>
+                  <TableHead>Billing Type</TableHead>
+                  <TableHead>File</TableHead>
+                  <TableHead>Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredBillingData.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell>{item.year}</TableCell>
+                    <TableCell>{item.month}</TableCell>
+                    <TableCell>{item.type_name}</TableCell>
+                    <TableCell>
+                      {item.file_path ? (
+                        <a href={item.file_path} target="_blank" rel="noopener noreferrer">
+                          View PDF
+                        </a>
+                      ) : (
+                        "N/A"
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => { setSelectedBillingData(item); setIsDialogOpen(true); }}
+                      >
+                        <Settings className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        className="text-destructive"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       )}
+
+      {/* Render the BillingFormDialog independently */}
+      <BillingFormDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        siteId={siteId}
+        initialData={selectedBillingData}
+      />
     </div>
   );
 };
