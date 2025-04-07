@@ -20,15 +20,14 @@ const InventorySettings = () => {
     console.log("Saving asset settings:", settings);
     toast({
       title: "Settings Saved",
-      description:
-        "Inventory management settings have been updated successfully.",
+      description: "Asset management settings have been updated successfully.",
     });
   };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Inventory Management Settings</h1>
+        <h1 className="text-3xl font-bold">Asset Management Settings</h1>
         <Card>
           <CardHeader>
             <CardTitle>General Settings</CardTitle>
