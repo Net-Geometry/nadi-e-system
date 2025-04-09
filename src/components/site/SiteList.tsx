@@ -25,13 +25,15 @@ import { useUserMetadata } from "@/hooks/use-user-metadata"; // Import useUserMe
 export const SiteList = () => {
   const userMetadata = useUserMetadata();
   const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
+  const isSuperAdmin = parsedMetadata?.user_type === "super_admin";
+  const isTPUser = parsedMetadata?.user_group_name === "TP" && !!parsedMetadata?.organization_id;
+  const isDUSPUser = parsedMetadata?.user_group_name === "DUSP" && !!parsedMetadata?.organization_id;
   const organizationId =
     parsedMetadata?.user_type !== "super_admin" &&
-      parsedMetadata?.user_group_name === "TP" &&
-      parsedMetadata?.organization_id
+    (isTPUser || isDUSPUser) &&
+    parsedMetadata?.organization_id
       ? parsedMetadata.organization_id
       : null;
-  const isSuperAdmin = parsedMetadata?.user_type === "super_admin";
 
   // Hooks must be called unconditionally
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -52,7 +54,7 @@ export const SiteList = () => {
 
   const { data: sites = [], isLoading } = useQuery({
     queryKey: ['sites', organizationId],
-    queryFn: () => fetchSites(organizationId),
+    queryFn: () => fetchSites(organizationId, isTPUser, isDUSPUser), // Pass isTPUser and isDUSPUser flags
     enabled: !!organizationId || isSuperAdmin, // Disable query if no access
   });
   console.log(sites);
@@ -312,13 +314,15 @@ export const SiteList = () => {
                             <EyeOff className="h-4 w-4" />
                           )}
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleEditClick(site)}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
+                        {!isDUSPUser && ( // Hide "Edit" button for DUSP users
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleEditClick(site)}
+                          >
+                            <Settings className="h-4 w-4" />
+                          </Button>
+                        )}
                         {isSuperAdmin && (
                           <Button
                             variant="outline"
@@ -383,11 +387,13 @@ export const SiteList = () => {
         </DialogContent>
       </Dialog>
 
-      <SiteFormDialog
-        open={isEditDialogOpen}
-        onOpenChange={handleEditDialogClose}
-        site={siteToEdit} // Pass the site to edit
-      />
+      {isEditDialogOpen && ( // Render SiteFormDialog only when isEditDialogOpen is true
+        <SiteFormDialog
+          open={isEditDialogOpen}
+          onOpenChange={handleEditDialogClose}
+          site={siteToEdit} // Pass the site to edit
+        />
+      )}
     </div>
   );
 };

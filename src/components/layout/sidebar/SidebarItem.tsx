@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import { LucideIcon } from "lucide-react";
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
@@ -8,7 +9,7 @@ import { useSidebar } from "@/hooks/use-sidebar";
 interface SidebarItemProps {
   title: string;
   path: string;
-  icon: LucideIcon;
+  icon?: LucideIcon;
   isCollapsed?: boolean;
   isInWhiteBackground?: boolean;
   iconColor?: string;
@@ -50,6 +51,7 @@ export const SidebarItem = ({
                 )}
               />
             )}
+            {Icon && <Icon className="h-5 w-5" color={iconColor} />}
           </div>
           {(!isCollapsed || isMobile) && (
             <span className="truncate leading-tight min-h-[1.25rem] line-clamp-2 text-left">

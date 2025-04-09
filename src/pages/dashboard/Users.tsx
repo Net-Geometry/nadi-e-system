@@ -1,68 +1,50 @@
-import { useState, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+
+import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useToast } from "@/hooks/use-toast";
-import { UserFormDialog } from "@/components/users/UserFormDialog";
-import { UserToolbar } from "@/components/users/UserToolbar";
-import { fetchUsers, deleteUsers, exportUsersToCSV } from "@/utils/users-utils";
-import type { Profile } from "@/types/auth";
 import { UserHeader } from "@/components/users/UserHeader";
 import { UserSearch } from "@/components/users/UserSearch";
+import { UserToolbar } from "@/components/users/UserToolbar";
 import { UserTable } from "@/components/users/UserTable";
+import { UserDialogs } from "@/components/users/UserDialogs";
+import { useUserManagement } from "@/hooks/use-user-management";
+import { exportUsersToCSV } from "@/utils/users-utils";
+import type { Profile } from "@/types/auth";
 
 const Users = () => {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [userTypeFilter, setUserTypeFilter] = useState<string>("");
-  const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [userToEdit, setUserToEdit] = useState<Profile | undefined>();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  
+  const {
+    searchQuery,
+    userTypeFilter,
+    siteFilter,
+    phaseFilter,
+    stateFilter,
+    dateFilter,
+    selectedUsers,
+    currentPage,
+    totalPages,
+    sortField,
+    sortDirection,
+    isLoading,
+    users,
+    setSearchQuery,
+    setUserTypeFilter,
+    setSiteFilter,
+    setPhaseFilter,
+    setStateFilter,
+    setDateFilter,
+    setCurrentPage,
+    handleSort,
+    handleSelectAll,
+    handleSelectUser,
+    handleDeleteSelected,
+    handleApplyFilters,
+    handleResetFilters
+  } = useUserManagement();
 
-  const { toast } = useToast();
-  const queryClient = useQueryClient();
-
-  const { data: users = [], isLoading } = useQuery({
-    queryKey: ["users", searchQuery, userTypeFilter],
-    queryFn: () => fetchUsers(searchQuery, userTypeFilter),
-  });
-
-  const deleteUsersMutation = useMutation({
-    mutationFn: deleteUsers,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users"] });
-      setSelectedUsers([]);
-      toast({
-        title: "Success",
-        description: "Users deleted successfully",
-      });
-    },
-    onError: (error) => {
-      console.error("Error deleting users:", error);
-      toast({
-        title: "Error",
-        description: "Failed to delete users",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleSelectAll = useCallback((checked: boolean) => {
-    setSelectedUsers(checked ? users.map((user) => user.id) : []);
-  }, [users]);
-
-  const handleSelectUser = useCallback((userId: string, checked: boolean) => {
-    setSelectedUsers((prev) =>
-      checked ? [...prev, userId] : prev.filter((id) => id !== userId)
-    );
-  }, []);
-
-  const handleDeleteSelected = useCallback(() => {
-    if (selectedUsers.length > 0) {
-      deleteUsersMutation.mutate(selectedUsers);
-    }
-  }, [selectedUsers, deleteUsersMutation]);
-
-  const handleExportUsers = useCallback(() => {
+  const handleExportUsers = () => {
     const csvContent = exportUsersToCSV(users);
     const link = document.createElement("a");
     link.setAttribute("href", csvContent);
@@ -70,56 +52,76 @@ const Users = () => {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-  }, [users]);
+  };
 
   return (
     <DashboardLayout>
-      <UserHeader onCreateUser={() => setIsCreateDialogOpen(true)} />
+      <div className="max-w-[1200px] mx-auto">
+        <UserHeader onCreateUser={() => setIsCreateDialogOpen(true)} />
 
-      <div className="flex flex-col gap-4 mb-6">
-        <UserSearch
-          searchQuery={searchQuery}
-          onSearchChange={setSearchQuery}
-          userTypeFilter={userTypeFilter}
-          onUserTypeFilterChange={setUserTypeFilter}
+        <div className="flex flex-col gap-4 mb-6">
+          <UserSearch
+            searchQuery={searchQuery}
+            onSearchChange={setSearchQuery}
+            userTypeFilter={userTypeFilter}
+            onUserTypeFilterChange={setUserTypeFilter}
+            onExport={handleExportUsers}
+            onApplyFilters={handleApplyFilters}
+            siteFilter={siteFilter}
+            onSiteFilterChange={setSiteFilter}
+            phaseFilter={phaseFilter}
+            onPhaseFilterChange={setPhaseFilter}
+            stateFilter={stateFilter}
+            onStateFilterChange={setStateFilter}
+            dateFilter={dateFilter}
+            onDateFilterChange={setDateFilter}
+            onReset={handleResetFilters}
+          />
+
+          {selectedUsers.length > 0 && (
+            <UserToolbar
+              selectedCount={selectedUsers.length}
+              onExport={handleExportUsers}
+              onDelete={() => handleDeleteSelected()}
+            />
+          )}
+        </div>
+
+        <UserTable
+          users={users}
+          isLoading={isLoading}
+          selectedUsers={selectedUsers}
+          onSelectAll={handleSelectAll}
+          onSelectUser={handleSelectUser}
+          onEditUser={(user) => {
+            setUserToEdit(user);
+            setIsEditDialogOpen(true);
+          }}
+          onDeleteUser={(userId) => {
+            // Here we're passing an array with a single ID
+            const idsToDelete = [userId];
+            handleDeleteSelected(idsToDelete);
+          }}
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          onSort={handleSort}
+          sortField={sortField}
+          sortDirection={sortDirection}
         />
 
-        <UserToolbar
-          selectedCount={selectedUsers.length}
-          onExport={handleExportUsers}
-          onDelete={handleDeleteSelected}
-        />
+        <div className="mt-8 text-center text-xs text-gray-500">
+          © 2025 NADI. All rights reserved.
+        </div>
       </div>
 
-      <UserTable
-        users={users}
-        isLoading={isLoading}
-        selectedUsers={selectedUsers}
-        onSelectAll={handleSelectAll}
-        onSelectUser={handleSelectUser}
-        onEditUser={(user) => {
-          setUserToEdit(user);
-          setIsEditDialogOpen(true);
-        }}
-        onDeleteUser={(userId) => deleteUsersMutation.mutate([userId])}
-      />
-
-      <UserFormDialog
-        open={isCreateDialogOpen}
-        onOpenChange={setIsCreateDialogOpen}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["users"] });
-        }}
-      />
-
-      <UserFormDialog
-        open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
-        user={userToEdit}
-        onSuccess={() => {
-          queryClient.invalidateQueries({ queryKey: ["users"] });
-          setUserToEdit(undefined);
-        }}
+      <UserDialogs
+        isCreateDialogOpen={isCreateDialogOpen}
+        setIsCreateDialogOpen={setIsCreateDialogOpen}
+        isEditDialogOpen={isEditDialogOpen}
+        setIsEditDialogOpen={setIsEditDialogOpen}
+        userToEdit={userToEdit}
+        setUserToEdit={setUserToEdit}
       />
     </DashboardLayout>
   );

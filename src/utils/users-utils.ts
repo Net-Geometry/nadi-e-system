@@ -1,3 +1,4 @@
+
 import { Profile } from "@/types/auth";
 import { supabase } from "@/lib/supabase";
 

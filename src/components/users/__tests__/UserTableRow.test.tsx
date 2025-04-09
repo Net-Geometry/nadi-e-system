@@ -1,3 +1,4 @@
+
 import { describe, it, expect, vi } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import { UserTableRow } from '../UserTableRow';
@@ -28,6 +29,7 @@ describe('UserTableRow', () => {
         onSelect={() => {}}
         onEdit={() => {}}
         onDelete={() => {}}
+        rowIndex={0}
       />
     );
     
@@ -45,6 +47,7 @@ describe('UserTableRow', () => {
         onSelect={onSelect}
         onEdit={() => {}}
         onDelete={() => {}}
+        rowIndex={0}
       />
     );
     

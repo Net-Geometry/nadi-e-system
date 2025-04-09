@@ -12,12 +12,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { UserGroup } from "./types";
-import { Edit, Trash2, Plus } from "lucide-react";
+import { Edit, Trash2, Plus, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { UserGroupDialog } from "./UserGroupDialog";
 import { DeleteUserGroupDialog } from "./DeleteUserGroupDialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import { toast } from "sonner";
 import { UserTypeChips } from "./UserTypeChips";
+import { TableRowNumber } from "@/components/ui/TableRowNumber";
+import { PaginationComponent } from "@/components/ui/PaginationComponent";
+
+type SortDirection = "asc" | "desc" | null;
+type SortField = "group_name" | "description" | null;
 
 export const UserGroupList = () => {
   const queryClient = useQueryClient();
@@ -25,6 +30,10 @@ export const UserGroupList = () => {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<UserGroup | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sortField, setSortField] = useState<SortField>(null);
+  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+  const pageSize = 20;
 
   const { data: userGroups = [], isLoading } = useQuery({
     queryKey: ["user-groups"],
@@ -43,6 +52,39 @@ export const UserGroupList = () => {
     },
   });
 
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      if (sortDirection === "asc") {
+        setSortDirection("desc");
+      } else if (sortDirection === "desc") {
+        setSortField(null);
+        setSortDirection(null);
+      }
+    } else {
+      setSortField(field);
+      setSortDirection("asc");
+    }
+  };
+
+  const sortedUserGroups = () => {
+    if (!sortField || !sortDirection) return userGroups;
+    
+    return [...userGroups].sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
+      
+      const compareResult = String(aValue || "").localeCompare(String(bValue || ""));
+      return sortDirection === "asc" ? compareResult : -compareResult;
+    });
+  };
+
+  const renderSortIcon = (field: SortField) => {
+    if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    return sortDirection === "asc" ? 
+      <ArrowUp className="ml-2 h-4 w-4" /> : 
+      <ArrowDown className="ml-2 h-4 w-4" />;
+  };
+
   const handleEdit = (group: UserGroup) => {
     setSelectedGroup(group);
     setIsEditDialogOpen(true);
@@ -52,6 +94,10 @@ export const UserGroupList = () => {
     setSelectedGroup(group);
     setIsDeleteDialogOpen(true);
   };
+
+  const sorted = sortedUserGroups();
+  const totalPages = Math.ceil(sorted.length / pageSize);
+  const paginatedGroups = sorted.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
   if (isLoading) {
     return <div className="py-4">Loading user groups...</div>;
@@ -83,15 +129,33 @@ export const UserGroupList = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Group Name</TableHead>
-                <TableHead>Description</TableHead>
+                <TableHead className="w-[60px] text-center">No.</TableHead>
+                <TableHead>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleSort("group_name")}
+                    className="p-0 hover:bg-transparent font-medium flex items-center"
+                  >
+                    Group Name{renderSortIcon("group_name")}
+                  </Button>
+                </TableHead>
+                <TableHead>
+                  <Button 
+                    variant="ghost" 
+                    onClick={() => handleSort("description")}
+                    className="p-0 hover:bg-transparent font-medium flex items-center"
+                  >
+                    Description{renderSortIcon("description")}
+                  </Button>
+                </TableHead>
                 <TableHead>User Types</TableHead>
                 <TableHead className="w-[120px]">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {userGroups.map((group) => (
+              {paginatedGroups.map((group, index) => (
                 <TableRow key={group.id}>
+                  <TableRowNumber index={(currentPage - 1) * pageSize + index} />
                   <TableCell className="font-medium">{group.group_name}</TableCell>
                   <TableCell>{group.description || "—"}</TableCell>
                   <TableCell>
@@ -119,6 +183,17 @@ export const UserGroupList = () => {
               ))}
             </TableBody>
           </Table>
+
+          {userGroups.length > pageSize && (
+            <div className="p-4 border-t">
+              <PaginationComponent
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+                totalItems={userGroups.length}
+              />
+            </div>
+          )}
         </div>
       )}
 

@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import {
@@ -12,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckSquare, XSquare } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
+import { TableRowNumber } from "@/components/ui/TableRowNumber";
 
 export function ClaimList() {
   const { toast } = useToast();
@@ -82,6 +84,7 @@ export function ClaimList() {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead className="w-[60px] text-center">No.</TableHead>
             <TableHead>Claim Number</TableHead>
             <TableHead>Type</TableHead>
             <TableHead>Title</TableHead>
@@ -91,8 +94,9 @@ export function ClaimList() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {claims?.map((claim) => (
+          {claims?.map((claim, index) => (
             <TableRow key={claim.id}>
+              <TableRowNumber index={index} />
               <TableCell>{claim.claim_number}</TableCell>
               <TableCell className="capitalize">{claim.claim_type}</TableCell>
               <TableCell>{claim.title}</TableCell>

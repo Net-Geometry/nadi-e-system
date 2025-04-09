@@ -1,3 +1,4 @@
+
 import { Link, useLocation } from "react-router-dom";
 import {
   Accordion,
@@ -70,7 +71,6 @@ export const SidebarAccordion = ({ label, items }: SidebarAccordionProps) => {
                 key={item.title}
                 title={item.title}
                 path={item.path}
-                icon={item.icon}
                 isCollapsed={false}
                 iconColor={iconColor}
               />
@@ -138,7 +138,6 @@ export const SidebarAccordion = ({ label, items }: SidebarAccordionProps) => {
                 key={item.title}
                 title={item.title}
                 path={item.path}
-                icon={item.icon}
                 isCollapsed={false}
                 iconColor={iconColor}
               />

@@ -683,7 +683,7 @@ export type Database = {
           date_install?: string | null
           date_waranty_supplier?: string | null
           date_waranty_tp?: string | null
-          id: number
+          id?: number
           is_active?: boolean | null
           location_id?: number | null
           name?: string | null
@@ -725,6 +725,13 @@ export type Database = {
             columns: ["type_id"]
             isOneToOne: false
             referencedRelation: "nd_asset_type"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_site"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "nd_site"
             referencedColumns: ["id"]
           },
         ]
@@ -2842,6 +2849,7 @@ export type Database = {
           name: string | null
           price: number | null
           quantity: number | null
+          site_id: number | null
           type_id: number | null
           updated_at: string | null
           updated_by: string | null
@@ -2855,6 +2863,7 @@ export type Database = {
           name?: string | null
           price?: number | null
           quantity?: number | null
+          site_id?: number | null
           type_id?: number | null
           updated_at?: string | null
           updated_by?: string | null
@@ -2868,11 +2877,27 @@ export type Database = {
           name?: string | null
           price?: number | null
           quantity?: number | null
+          site_id?: number | null
           type_id?: number | null
           updated_at?: string | null
           updated_by?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fk_nd_inventory_site"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "nd_site"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_nd_inventory_type"
+            columns: ["type_id"]
+            isOneToOne: false
+            referencedRelation: "nd_inventory_type"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       nd_inventory_attachment: {
         Row: {
@@ -2916,7 +2941,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           created_by?: string | null
-          id: number
+          id?: number
           name?: string | null
           updated_at?: string | null
           updated_by?: string | null
@@ -9215,11 +9240,7 @@ export type Database = {
     }
     Functions: {
       create_notification_from_template: {
-        Args: {
-          p_template_id: string
-          p_user_id: string
-          p_params: Json
-        }
+        Args: { p_template_id: string; p_user_id: string; p_params: Json }
         Returns: {
           created_at: string
           id: string
@@ -9267,9 +9288,7 @@ export type Database = {
         Returns: string
       }
       user_has_role: {
-        Args: {
-          required_roles: string[]
-        }
+        Args: { required_roles: string[] }
         Returns: boolean
       }
     }
@@ -9338,27 +9357,29 @@ export type Database = {
   }
 }
 
-type PublicSchema = Database[Extract<keyof Database, "public">]
+type DefaultSchema = Database[Extract<keyof Database, "public">]
 
 export type Tables<
-  PublicTableNameOrOptions extends
-    | keyof (PublicSchema["Tables"] & PublicSchema["Views"])
+  DefaultSchemaTableNameOrOptions extends
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-        Database[PublicTableNameOrOptions["schema"]]["Views"])
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? (Database[PublicTableNameOrOptions["schema"]]["Tables"] &
-      Database[PublicTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? (Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      Database[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : PublicTableNameOrOptions extends keyof (PublicSchema["Tables"] &
-        PublicSchema["Views"])
-    ? (PublicSchema["Tables"] &
-        PublicSchema["Views"])[PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -9366,20 +9387,22 @@ export type Tables<
     : never
 
 export type TablesInsert<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -9387,20 +9410,22 @@ export type TablesInsert<
     : never
 
 export type TablesUpdate<
-  PublicTableNameOrOptions extends
-    | keyof PublicSchema["Tables"]
+  DefaultSchemaTableNameOrOptions extends
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof Database },
-  TableName extends PublicTableNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicTableNameOrOptions["schema"]]["Tables"]
+  TableName extends DefaultSchemaTableNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
-> = PublicTableNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+> = DefaultSchemaTableNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : PublicTableNameOrOptions extends keyof PublicSchema["Tables"]
-    ? PublicSchema["Tables"][PublicTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -9408,21 +9433,23 @@ export type TablesUpdate<
     : never
 
 export type Enums<
-  PublicEnumNameOrOptions extends
-    | keyof PublicSchema["Enums"]
+  DefaultSchemaEnumNameOrOptions extends
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof Database },
-  EnumName extends PublicEnumNameOrOptions extends { schema: keyof Database }
-    ? keyof Database[PublicEnumNameOrOptions["schema"]]["Enums"]
+  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+    schema: keyof Database
+  }
+    ? keyof Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
-> = PublicEnumNameOrOptions extends { schema: keyof Database }
-  ? Database[PublicEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : PublicEnumNameOrOptions extends keyof PublicSchema["Enums"]
-    ? PublicSchema["Enums"][PublicEnumNameOrOptions]
+> = DefaultSchemaEnumNameOrOptions extends { schema: keyof Database }
+  ? Database[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof PublicSchema["CompositeTypes"]
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof Database },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof Database
@@ -9431,6 +9458,74 @@ export type CompositeTypes<
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends { schema: keyof Database }
   ? Database[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof PublicSchema["CompositeTypes"]
-    ? PublicSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
+
+export const Constants = {
+  public: {
+    Enums: {
+      asset_category: [
+        "equipment",
+        "furniture",
+        "vehicle",
+        "electronics",
+        "software",
+        "other",
+      ],
+      asset_status: ["active", "in_maintenance", "retired", "disposed"],
+      claim_status: ["pending", "approved", "rejected"],
+      claim_type: ["damage", "reimbursement", "medical", "travel", "other"],
+      email_provider_type: ["smtp", "resend", "sendgrid"],
+      invoice_status: ["draft", "sent", "paid", "overdue", "cancelled"],
+      notification_channel: ["in_app", "email", "sms"],
+      notification_type: ["info", "warning", "success", "error"],
+      organization_type: ["dusp", "tp"],
+      priority_level: ["low", "medium", "high", "urgent"],
+      programme_status: ["draft", "active", "completed", "cancelled"],
+      session_event_type: [
+        "login",
+        "logout",
+        "session_expired",
+        "session_refreshed",
+        "inactivity_timeout",
+      ],
+      session_type: ["login", "system_access", "feature_usage", "api_call"],
+      task_status: [
+        "pending",
+        "in_progress",
+        "completed",
+        "blocked",
+        "cancelled",
+      ],
+      transaction_type: ["income", "expense", "transfer"],
+      user_type: [
+        "member",
+        "vendor",
+        "tp_management",
+        "sso",
+        "dusp_admin",
+        "super_admin",
+        "tp_region",
+        "tp_hr",
+        "tp_finance",
+        "tp_admin",
+        "tp_operation",
+        "mcmc_admin",
+        "mcmc_operation",
+        "mcmc_management",
+        "sso_admin",
+        "sso_pillar",
+        "sso_management",
+        "sso_operation",
+        "dusp_management",
+        "dusp_operation",
+        "staff_assistant_manager",
+        "staff_manager",
+        "vendor_admin",
+        "vendor_staff",
+      ],
+      workflow_status: ["draft", "active", "completed", "cancelled"],
+    },
+  },
+} as const
