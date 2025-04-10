@@ -10,22 +10,20 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Eye, EyeOff, Search, Settings, Trash2 } from "lucide-react";
+import { Search } from "lucide-react";
 import { useState } from "react";
 
-import { useAssets } from "@/hooks/use-assets";
-import { Asset } from "@/types/asset";
-import { AssetDetailsDialog } from "./AssetDetailsDialog";
-import { AssetFormDialog } from "./AssetFormDialog";
+import { useInventories } from "@/hooks/use-inventories";
+import { Inventory } from "@/types/inventory";
+import { InventoryDetailsDialog } from "./InventoryDetailsDialog";
 
-export const AssetList = () => {
+export const InventoryDetailsList = () => {
   const [isViewDetailsDialogOpen, setIsViewDetailsDialogOpen] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<Asset | null>(null);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<Inventory | null>(null);
 
-  const { useAssetsQuery, useAssetTypesQuery } = useAssets();
+  const { useInventoriesQuery, useInventoryTypesQuery } = useInventories();
 
-  const { data: assets, isLoading, error } = useAssetsQuery();
+  const { data: inventories, isLoading, error } = useInventoriesQuery();
 
   const [filter, setFilter] = useState("");
   const [typeFilter, setTypeFilter] = useState<number | string>("");
@@ -33,15 +31,15 @@ export const AssetList = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
-  const { data: assetTypes = [], isLoading: isLoadingAssetType } =
-    useAssetTypesQuery();
+  const { data: inventoryTypes = [], isLoading: isLoadingInventoryType } =
+    useInventoryTypesQuery();
 
   if (error) {
-    console.error("Error fetching assets:", error);
-    return <div>Error fetching assets</div>;
+    console.error("Error fetching inventories:", error);
+    return <div>Error fetching inventories</div>;
   }
 
-  if (isLoading || isLoadingAssetType) {
+  if (isLoading || isLoadingInventoryType) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-10 w-full" />
@@ -50,25 +48,31 @@ export const AssetList = () => {
       </div>
     );
   }
+  const filteredInventories = (inventories ?? [])
+    .filter((inventory) =>
+      inventory.name.toLowerCase().includes(filter.toLowerCase())
+    )
+    .filter((inventory) =>
+      typeFilter ? inventory.type.id === typeFilter : true
+    );
 
-  const filteredAssets = (assets ?? [])
-    .filter((asset) => asset.name.toLowerCase().includes(filter.toLowerCase()))
-    .filter((asset) => (typeFilter ? asset.type.id === typeFilter : true));
-
-  const paginatedSites = filteredAssets.slice(
+  const paginatedSites = filteredInventories.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const totalPages = Math.ceil(filteredAssets.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredInventories.length / itemsPerPage);
   const startItem = (currentPage - 1) * itemsPerPage + 1;
-  const endItem = Math.min(currentPage * itemsPerPage, filteredAssets.length);
+  const endItem = Math.min(
+    currentPage * itemsPerPage,
+    filteredInventories.length
+  );
 
   return (
     <div className="space-y-4">
       <div className="relative mb-4 flex space-x-4">
         <Input
-          placeholder="Search asset.."
+          placeholder="Search inventory.."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="pl-10"
@@ -77,13 +81,11 @@ export const AssetList = () => {
         <div className="relative">
           <select
             value={typeFilter}
-            onChange={(e) =>
-              setTypeFilter(e.target.value ? Number(e.target.value) : "")
-            }
+            onChange={(e) => setTypeFilter(e.target.value)}
             className="h-10 rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
           >
             <option value="">All</option>
-            {assetTypes.map((type) => (
+            {inventoryTypes.map((type) => (
               <option key={type.id} value={type.id}>
                 {type.name}
               </option>
@@ -155,69 +157,41 @@ export const AssetList = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginatedSites &&
-                paginatedSites.map((asset, index) => {
-                  const requestDate = asset.created_at
-                    ? asset.created_at.split("T")[0]
-                    : "";
+              {paginatedSites.map((inventory, index) => {
+                const requestDate = inventory.created_at
+                  ? inventory.created_at.split("T")[0]
+                  : "";
 
-                  return (
-                    <TableRow key={asset.id}>
-                      <TableCell>
-                        {(currentPage - 1) * itemsPerPage + index + 1}
-                      </TableCell>
-                      <TableCell>{asset?.name || ""}</TableCell>
-                      <TableCell>{asset?.type.name || ""}</TableCell>
-                      <TableCell>{asset?.qty_unit || ""}</TableCell>
-                      <TableCell>{asset?.site.sitename || ""}</TableCell>
-                      <TableCell>{requestDate || ""}</TableCell>
-                      <TableCell>
-                        {asset?.is_active ? "Active" : "Inactive"}
-                      </TableCell>
-                      <TableCell>
+                return (
+                  <TableRow key={inventory.id}>
+                    <TableCell>
+                      {(currentPage - 1) * itemsPerPage + index + 1}
+                    </TableCell>
+                    <TableCell>{inventory?.name || ""}</TableCell>
+                    <TableCell>{inventory?.type.name || ""}</TableCell>
+                    <TableCell>{inventory?.quantity || ""}</TableCell>
+                    <TableCell>{inventory?.site.sitename || ""}</TableCell>
+                    <TableCell>{requestDate || ""}</TableCell>
+                    <TableCell>{"Status"}</TableCell>
+                    <TableCell>
+                      <div className="flex space-x-2">
                         <Button
                           variant="outline"
-                          size="icon"
-                          onClick={() => {}}
-                        >
-                          {asset.is_active ? (
-                            <Eye className="h-4 w-4" />
-                          ) : (
-                            <EyeOff className="h-4 w-4" />
-                          )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => {
-                            setIsEditDialogOpen(true);
-                            setSelectedItem(asset);
-                          }}
-                        >
-                          <Settings className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="text-destructive"
-                          onClick={() => {}}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="icon"
                           onClick={() => {
                             setIsViewDetailsDialogOpen(true);
-                            setSelectedItem(asset);
+                            setSelectedItem(inventory);
                           }}
                         >
-                          <Search className="h-4 w-4" />
+                          View Detail
                         </Button>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                        <Button variant="default" onClick={() => {}}>
+                          Generate Report
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
             </TableBody>
           </Table>
         )}
@@ -229,22 +203,15 @@ export const AssetList = () => {
           onPageChange={setCurrentPage}
           startItem={startItem}
           endItem={endItem}
-          totalItems={filteredAssets.length}
+          totalItems={filteredInventories.length}
         />
       )}
 
-      <AssetDetailsDialog
+      <InventoryDetailsDialog
         open={isViewDetailsDialogOpen}
         onOpenChange={setIsViewDetailsDialogOpen}
-        asset={selectedItem}
+        inventory={selectedItem}
       />
-      {isEditDialogOpen && (
-        <AssetFormDialog
-          open={isEditDialogOpen}
-          onOpenChange={setIsEditDialogOpen}
-          asset={selectedItem}
-        />
-      )}
     </div>
   );
 };

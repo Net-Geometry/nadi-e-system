@@ -1,14 +1,16 @@
+import { AssetStatsCard } from "@/components/dashboard/asset/AssetStatsCard";
+import { InventoryFormDialog } from "@/components/inventory/InventoryFormDialog";
+import { InventoryList } from "@/components/inventory/InventoryList";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Box, Package, Settings, DollarSign, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import { AssetList } from "@/components/assets/AssetList";
-import { useState } from "react";
-import { AssetFormDialog } from "@/components/assets/AssetFormDialog";
+import { AssetStatsCardProps } from "@/types/asset";
+import { useQuery } from "@tanstack/react-query";
+import { Plus } from "lucide-react";
 
-const InventoryDashboard = () => {
+import { useState } from "react";
+
+const AssetDashboard = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const {
@@ -44,77 +46,55 @@ const InventoryDashboard = () => {
     },
   });
 
+  const items: AssetStatsCardProps[] = [
+    {
+      title: "Total Assets",
+      value: isLoading ? "Loading..." : assetStats?.total.toString() || "0",
+      description: "Inventory registered",
+    },
+    {
+      title: "Active Assets",
+      value: isLoading ? "Loading..." : assetStats?.active.toString() || "0",
+      color: "green-600",
+      description: "Currently in use",
+    },
+    {
+      title: "Under Maintenance",
+      value: isLoading
+        ? "Loading..."
+        : assetStats?.maintenance.toString() || "0",
+      color: "red-600",
+      description: "Being serviced",
+    },
+  ];
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <div>
             <h1 className="text-3xl font-bold">Inventory Management</h1>
-            <p className="text-muted-foreground mt-2">
-              Track and manage company inventory, and maintenance
-            </p>
           </div>
           <Button onClick={() => setIsDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
-            Add Asset
+            Add New Inventory
           </Button>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Total Assets
-              </CardTitle>
-              <Box className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{assetStats.total}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Active Assets
-              </CardTitle>
-              <Package className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{assetStats.active}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                In Maintenance
-              </CardTitle>
-              <Settings className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{assetStats.maintenance}</div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Value</CardTitle>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                ${assetStats.value.toLocaleString()}
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {items.map((item) => (
+            <AssetStatsCard key={item.title} {...item} />
+          ))}
         </div>
 
-        <AssetList />
-        <AssetFormDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
+        <InventoryList />
+        <InventoryFormDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+        />
       </div>
     </DashboardLayout>
   );
 };
 
-export default InventoryDashboard;
+export default AssetDashboard;
