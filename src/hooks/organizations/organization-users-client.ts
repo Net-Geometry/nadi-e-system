@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 import { OrganizationUser, OrganizationUserFormData } from "@/types/organization";
 import { UserType } from "@/types/auth";
@@ -39,7 +40,7 @@ export const organizationUsersClient = {
       .select("id")
       .eq("organization_id", formData.organization_id)
       .eq("user_id", formData.user_id)
-      .single();
+      .maybeSingle();
     
     if (existingData) {
       console.log("User already exists in organization, updating role instead");

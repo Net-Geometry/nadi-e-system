@@ -1,3 +1,4 @@
+
 import { supabase } from "@/lib/supabase";
 
 export const fetchOrganizationDetails = async (
@@ -8,10 +9,14 @@ export const fetchOrganizationDetails = async (
   let organizationId = profile?.organization_id || null;
   console.log("Fetching organization details for user:", userId);
   console.log("User profile:", profile);
-  // If user is tp_admin or has an organization_id, fetch organization details
+  
+  // Check if user group is one of the allowed values: 1, 2, 5, 6, 7
   if (
-    (profile?.nd_user_group?.group_name === "DUSP" ||
-      profile?.nd_user_group?.group_name === "TP") &&
+    (profile?.user_group === 1 ||
+     profile?.user_group === 2 ||
+     profile?.user_group === 5 ||
+     profile?.user_group === 6 ||
+     profile?.user_group === 7) &&
     profile
   ) {
     console.log(
@@ -28,6 +33,7 @@ export const fetchOrganizationDetails = async (
 
     if (!orgAdminError && orgAdminData?.organization_id) {
       organizationId = orgAdminData.organization_id;
+      console.log("Found organization ID:", organizationId);
 
       // Update profile with organization_id if found
       const { error: updateError } = await supabase
@@ -41,6 +47,8 @@ export const fetchOrganizationDetails = async (
           updateError
         );
       }
+    } else if (orgAdminError) {
+      console.error("Error fetching organization user data:", orgAdminError);
     }
 
     // Fetch organization name if we have an organization_id
@@ -49,15 +57,19 @@ export const fetchOrganizationDetails = async (
         .from("organizations")
         .select("name")
         .eq("id", organizationId)
-        .single();
+        .maybeSingle();
 
       if (!orgError && orgData) {
         organizationName = orgData.name;
+        console.log("Found organization name:", organizationName);
       } else if (orgError) {
         console.error("Error fetching organization:", orgError);
       }
     }
+  } else {
+    console.log("User not in allowed groups or profile missing");
   }
 
+  console.log("Returning organization details:", { organizationId, organizationName });
   return { organizationId, organizationName };
 };

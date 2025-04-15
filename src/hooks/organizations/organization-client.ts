@@ -27,7 +27,7 @@ export const organizationClient = {
       .from("organizations")
       .select("*")
       .eq("id", id)
-      .single();
+      .maybeSingle();
 
     if (error) throw error;
     return data as Organization;
