@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { UserType } from "@/types/auth";
 
@@ -13,11 +12,12 @@ export const useUserTypes = () => {
     "sso",
     "dusp_admin",
     "super_admin",
-    "tp_region",
+    "tp_pic",
     "tp_hr",
     "tp_finance",
     "tp_admin",
     "tp_operation",
+    "tp_site",
     "mcmc_admin",
     "mcmc_operation",
     "mcmc_management",
@@ -30,12 +30,12 @@ export const useUserTypes = () => {
     "staff_assistant_manager",
     "staff_manager",
     "vendor_admin",
-    "vendor_staff"
+    "vendor_staff",
   ];
 
   return {
     userTypes,
     isLoading: false,
-    error: null
+    error: null,
   };
 };
