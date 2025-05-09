@@ -17,6 +17,12 @@ export type Database = {
           viewed_at: string | null;
         };
         Insert: {
+          created_at?: string;
+          id?: string;
+          key: string;
+          updated_at?: string;
+          value: string;
+        };
           announcement_id?: string | null;
           id?: string;
           user_id?: string | null;
@@ -911,6 +917,16 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          created_at?: string | null;
+          created_by?: string | null;
+          id?: number;
+          name?: string | null;
+          type_id?: number | null;
+          updated_at?: string | null;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
           asset_type_id?: number | null;
           created_at?: string | null;
           created_by?: string | null;
@@ -4052,70 +4068,47 @@ export type Database = {
       };
       nd_maintenance_request: {
         Row: {
+          id: number;
+          no_docket: string | null;
           asset_id: number | null;
+          description: string | null;
+          type_id?: number | null;
+          requester_by: string | null;
           attachment: string | null;
+          sla_id: number | null;
+          status?: Database["public"]["Enums"]["maintenance_status"] | null;
           created_at: string | null;
           created_by: string | null;
-          description: string | null;
-          id: number;
-          requester_by: string | null;
-          sla_id: number | null;
-          status: Database["public"]["Enums"]["maintenance_status"] | null;
-          type_id: number | null;
           updated_at: string | null;
           updated_by: string | null;
         };
         Insert: {
+          no_docket: string | null;
           asset_id?: number | null;
+          description?: string | null;
+          type_id?: number | null;
+          requester_by?: string | null;
+          status?: string | null;
           attachment?: string | null;
           created_at?: string | null;
           created_by?: string | null;
-          description?: string | null;
-          id?: number;
-          requester_by?: string | null;
-          sla_id?: number | null;
-          status?: Database["public"]["Enums"]["maintenance_status"] | null;
-          type_id?: number | null;
           updated_at?: string | null;
           updated_by?: string | null;
         };
         Update: {
+          id?: number;
           asset_id?: number | null;
+          description?: string | null;
+          requester_by?: string | null;
+          status?: Database["public"]["Enums"]["maintenance_status"] | null;
           attachment?: string | null;
+          sla_id?: number | null;
           created_at?: string | null;
           created_by?: string | null;
-          description?: string | null;
-          id?: number;
-          requester_by?: string | null;
-          sla_id?: number | null;
-          status?: Database["public"]["Enums"]["maintenance_status"] | null;
-          type_id?: number | null;
           updated_at?: string | null;
           updated_by?: string | null;
         };
-        Relationships: [
-          {
-            foreignKeyName: "nd_maintenance_request_asset_id_fkey";
-            columns: ["asset_id"];
-            isOneToOne: false;
-            referencedRelation: "nd_asset";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "nd_maintenance_request_sla_id_fkey";
-            columns: ["sla_id"];
-            isOneToOne: false;
-            referencedRelation: "nd_sla_categories";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "nd_maintenance_request_type_id_fkey";
-            columns: ["type_id"];
-            isOneToOne: false;
-            referencedRelation: "nd_type_maintenance";
-            referencedColumns: ["id"];
-          }
-        ];
+        Relationships: [];
       };
       nd_marital_status: {
         Row: {
@@ -4286,6 +4279,21 @@ export type Database = {
           updated_at?: string | null;
           updated_by?: string | null;
         };
+        Relationships: [];
+      };
+          address1?: string | null;
+          address2?: string | null;
+          city?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          district_id?: number | null;
+          id?: number;
+          member_id?: number | null;
+          postcode?: string | null;
+          state_id?: number | null;
+          updated_at?: string | null;
+          updated_by?: string | null;
+        };
         Relationships: [
           {
             foreignKeyName: "nd_member_address_district_id_fkey";
@@ -4381,6 +4389,19 @@ export type Database = {
       };
       nd_member_photo: {
         Row: {
+          created_at: string;
+          created_by: string | null;
+          ext: string | null;
+          id: number;
+          is_active: boolean | null;
+          member_id: number | null;
+          photo: string | null;
+          photo_thumb: string | null;
+          size: string | null;
+          updated_at: string;
+          updated_by: string | null;
+          user_id: string | null;
+        };
           created_at: string | null;
           created_by: string | null;
           ext: string | null;
@@ -4395,6 +4416,19 @@ export type Database = {
           user_id: string | null;
         };
         Insert: {
+          created_at: string;
+          created_by?: string | null;
+          ext?: string | null;
+          id?: number;
+          is_active?: boolean | null;
+          member_id?: number | null;
+          photo?: string | null;
+          photo_thumb?: string | null;
+          size?: string | null;
+          updated_at: string;
+          updated_by?: string | null;
+          user_id?: string | null;
+        };
           created_at?: string | null;
           created_by?: string | null;
           ext?: string | null;
@@ -4409,6 +4443,19 @@ export type Database = {
           user_id?: string | null;
         };
         Update: {
+          created_at?: string;
+          created_by?: string | null;
+          ext?: string | null;
+          id?: number;
+          is_active?: boolean | null;
+          member_id?: number | null;
+          photo?: string | null;
+          photo_thumb?: string | null;
+          size?: string | null;
+          updated_at?: string;
+          updated_by?: string | null;
+          user_id?: string | null;
+        };
           created_at?: string | null;
           created_by?: string | null;
           ext?: string | null;
@@ -4426,6 +4473,11 @@ export type Database = {
           {
             foreignKeyName: "nd_member_photo_member_id_fkey";
             columns: ["member_id"];
+            isOneToOne: false;
+            referencedRelation: "nd_member_profile";
+            referencedColumns: ["id"];
+            foreignKeyName: "nd_member_photo_member_id_fkey";
+            columns: ["member_id"];
             isOneToOne: true;
             referencedRelation: "nd_member_profile";
             referencedColumns: ["id"];
@@ -4441,6 +4493,41 @@ export type Database = {
       };
       nd_member_profile: {
         Row: {
+          age: number | null;
+          agree_declare: boolean | null;
+          community_status: boolean;
+          created_at: string | null;
+          created_by: string | null;
+          distance: number | null;
+          dob: string | null;
+          education_level: number | null;
+          email: string | null;
+          ethnic_id: number | null;
+          fullname: string | null;
+          gender: number;
+          ict_knowledge: number | null;
+          id: number;
+          identity_no: string | null;
+          income_range: number | null;
+          join_date: string | null;
+          mobile_no: string | null;
+          occupation_id: number | null;
+          oku_status: boolean | null;
+          pdpa_declare: boolean | null;
+          race_id: number | null;
+          ref_id: number;
+          register_method: string | null;
+          registration_status: boolean | null;
+          socio_id: number | null;
+          status_entrepreneur: boolean | null;
+          status_membership: number | null;
+          supervision: string | null;
+          type_membership: number;
+          type_sector: number | null;
+          updated_at: string | null;
+          updated_by: string | null;
+          user_id: string | null;
+        };
           age: number | null;
           agree_declare: boolean | null;
           community_status: boolean | null;
@@ -4479,6 +4566,41 @@ export type Database = {
         Insert: {
           age?: number | null;
           agree_declare?: boolean | null;
+          community_status: boolean;
+          created_at?: string | null;
+          created_by?: string | null;
+          distance?: number | null;
+          dob?: string | null;
+          education_level?: number | null;
+          email?: string | null;
+          ethnic_id?: number | null;
+          fullname?: string | null;
+          gender: number;
+          ict_knowledge?: number | null;
+          id?: number;
+          identity_no?: string | null;
+          income_range?: number | null;
+          join_date?: string | null;
+          mobile_no?: string | null;
+          occupation_id?: number | null;
+          oku_status?: boolean | null;
+          pdpa_declare?: boolean | null;
+          race_id?: number | null;
+          ref_id: number;
+          register_method?: string | null;
+          registration_status?: boolean | null;
+          socio_id?: number | null;
+          status_entrepreneur?: boolean | null;
+          status_membership?: number | null;
+          supervision?: string | null;
+          type_membership: number;
+          type_sector?: number | null;
+          updated_at?: string | null;
+          updated_by?: string | null;
+          user_id?: string | null;
+        };
+          age?: number | null;
+          agree_declare?: boolean | null;
           community_status?: boolean | null;
           created_at?: string | null;
           created_by?: string | null;
@@ -4513,6 +4635,41 @@ export type Database = {
           user_id?: string | null;
         };
         Update: {
+          age?: number | null;
+          agree_declare?: boolean | null;
+          community_status?: boolean;
+          created_at?: string | null;
+          created_by?: string | null;
+          distance?: number | null;
+          dob?: string | null;
+          education_level?: number | null;
+          email?: string | null;
+          ethnic_id?: number | null;
+          fullname?: string | null;
+          gender?: number;
+          ict_knowledge?: number | null;
+          id?: number;
+          identity_no?: string | null;
+          income_range?: number | null;
+          join_date?: string | null;
+          mobile_no?: string | null;
+          occupation_id?: number | null;
+          oku_status?: boolean | null;
+          pdpa_declare?: boolean | null;
+          race_id?: number | null;
+          ref_id?: number;
+          register_method?: string | null;
+          registration_status?: boolean | null;
+          socio_id?: number | null;
+          status_entrepreneur?: boolean | null;
+          status_membership?: number | null;
+          supervision?: string | null;
+          type_membership?: number;
+          type_sector?: number | null;
+          updated_at?: string | null;
+          updated_by?: string | null;
+          user_id?: string | null;
+        };
           age?: number | null;
           agree_declare?: boolean | null;
           community_status?: boolean | null;
@@ -4585,6 +4742,11 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "nd_member_profile_occupation_id_fkey";
+            columns: ["occupation_id"];
+            isOneToOne: false;
+            referencedRelation: "nd_occupation";
+            referencedColumns: ["id"];
             foreignKeyName: "nd_member_profile_nationality_id_fkey";
             columns: ["nationality_id"];
             isOneToOne: false;
@@ -4613,6 +4775,11 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "nd_member_profile_socio_id_fkey";
+            columns: ["socio_id"];
+            isOneToOne: false;
+            referencedRelation: "nd_socioeconomics";
+            referencedColumns: ["id"];
             foreignKeyName: "nd_member_profile_ref_id_fkey";
             columns: ["ref_id"];
             isOneToOne: false;
@@ -4627,6 +4794,14 @@ export type Database = {
             referencedColumns: ["id"];
           },
           {
+            foreignKeyName: "nd_member_profile_type_sector_fkey";
+            columns: ["type_sector"];
+            isOneToOne: false;
+            referencedRelation: "nd_type_sector";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
             foreignKeyName: "nd_member_profile_status_membership_fkey";
             columns: ["status_membership"];
             isOneToOne: false;
@@ -4795,6 +4970,16 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          bm?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          eng?: string | null;
+          id?: never;
+          updated_at?: string | null;
+          updated_by?: string | null;
+        };
+        Relationships: [];
+      };
           bm?: string | null;
           created_at?: string | null;
           created_by?: string | null;
@@ -5784,6 +5969,16 @@ export type Database = {
           created_at: string | null;
           created_by: string | null;
           id: number;
+          refid_mcmc: number | null;
+          refid_tp: number | null;
+          site_profile_id: number | null;
+          standard_code: string | null;
+          updated_at: string | null;
+          updated_by: string | null;
+        };
+          created_at: string | null;
+          created_by: string | null;
+          id: number;
           refid_mcmc: string | null;
           refid_tp: string | null;
           site_profile_id: number | null;
@@ -5995,6 +6190,22 @@ export type Database = {
           updated_by?: string | null;
         };
         Update: {
+          affected_areas_id?: number | null;
+          category_id?: number | null;
+          close_end?: string | null;
+          close_start?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          duration?: number | null;
+          id?: number;
+          remark?: string | null;
+          session?: string | null;
+          site_id?: number | null;
+          status?: number | null;
+          subcategory_id?: number | null;
+          updated_at?: string | null;
+          updated_by?: string | null;
+        };
           affected_areas_id?: number | null;
           category_id?: number | null;
           close_end?: string | null;
@@ -6561,6 +6772,15 @@ export type Database = {
           created_at?: string | null;
           created_by?: string | null;
           description?: string | null;
+          id: number;
+          site_id?: number | null;
+          type_id?: number | null;
+          updated_at?: string | null;
+          updated_by?: string | null;
+        };
+          created_at?: string | null;
+          created_by?: string | null;
+          description?: string | null;
           id?: number;
           site_id?: number | null;
           type_id?: number | null;
@@ -6701,13 +6921,6 @@ export type Database = {
             columns: ["site_id"];
             isOneToOne: false;
             referencedRelation: "nd_site_profile_name";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "nd_site_space_space_id_fkey";
-            columns: ["space_id"];
-            isOneToOne: false;
-            referencedRelation: "nd_space";
             referencedColumns: ["id"];
           },
           {
