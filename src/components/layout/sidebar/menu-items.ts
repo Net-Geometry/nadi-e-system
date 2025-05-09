@@ -73,11 +73,17 @@ export const programmesItems = [
 ];
 
 export const reportItems = [
-  { title: "Reports Dashboard", path: "/report/dashboard" },
-  { title: "Usage Sessions", path: "/report/usage-sessions" },
-  { title: "Internet Access", path: "/report/internet-access" },
-  { title: "Preset Reports", path: "/report/preset-reports" },
-  { title: "Custom Reports", path: "/report/custom-reports" },
+  // { title: "Usage Sessions", path: "/report/usage-sessions" },
+  { title: "Dashboard", path: "/reports" },
+  { title: "Nadi e-System", path: "/reports/nadi-e-system" },
+  { title: "Internet Access", path: "/reports/internet-access" },
+  { title: "Site Management", path: "/reports/site-management" },
+  { title: "HR & Salary", path: "/reports/internet-access" },
+  { title: "Training", path: "/reports/training" },
+  { title: "Comprehensive Maintenance", path: "/reports/cm" },
+  { title: "Smart Services", path: "/reports/internet-access" },
+  // { title: "Preset Reports", path: "/reports/preset-reports" },
+  // { title: "Custom Reports", path: "/reports/custom-reports" },
 ];
 
 export const workflowItems = [

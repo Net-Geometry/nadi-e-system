@@ -49,6 +49,14 @@ import KPI from "@/pages/dashboard/site/KPI";
 import NMS from "@/pages/dashboard/site/NMS";
 import SiteManagementDashboard from "@/pages/dashboard/main-dashboard/SiteManagementDashboard";
 import Billing from "@/pages/dashboard/site/Billing";
+import ReportDashboard from "@/pages/report/ReportDashboard";
+import ReportNadiESystem from "@/pages/report/ReportNadiESystem";
+import ReportInternetAccess from "@/pages/report/ReportInternetAccess";
+import ReportSiteManagement from "@/pages/report/ReportSiteManagement";
+import ReportHRSalary from "@/pages/report/ReportHRSalary";
+import ReportTraining from "@/pages/report/ReportTraining";
+import ReportCM from "@/pages/report/ReportCM";
+import ReportSmartService from "@/pages/report/ReportSmartService";
 
 export const moduleRoutes: RouteObject[] = [
   // HR Routes
@@ -402,22 +410,6 @@ export const moduleRoutes: RouteObject[] = [
     ),
   },
   {
-    path: "/site/booking-management",
-    element: (
-      // <ProtectedRoute requiredPermission="view_site_details">
-      <BookingManagement />
-      // </ProtectedRoute>
-    ),
-  },
-  {
-    path: "/site/booking-management",
-    element: (
-      // <ProtectedRoute requiredPermission="view_site_details">
-      <BookingManagement />
-      // </ProtectedRoute>
-    ),
-  },
-  {
     path: "/docket-status", //For superadmin
     element: (
       // <ProtectedRoute requiredPermission="view_site_details">
@@ -491,12 +483,76 @@ export const moduleRoutes: RouteObject[] = [
       <NADIClosure />
       // </ProtectedRoute>
     ),
-  },
+  }, 
   {
     path: "/dashboard/site-management",
     element: (
       // <ProtectedRoute requiredPermission="view_site_details">
       <SiteManagementDashboard />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports",
+    element: (
+      // <ProtectedRoute requiredPermission="s">
+      <ReportDashboard />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/nadi-e-system",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportNadiESystem />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/internet-access",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportInternetAccess />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/site-management",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportSiteManagement />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/hr-salary",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportHRSalary />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/training",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportTraining />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/cm",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportCM />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/smart-services",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportSmartService />
       // </ProtectedRoute>
     ),
   },
