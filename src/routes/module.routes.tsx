@@ -49,7 +49,6 @@ import Usage from "@/pages/dashboard/site/Usage";
 import KPI from "@/pages/dashboard/site/KPIPerformance";
 import NMS from "@/pages/dashboard/site/NMS";
 import SiteManagementDashboard from "@/pages/dashboard/main-dashboard/SiteManagementDashboard";
-import Billing from "@/pages/dashboard/site/Billing";
 import ReportDashboard from "@/pages/report/ReportDashboard";
 import ReportNadiESystem from "@/pages/report/ReportNadiESystem";
 import ReportInternetAccess from "@/pages/report/ReportInternetAccess";
