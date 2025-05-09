@@ -2,7 +2,7 @@ import { DashboardMap } from "@/components/dashboard/DashboardMap";
 import { useDashboardData } from "@/hooks/use-dashboard-data";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import ChartCard from "@/components/dashboard/ChartCard";
 import UserGrowthChart from "@/components/dashboard/UserGrowthChart";
 import DailyActivityChart from "@/components/dashboard/DailyActivityChart";

@@ -3,7 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import TimeInput from "@/components/ui/TimePicker";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 
@@ -22,30 +22,36 @@ interface SiteOperationHoursProps {
 }
 
 const DAYS_OF_WEEK = [
-  'Monday',
-  'Tuesday',
-  'Wednesday',
-  'Thursday',
-  'Friday',
-  'Saturday',
-  'Sunday'
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
 ];
 
 const DEFAULT_OPEN_TIME = "08:00";
 const DEFAULT_CLOSE_TIME = "18:00";
 
-export const SiteOperationHours = ({ siteId, onOperationTimesChange, initialTimes }: SiteOperationHoursProps) => {
+export const SiteOperationHours = ({
+  siteId,
+  onOperationTimesChange,
+  initialTimes,
+}: SiteOperationHoursProps) => {
   // Initialize with initialTimes if available, but keep a reference to the original initialTimes
-  const [operationTimes, setOperationTimes] = useState<OperationTime[]>(initialTimes || []);
+  const [operationTimes, setOperationTimes] = useState<OperationTime[]>(
+    initialTimes || []
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [hasInitialized, setHasInitialized] = useState(false); // Track initialization state
-  
+
   // Initialize operation hours - either from existing site or empty
   useEffect(() => {
     const initializeOperationTimes = async () => {
       if (hasInitialized) return; // Prevent reinitialization
       setIsLoading(true);
-      
+
       // Set a timeout to prevent infinite loading
       const timeoutId = setTimeout(() => {
         console.log("Operation hours loading timed out");
@@ -53,29 +59,38 @@ export const SiteOperationHours = ({ siteId, onOperationTimesChange, initialTime
         setOperationTimes(initialTimes || []);
         setHasInitialized(true); // Mark as initialized even on timeout
       }, 5000); // 5 second timeout
-      
+
       if (siteId) {
         // If we're editing an existing site, fetch its operation times
         try {
           const { data, error } = await supabase
-            .from('nd_site_operation')
-            .select('*')
-            .eq('site_id', siteId);
-            
+            .from("nd_site_operation")
+            .select("*")
+            .eq("site_id", siteId);
+
           clearTimeout(timeoutId); // Clear timeout on successful response
-            
+
           if (error) throw error;
-          
+
           if (data && data.length > 0) {
             // Map the database data to our OperationTime format
-            const mappedData: OperationTime[] = data.map(item => ({
-              id: item.id,
-              day: item.days_of_week,
-              openTime: item.open_time ? item.open_time.substring(0, 5) : DEFAULT_OPEN_TIME,
-              closeTime: item.close_time ? item.close_time.substring(0, 5) : DEFAULT_CLOSE_TIME,
-              isClosed: item.is_closed || false
-            })).sort((a, b) => DAYS_OF_WEEK.indexOf(a.day) - DAYS_OF_WEEK.indexOf(b.day));
-            
+            const mappedData: OperationTime[] = data
+              .map((item) => ({
+                id: item.id,
+                day: item.days_of_week,
+                openTime: item.open_time
+                  ? item.open_time.substring(0, 5)
+                  : DEFAULT_OPEN_TIME,
+                closeTime: item.close_time
+                  ? item.close_time.substring(0, 5)
+                  : DEFAULT_CLOSE_TIME,
+                isClosed: item.is_closed || false,
+              }))
+              .sort(
+                (a, b) =>
+                  DAYS_OF_WEEK.indexOf(a.day) - DAYS_OF_WEEK.indexOf(b.day)
+              );
+
             setOperationTimes(mappedData);
           } else {
             // No existing operation times, initialize with empty array
@@ -94,11 +109,11 @@ export const SiteOperationHours = ({ siteId, onOperationTimesChange, initialTime
         // New site, initialize with empty array
         setOperationTimes([]);
       }
-      
+
       setIsLoading(false);
       setHasInitialized(true); // Mark as initialized
     };
-    
+
     initializeOperationTimes();
   }, [siteId, initialTimes, hasInitialized]);
 
@@ -119,84 +134,88 @@ export const SiteOperationHours = ({ siteId, onOperationTimesChange, initialTime
       setHasInitialized(false);
     }
   }, [siteId]);
-  
+
   // Notify parent of changes
   useEffect(() => {
     if (onOperationTimesChange) {
       onOperationTimesChange(operationTimes);
     }
   }, [operationTimes, onOperationTimesChange]);
-  
+
   // Create default operation times for all days
   const createDefaultOperationTimes = () => {
-    const defaultTimes: OperationTime[] = DAYS_OF_WEEK.map(day => ({
+    const defaultTimes: OperationTime[] = DAYS_OF_WEEK.map((day) => ({
       day,
       openTime: DEFAULT_OPEN_TIME,
       closeTime: DEFAULT_CLOSE_TIME,
-      isClosed: false
+      isClosed: false,
     }));
-    
+
     setOperationTimes(defaultTimes);
   };
 
   // Add a single day operation time
   const addOperationTime = (day: string) => {
     // Check if day already exists
-    if (operationTimes.some(time => time.day === day)) {
+    if (operationTimes.some((time) => time.day === day)) {
       return;
     }
-    
-    setOperationTimes(prev => [
-      ...prev,
-      {
-        day,
-        openTime: DEFAULT_OPEN_TIME,
-        closeTime: DEFAULT_CLOSE_TIME,
-        isClosed: false
-      }
-    ].sort((a, b) => DAYS_OF_WEEK.indexOf(a.day) - DAYS_OF_WEEK.indexOf(b.day)));
+
+    setOperationTimes((prev) =>
+      [
+        ...prev,
+        {
+          day,
+          openTime: DEFAULT_OPEN_TIME,
+          closeTime: DEFAULT_CLOSE_TIME,
+          isClosed: false,
+        },
+      ].sort(
+        (a, b) => DAYS_OF_WEEK.indexOf(a.day) - DAYS_OF_WEEK.indexOf(b.day)
+      )
+    );
   };
-  
+
   // Remove a single day operation time
   const removeOperationTime = (day: string) => {
-    setOperationTimes(prev => prev.filter(time => time.day !== day));
+    setOperationTimes((prev) => prev.filter((time) => time.day !== day));
   };
-  
+
   // Clear all operation times
   const clearAllOperationTimes = () => {
     setOperationTimes([]);
   };
-  
+
   const handleOpenTimeChange = (day: string, time: string) => {
-    setOperationTimes(prev => 
-      prev.map(item => 
+    setOperationTimes((prev) =>
+      prev.map((item) =>
         item.day === day ? { ...item, openTime: time } : item
       )
     );
   };
-  
+
   const handleCloseTimeChange = (day: string, time: string) => {
-    setOperationTimes(prev => 
-      prev.map(item => 
+    setOperationTimes((prev) =>
+      prev.map((item) =>
         item.day === day ? { ...item, closeTime: time } : item
       )
     );
   };
-  
+
   const handleOpenToggle = (day: string, isOpen: boolean) => {
-    setOperationTimes(prev => 
-      prev.map(item => 
+    setOperationTimes((prev) =>
+      prev.map((item) =>
         item.day === day ? { ...item, isClosed: !isOpen } : item
       )
     );
   };
-  
+
   // Generate available days that aren't already in the operation times
   const getAvailableDays = () => {
-    const usedDays = operationTimes.map(time => time.day);
-    return DAYS_OF_WEEK.filter(day => !usedDays.includes(day));
+    const usedDays = operationTimes.map((time) => time.day);
+    return DAYS_OF_WEEK.filter((day) => !usedDays.includes(day));
   };
-  
+
   if (isLoading) {
     return (
       <Card>
@@ -206,7 +225,9 @@ export const SiteOperationHours = ({ siteId, onOperationTimesChange, initialTime
         <CardContent>
           <div className="flex flex-col items-center justify-center p-8 space-y-4">
             <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
-            <p className="text-sm text-muted-foreground">Loading operation hours...</p>
+            <p className="text-sm text-muted-foreground">
+              Loading operation hours...
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -219,8 +240,8 @@ export const SiteOperationHours = ({ siteId, onOperationTimesChange, initialTime
         <CardTitle>Operation Hours</CardTitle>
         <div className="flex space-x-2">
           {operationTimes.length > 0 ? (
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               size="sm"
               onClick={clearAllOperationTimes}
             >
@@ -228,10 +249,7 @@ export const SiteOperationHours = ({ siteId, onOperationTimesChange, initialTime
               Clear All
             </Button>
           ) : (
-            <Button 
-              onClick={createDefaultOperationTimes}
-              size="sm"
-            >
+            <Button onClick={createDefaultOperationTimes} size="sm">
               <Plus className="h-4 w-4 mr-2" />
               Add All Days
             </Button>
@@ -243,10 +261,10 @@ export const SiteOperationHours = ({ siteId, onOperationTimesChange, initialTime
           <div className="text-center p-6 border border-dashed rounded-md">
             <p className="text-gray-500 mb-4">No operation hours set.</p>
             <div className="flex flex-wrap gap-2 justify-center">
-              {DAYS_OF_WEEK.map(day => (
-                <Button 
-                  key={day} 
-                  variant="outline" 
+              {DAYS_OF_WEEK.map((day) => (
+                <Button
+                  key={day}
+                  variant="outline"
                   size="sm"
                   onClick={() => addOperationTime(day)}
                 >
@@ -259,7 +277,10 @@ export const SiteOperationHours = ({ siteId, onOperationTimesChange, initialTime
           <>
             <div className="grid grid-cols-2 md:grid-cols-7 gap-4">
               {operationTimes.map((item) => (
-                <div key={item.day} className="flex flex-col space-y-2 p-3 border rounded-md relative">
+                <div
+                  key={item.day}
+                  className="flex flex-col space-y-2 p-3 border rounded-md relative"
+                >
                   <div className="flex justify-between items-center">
                     <span className="font-medium">{item.day}</span>
                     <Button
@@ -271,33 +292,51 @@ export const SiteOperationHours = ({ siteId, onOperationTimesChange, initialTime
                       <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
-                  
+
                   <div className="flex items-center justify-between">
-                    <Label htmlFor={`open-switch-${item.day}`} className="text-sm">Open</Label>
+                    <Label
+                      htmlFor={`open-switch-${item.day}`}
+                      className="text-sm"
+                    >
+                      Open
+                    </Label>
                     <Switch
                       id={`open-switch-${item.day}`}
                       checked={!item.isClosed} // Invert the logic - Switch ON means NOT closed
-                      onCheckedChange={(isOpen) => handleOpenToggle(item.day, isOpen)}
+                      onCheckedChange={(isOpen) =>
+                        handleOpenToggle(item.day, isOpen)
+                      }
                     />
                   </div>
-                  
+
                   {!item.isClosed && (
                     <>
                       <div className="space-y-1">
-                        <Label htmlFor={`open-${item.day}`} className="text-sm">Open Time</Label>
+                        <Label htmlFor={`open-${item.day}`} className="text-sm">
+                          Open Time
+                        </Label>
                         <TimeInput
                           id={`open-${item.day}`}
                           value={item.openTime}
-                          onChange={(value) => handleOpenTimeChange(item.day, value)}
+                          onChange={(value) =>
+                            handleOpenTimeChange(item.day, value)
+                          }
                         />
                       </div>
-                      
+
                       <div className="space-y-1">
-                        <Label htmlFor={`close-${item.day}`} className="text-sm">Close Time</Label>
+                        <Label
+                          htmlFor={`close-${item.day}`}
+                          className="text-sm"
+                        >
+                          Close Time
+                        </Label>
                         <TimeInput
                           id={`close-${item.day}`}
                           value={item.closeTime}
-                          onChange={(value) => handleCloseTimeChange(item.day, value)}
+                          onChange={(value) =>
+                            handleCloseTimeChange(item.day, value)
+                          }
                         />
                       </div>
                     </>
@@ -305,15 +344,15 @@ export const SiteOperationHours = ({ siteId, onOperationTimesChange, initialTime
                 </div>
               ))}
             </div>
-            
+
             {getAvailableDays().length > 0 && (
               <div className="mt-4">
                 <div className="text-sm font-medium mb-2">Add more days:</div>
                 <div className="flex flex-wrap gap-2">
-                  {getAvailableDays().map(day => (
-                    <Button 
-                      key={day} 
-                      variant="outline" 
+                  {getAvailableDays().map((day) => (
+                    <Button
+                      key={day}
+                      variant="outline"
                       size="sm"
                       onClick={() => addOperationTime(day)}
                     >

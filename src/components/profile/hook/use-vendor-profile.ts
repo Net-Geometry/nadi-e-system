@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useVendorProfile = () => {
   const fetchVendorProfile = async () => {
@@ -14,9 +14,11 @@ export const useVendorProfile = () => {
     // Fetch the vendor profile data
     const { data: profile, error: profileError } = await supabase
       .from("nd_vendor_staff")
-      .select(`
+      .select(
+        `
       *, position_id (id, name)
-    `)
+    `
+      )
       .eq("user_id", userId)
       .single();
 

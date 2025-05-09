@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const useLastLogin = () => {
   const [lastLogin, setLastLogin] = useState<string | null>(null);
@@ -10,7 +10,9 @@ const useLastLogin = () => {
   useEffect(() => {
     const fetchLastLogin = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
 
         const { data: sessions, error: sessionError } = await supabase

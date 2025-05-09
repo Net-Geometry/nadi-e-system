@@ -91,14 +91,13 @@ export const workflowItems = [
 ];
 
 export const memberManagementItems = [
-  { title: "Member Management", path: "/members" },
-  { title: "Member Profile", path: "/members/details" },
-  { title: "Registration", path: "/members/registration" },
-  { title: "Activity Logs", path: "/members/activity" },
+  { title: "Member Management", path: "/member-management" },
+  { title: "Registration", path: "/member-management/registration" },
+  { title: "Activity Logs", path: "/member-management/activity" },
 ];
 
 export const serviceModuleItems = [
-  { title: "Service Information", path: "/services/info" },
+  { title: "Service Information", path: "/services" },
   { title: "Transactions", path: "/services/transactions" },
 ];
 
@@ -120,16 +119,18 @@ export const complianceItems = [
 
 export const siteManagementItems = [
   { title: "Site Management", path: "/site-management" },
-  { title: "Site Profile", path: "/site" },
-  { title: "Usage", path: "/site/usage" },
-  { title: "Booking Management", path: "/site/booking-management" },
-  { title: "NADI Closure", path: "/site/closure" },
-  { title: "Insurance", path: "/site/insurance" },
-  { title: "Inventory Management", path: "/site/inventory-management" },
-  { title: "Utilities Billing", path: "/site/utilities-billing" },
-  { title: "Vendor Management", path: "/site/vendor-management" },
-  { title: "KPI Performance", path: "/site/kpi" },
-  { title: "NMS", path: "/site/nms" },
+  { title: "Usage", path: "/site-management/usage" },
+  { title: "Booking Management", path: "/site-management/booking-management" },
+  { title: "NADI Closure", path: "/site-management/closure" },
+  { title: "Insurance", path: "/site-management/insurance" },
+  {
+    title: "Inventory Management",
+    path: "/site-management/inventory-management",
+  },
+  { title: "Utilities Billing", path: "/site-management/utilities-billing" },
+  { title: "Vendor Management", path: "/site-management/vendor-management" },
+  { title: "KPI Performance", path: "/site-management/kpi-performance" },
+  { title: "NMS", path: "/site-management/nms" },
 ];
 
 export const dashboardItems = [
@@ -166,22 +167,24 @@ export const dashboardItems = [
 ];
 
 export const nadiDashboardItems = [
-  { title: "NADI Information", path: "/nadi-dashboard-nadi-information" },
-  { title: "Membership", path: "/nadi-dashboard-membership" },
-  { title: "Events", path: "/nadi-dashboard-events" },
-  { title: "Maps", path: "/nadi-dashboard-aps" },
-  { title: "NADI Location", path: "/nadi-dashboard-nadi-location" },
-  { title: "Operation Hour", path: "/nadi-dashboard-operation-hour" },
-  { title: "Service Provider", path: "/nadi-dashboard-service-provider" },
-  { title: "Contact Information", path: "/nadi-dashboard-contact-information" },
-  { title: "Others", path: "/nadi-dashboard-others" },
+  { title: "NADI Dashboard", path: "/nadi-dashboard" },
+  // { title: "NADI Information", path: "/nadi-dashboard-nadi-information" },
+  // { title: "Membership", path: "/nadi-dashboard-membership" },
+  // { title: "Events", path: "/nadi-dashboard-events" },
+  // { title: "Maps", path: "/nadi-dashboard-aps" },
+  // { title: "NADI Location", path: "/nadi-dashboard-nadi-location" },
+  // { title: "Operation Hour", path: "/nadi-dashboard-operation-hour" },
+  // { title: "Service Provider", path: "/nadi-dashboard-service-provider" },
+  // { title: "Contact Information", path: "/nadi-dashboard-contact-information" },
+  // { title: "Others", path: "/nadi-dashboard-others" },
 ];
 
 export const iotDashboardItems = [
-  { title: "Rain Gauge", path: "/iot-dashboard-rain-gauge" },
-  { title: "Temperature", path: "/iot-dashboard-temperature" },
-  { title: "Humidity", path: "/iot-dashboard-humidity" },
-  { title: "Pressure", path: "/iot-dashboard-pressure" },
+  { title: "IOT Dashboard", path: "/iot-dashboard" },
+  // { title: "Rain Gauge", path: "/iot-dashboard-rain-gauge" },
+  // { title: "Temperature", path: "/iot-dashboard-temperature" },
+  // { title: "Humidity", path: "/iot-dashboard-humidity" },
+  // { title: "Pressure", path: "/iot-dashboard-pressure" },
 ];
 
 export const announcementsItems = [

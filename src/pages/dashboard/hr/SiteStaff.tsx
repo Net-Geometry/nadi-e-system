@@ -20,7 +20,7 @@ import { useNavigate } from "react-router-dom";
 import { SiteStaffTable } from "@/components/hr/SiteStaffTable";
 import { StaffToolbar } from "@/components/hr/StaffToolbar";
 import { StaffFilters } from "@/components/hr/StaffFilters";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
 const statusColors = {

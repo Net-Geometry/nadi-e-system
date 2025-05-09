@@ -1,8 +1,7 @@
-
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ApproverUserTypesProps {
   selectedUserTypes: string[];
@@ -15,26 +14,27 @@ export function ApproverUserTypes({
 }: ApproverUserTypesProps) {
   // Fetch roles from the roles table
   const { data: userTypes = [] } = useQuery({
-    queryKey: ['roles'],
+    queryKey: ["roles"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('roles')
-        .select('name, description')
-        .order('name');
-      
+        .from("roles")
+        .select("name, description")
+        .order("name");
+
       if (error) {
-        console.error('Error fetching roles:', error);
+        console.error("Error fetching roles:", error);
         throw error;
       }
-      
-      return data.map(role => ({ 
+
+      return data.map((role) => ({
         id: role.name, // Using name as the id
-        name: role.name.split('_').map(word => 
-          word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' '),
-        description: role.description
+        name: role.name
+          .split("_")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" "),
+        description: role.description,
       }));
-    }
+    },
   });
 
   return (

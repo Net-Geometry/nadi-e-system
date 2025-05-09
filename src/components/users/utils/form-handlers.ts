@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Profile } from "@/types/auth";
 import { UserFormData } from "../types";
 

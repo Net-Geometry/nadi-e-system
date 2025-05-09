@@ -1,7 +1,7 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import ClosurePage from "@/components/site/component/ClosurePage";
 
-const NADIClosure = () => {
+const SiteClosure = () => {
 
     return(
     <DashboardLayout>
@@ -11,4 +11,4 @@ const NADIClosure = () => {
 };
 
 
-export default NADIClosure;
+export default SiteClosure;

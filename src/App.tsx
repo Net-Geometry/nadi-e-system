@@ -8,7 +8,7 @@ import Login from "@/pages/auth/Login";
 import Register from "@/pages/auth/Register";
 import MemberLogin from "@/pages/auth/MemberLogin";
 import { dashboardRoutes, DashboardRoutes } from "@/routes/dashboard.routes";
-import { memberRoutes } from "@/routes/member.routes";
+import { memberRoutes } from "@/routes/module.member.routes";
 import { moduleRoutes } from "@/routes/module.routes";
 import UIComponents from "@/pages/UIComponents";
 import OrganizationDetails from "@/pages/dashboard/OrganizationDetails";

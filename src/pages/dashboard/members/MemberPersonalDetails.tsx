@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import MemberProfileSettings from "@/components/profile/MemberProfileSettings";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
 
-const PersonalDetails = () => {
+const MemberPersonalDetails = () => {
   const userMetadata = useUserMetadata();
   const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
   const userGroup = parsedMetadata?.user_group;
@@ -18,4 +18,4 @@ const PersonalDetails = () => {
   );
 };
 
-export default PersonalDetails;
+export default MemberPersonalDetails;

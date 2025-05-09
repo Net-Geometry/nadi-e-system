@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 // Define types for closure logs
@@ -9,7 +9,7 @@ export type SiteClosureLogEntry = {
   remark: string;
   created_at?: string;
   created_by?: string;
-      closure_status_id?: number; // Added new field
+  closure_status_id?: number; // Added new field
 };
 
 // Define closure status map
@@ -57,13 +57,13 @@ export const useSiteClosureLogs = () => {
   ) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // If status ID is provided, use a default remark based on status
-      const effectiveRemark = statusId 
+      const effectiveRemark = statusId
         ? STATUS_CHANGE_DESCRIPTIONS[statusId] || remark
         : remark;
-      
+
       const { error: insertError } = await supabase
         .from("nd_site_closure_logs")
         .insert({
@@ -89,40 +89,42 @@ export const useSiteClosureLogs = () => {
   const getLogs = async (siteClosureId: number) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // First, fetch the logs
       const { data: logsData, error: fetchError } = await supabase
         .from("nd_site_closure_logs")
-        .select(`
+        .select(
+          `
           id,
           site_closure_id,
           remark,
           created_at,
           created_by,
           closure_status_id
-        `)
+        `
+        )
         .eq("site_closure_id", siteClosureId)
         .order("created_at", { ascending: true });
 
       if (fetchError) throw new Error(fetchError.message);
-      
+
       if (!logsData || logsData.length === 0) {
         return [];
       }
 
       // Get the status information
       const statusIds = logsData
-        .filter(log => log.closure_status_id !== null)
-        .map(log => log.closure_status_id);
-      
+        .filter((log) => log.closure_status_id !== null)
+        .map((log) => log.closure_status_id);
+
       let statusMap: Record<number, any> = {};
       if (statusIds.length > 0) {
         const { data: statusData, error: statusError } = await supabase
           .from("nd_closure_status")
           .select("id, name")
           .in("id", statusIds);
-        
+
         if (statusError) {
           console.error("Error fetching status data:", statusError);
         } else if (statusData) {
@@ -135,16 +137,16 @@ export const useSiteClosureLogs = () => {
 
       // Get the profile information
       const userIds = logsData
-        .filter(log => log.created_by !== null)
-        .map(log => log.created_by);
-      
+        .filter((log) => log.created_by !== null)
+        .map((log) => log.created_by);
+
       let profileMap: Record<string, any> = {};
       if (userIds.length > 0) {
         const { data: profileData, error: profileError } = await supabase
           .from("profiles")
           .select("id, full_name, user_type")
           .in("id", userIds);
-        
+
         if (profileError) {
           console.error("Error fetching profile data:", profileError);
         } else if (profileData) {
@@ -156,10 +158,12 @@ export const useSiteClosureLogs = () => {
       }
 
       // Combine the data
-      const enhancedLogs = logsData.map(log => ({
+      const enhancedLogs = logsData.map((log) => ({
         ...log,
-        nd_closure_status: log.closure_status_id ? statusMap[log.closure_status_id] || null : null,
-        profiles: log.created_by ? profileMap[log.created_by] || null : null
+        nd_closure_status: log.closure_status_id
+          ? statusMap[log.closure_status_id] || null
+          : null,
+        profiles: log.created_by ? profileMap[log.created_by] || null : null,
       }));
 
       return enhancedLogs;
@@ -189,11 +193,14 @@ export const useSiteClosureLogs = () => {
 
     if (!remark) {
       // Default remark based on status change
-      remark = STATUS_CHANGE_DESCRIPTIONS[newStatusId] || `Status changed to ${newStatusId}`;
-      
+      remark =
+        STATUS_CHANGE_DESCRIPTIONS[newStatusId] ||
+        `Status changed to ${newStatusId}`;
+
       // Add information about the previous status if available
       if (oldStatusId) {
-        const oldStatusDesc = STATUS_CHANGE_DESCRIPTIONS[oldStatusId] || `status ${oldStatusId}`;
+        const oldStatusDesc =
+          STATUS_CHANGE_DESCRIPTIONS[oldStatusId] || `status ${oldStatusId}`;
         remark += ` from previous ${oldStatusDesc}`;
       }
     }
@@ -214,7 +221,7 @@ export const useSiteClosureLogs = () => {
   ) => {
     setLoading(true);
     setError(null);
-    
+
     try {
       // First, get the current status
       const { data: currentData, error: fetchError } = await supabase
@@ -224,9 +231,9 @@ export const useSiteClosureLogs = () => {
         .single();
 
       if (fetchError) throw new Error(fetchError.message);
-      
+
       const oldStatusId = currentData?.status;
-      
+
       // Update the status
       const { error: updateError } = await supabase
         .from("nd_site_closure")
@@ -234,10 +241,10 @@ export const useSiteClosureLogs = () => {
         .eq("id", siteClosureId);
 
       if (updateError) throw new Error(updateError.message);
-      
+
       // Log the status change
       await logStatusChange(siteClosureId, newStatusId, oldStatusId, remark);
-      
+
       return { success: true };
     } catch (err: any) {
       setError(err.message);

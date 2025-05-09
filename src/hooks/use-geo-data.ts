@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const useGeoData = () => {
   const [districts, setDistricts] = useState<any[]>([]);
@@ -14,7 +14,9 @@ const useGeoData = () => {
   useEffect(() => {
     const fetchDistricts = async () => {
       try {
-        const { data, error } = await supabase.from("nd_district").select("id, state_id, code, name");
+        const { data, error } = await supabase
+          .from("nd_district")
+          .select("id, state_id, code, name");
         if (error) throw error;
         setDistricts(data);
       } catch (error) {
@@ -25,7 +27,9 @@ const useGeoData = () => {
 
     const fetchStates = async () => {
       try {
-        const { data, error } = await supabase.from("nd_state").select("id, region_id, code, abbr, name");
+        const { data, error } = await supabase
+          .from("nd_state")
+          .select("id, region_id, code, abbr, name");
         if (error) throw error;
         setStates(data);
       } catch (error) {
@@ -36,7 +40,9 @@ const useGeoData = () => {
 
     const fetchRegions = async () => {
       try {
-        const { data, error } = await supabase.from("nd_region").select("id, bm, eng");
+        const { data, error } = await supabase
+          .from("nd_region")
+          .select("id, bm, eng");
         if (error) throw error;
         setRegions(data);
       } catch (error) {
@@ -47,7 +53,9 @@ const useGeoData = () => {
 
     const fetchPhases = async () => {
       try {
-        const { data, error } = await supabase.from("nd_phases").select("id, name");
+        const { data, error } = await supabase
+          .from("nd_phases")
+          .select("id, name");
         if (error) throw error;
         setPhases(data);
       } catch (error) {
@@ -58,7 +66,9 @@ const useGeoData = () => {
 
     const fetchParliaments = async () => {
       try {
-        const { data, error } = await supabase.from("nd_parliaments").select("id, state_id, refid, name, fullname");
+        const { data, error } = await supabase
+          .from("nd_parliaments")
+          .select("id, state_id, refid, name, fullname");
         if (error) throw error;
         setParliaments(data);
       } catch (error) {
@@ -69,7 +79,11 @@ const useGeoData = () => {
 
     const fetchDuns = async () => {
       try {
-        const { data, error } = await supabase.from("nd_duns").select("id, states_id, rfid_parliament, refid, name, full_name, no_of_duns");
+        const { data, error } = await supabase
+          .from("nd_duns")
+          .select(
+            "id, states_id, rfid_parliament, refid, name, full_name, no_of_duns"
+          );
         if (error) throw error;
         setDuns(data);
       } catch (error) {
@@ -80,7 +94,9 @@ const useGeoData = () => {
 
     const fetchMukims = async () => {
       try {
-        const { data, error } = await supabase.from("nd_mukims").select("id, state_id, district_id, code, name");
+        const { data, error } = await supabase
+          .from("nd_mukims")
+          .select("id, state_id, district_id, code, name");
         if (error) throw error;
         setMukims(data);
       } catch (error) {
@@ -98,7 +114,16 @@ const useGeoData = () => {
     fetchMukims();
   }, []);
 
-  return { districts, states, regions, phases, parliaments, duns, mukims, error };
+  return {
+    districts,
+    states,
+    regions,
+    phases,
+    parliaments,
+    duns,
+    mukims,
+    error,
+  };
 };
 
 export default useGeoData;

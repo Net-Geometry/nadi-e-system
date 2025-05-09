@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const useBankData = () => {
   const [banks, setBanks] = useState<any[]>([]);
@@ -8,7 +8,9 @@ const useBankData = () => {
   useEffect(() => {
     const fetchBanks = async () => {
       try {
-        const { data, error } = await supabase.from("nd_bank_list").select("id, bank_name, bank_code");
+        const { data, error } = await supabase
+          .from("nd_bank_list")
+          .select("id, bank_name, bank_code");
         if (error) throw error;
         setBanks(data);
       } catch (error) {
@@ -16,7 +18,6 @@ const useBankData = () => {
         setError(error.message);
       }
     };
-
 
     fetchBanks();
   }, []);

@@ -1,6 +1,5 @@
-
 import { useState as useReactState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export const useStateData = () => {
@@ -71,10 +70,7 @@ export const useStateData = () => {
 
   const deleteState = async (id: number) => {
     try {
-      const { error } = await supabase
-        .from("nd_state")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("nd_state").delete().eq("id", id);
       if (error) throw error;
       await fetchStates();
     } catch (error: any) {

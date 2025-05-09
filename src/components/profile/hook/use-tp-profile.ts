@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useTPProfile = () => {
   const fetchTPProfile = async () => {
@@ -14,14 +14,16 @@ export const useTPProfile = () => {
     // Fetch the TP profile data
     const { data: profile, error: profileError } = await supabase
       .from("nd_tech_partner_profile")
-      .select(`
+      .select(
+        `
       *, position_id (id, name),
       marital_status (id, bm, eng),
       tech_partner_id (id, code, name),
       nationality_id (id, bm, eng),
       religion_id (id, bm, eng),
       race_id (id, bm, eng)
-    `)
+    `
+      )
       .eq("user_id", userId)
       .single();
 

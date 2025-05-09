@@ -10,12 +10,23 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { TableRowNumber } from "@/components/ui/TableRowNumber";
-import { ArrowUp, ArrowDown, ArrowUpDown, FilePlus, Settings, Trash2, Edit, Eye } from "lucide-react";
+import { ArrowUp, ArrowDown, ArrowUpDown, FilePlus, Trash2, Edit, Eye } from "lucide-react";
 import BillingFormDialog from "../BillingFormDialog";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { BUCKET_NAME_UTILITIES } from "@/integrations/supabase/client";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast"; // Import the useToast hook
 import BillingPageView from "./BillingPageView";
 
@@ -24,7 +35,15 @@ interface BillingPageProps {
 }
 
 type SortDirection = "asc" | "desc" | null;
-type SortField = "id" | "type_name" | "year" | "month" | "reference_no" | "amount_bill" | "remark" | null;
+type SortField =
+  | "id"
+  | "type_name"
+  | "year"
+  | "month"
+  | "reference_no"
+  | "amount_bill"
+  | "remark"
+  | null;
 
 const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
   const [refreshBilling, setRefreshBilling] = useState(false); // State to trigger re-fetch
@@ -38,7 +57,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
   const { toast } = useToast(); // Initialize the toast hook
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false); // State to manage view dialog visibility
   const [viewData, setViewData] = useState<any>(null); // State to store the data to view
-  
+
   const handleSort = (field: SortField) => {
     if (sortField === field) {
       if (sortDirection === "asc") {
@@ -51,15 +70,6 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
       setSortField(field);
       setSortDirection("asc");
     }
-  };
-
-  const renderSortIcon = (field: SortField) => {
-    if (sortField !== field) return <ArrowUpDown className="ml-2 h-4 w-4" />;
-    return sortDirection === "asc" ? (
-      <ArrowUp className="ml-2 h-4 w-4" />
-    ) : (
-      <ArrowDown className="ml-2 h-4 w-4" />
-    );
   };
 
   const sortedData = () => {
@@ -109,7 +119,10 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
         .single();
 
       if (attachmentError) {
-        console.warn("No associated file found or error fetching file path:", attachmentError);
+        console.warn(
+          "No associated file found or error fetching file path:",
+          attachmentError
+        );
       } else if (attachmentData?.file_path) {
         const filePath = attachmentData.file_path;
         const relativeFilePath = filePath.split(`${BUCKET_NAME_UTILITIES}/`)[1];
@@ -122,7 +135,8 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
           console.error("Error deleting file from storage:", storageError);
           toast({
             title: "Error",
-            description: "Failed to delete the associated file. Please try again.",
+            description:
+              "Failed to delete the associated file. Please try again.",
             variant: "destructive",
           });
           return;
@@ -179,25 +193,19 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
   const sorted = sortedData();
 
   return (
-    <div>
+    <div >
       <h2 className="text-xl font-bold mb-4">Billing Information</h2>
 
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
-        <div className="w-full md:w-[400px]">
-          {/* Optional: search or input field can go here */}
-        </div>
-
-        <div className="ml-auto flex items-center gap-2">
-          <Button
-            onClick={() => {
-              setSelectedBilling(null); // Clear selected billing for new entry
-              setIsDialogOpen(true); // Open the dialog
-            }}
-          >
-            <FilePlus className="mr-2 h-4 w-4" />
-            Add New Billing
-          </Button>
-        </div>
+      <div className="flex justify-end mb-4">
+        <Button
+          onClick={() => {
+            setSelectedBilling(null); // Clear selected billing for new entry
+            setIsDialogOpen(true); // Open the dialog
+          }}
+        >
+          <FilePlus className="mr-2 h-4 w-4" />
+          Add New Billing
+        </Button>
       </div>
 
       <div className="rounded-md border overflow-hidden">
@@ -205,70 +213,55 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
           <TableHeader>
             <TableRow>
               <TableHead className="w-[60px] text-center">No.</TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("id")}
-                  className="p-0 hover:bg-transparent font-medium flex items-center"
-                >
-                  ID{renderSortIcon("id")}
-                </Button>
+              <TableHead
+                sortable
+                sorted={sortField === "id" ? sortDirection : null}
+                onSort={() => handleSort("id")}
+              >
+                ID
               </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("type_name")}
-                  className="p-0 hover:bg-transparent font-medium flex items-center"
-                >
-                  Type{renderSortIcon("type_name")}
-                </Button>
+              <TableHead
+                sortable
+                sorted={sortField === "type_name" ? sortDirection : null}
+                onSort={() => handleSort("type_name")}
+              >
+                Type
               </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("year")}
-                  className="p-0 hover:bg-transparent font-medium flex items-center"
-                >
-                  Year{renderSortIcon("year")}
-                </Button>
+              <TableHead
+                sortable
+                sorted={sortField === "year" ? sortDirection : null}
+                onSort={() => handleSort("year")}
+              >
+                Year
               </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("month")}
-                  className="p-0 hover:bg-transparent font-medium flex items-center"
-                >
-                  Month{renderSortIcon("month")}
-                </Button>
+              <TableHead
+                sortable
+                sorted={sortField === "month" ? sortDirection : null}
+                onSort={() => handleSort("month")}
+              >
+                Month
               </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("reference_no")}
-                  className="p-0 hover:bg-transparent font-medium flex items-center"
-                >
-                  Reference No{renderSortIcon("reference_no")}
-                </Button>
+              <TableHead
+                sortable
+                sorted={sortField === "reference_no" ? sortDirection : null}
+                onSort={() => handleSort("reference_no")}
+              >
+                Reference No
               </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("amount_bill")}
-                  className="p-0 hover:bg-transparent font-medium flex items-center"
-                >
-                  Amount{renderSortIcon("amount_bill")}
-                </Button>
+              <TableHead
+                sortable
+                sorted={sortField === "amount_bill" ? sortDirection : null}
+                onSort={() => handleSort("amount_bill")}
+              >
+                Amount
               </TableHead>
-              <TableHead>
-                <Button
-                  variant="ghost"
-                  onClick={() => handleSort("remark")}
-                  className="p-0 hover:bg-transparent font-medium flex items-center"
-                >
-                  Remark{renderSortIcon("remark")}
-                </Button>
+              <TableHead
+                sortable
+                sorted={sortField === "remark" ? sortDirection : null}
+                onSort={() => handleSort("remark")}
+              >
+                Remark
               </TableHead>
-              <TableHead>File</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
@@ -284,34 +277,20 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
                 <TableCell>{item.amount_bill}</TableCell>
                 <TableCell>{item.remark}</TableCell>
                 <TableCell>
-                  {item.file_path ? (
-                    <a
-                      href={item.file_path}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      View PDF
-                    </a>
-                  ) : (
-                    "N/A"
-                  )}
-                </TableCell>
-                <TableCell>
                   <div className="flex space-x-2">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleView(item)} // Open view dialog with data
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>View</TooltipContent>
+                    </Tooltip>
 
-                  <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleView(item)} // Open view dialog with data
-                    >
-                      <Eye className="h-4 w-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>View</TooltipContent>
-                </Tooltip>
-                
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <Button
@@ -370,11 +349,15 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this record? This action cannot be undone.
+              Are you sure you want to delete this record? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete}>
@@ -383,7 +366,6 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </div>
   );
 };

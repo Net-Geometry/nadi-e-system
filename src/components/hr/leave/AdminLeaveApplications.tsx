@@ -1,8 +1,7 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
@@ -41,7 +40,9 @@ type LeaveApplication = {
 };
 
 export function AdminLeaveApplications() {
-  const [selectedLeave, setSelectedLeave] = useState<LeaveApplication | null>(null);
+  const [selectedLeave, setSelectedLeave] = useState<LeaveApplication | null>(
+    null
+  );
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -61,7 +62,7 @@ export function AdminLeaveApplications() {
           days: 3,
           status: "Pending",
           reason: "Family vacation",
-          created_at: "2025-05-01T08:30:00Z"
+          created_at: "2025-05-01T08:30:00Z",
         },
         {
           id: "2",
@@ -73,7 +74,7 @@ export function AdminLeaveApplications() {
           status: "Approved",
           reason: "Doctor's appointment",
           attachmentUrl: "/medical-certificate.pdf",
-          created_at: "2025-05-03T10:15:00Z"
+          created_at: "2025-05-03T10:15:00Z",
         },
         {
           id: "3",
@@ -85,7 +86,7 @@ export function AdminLeaveApplications() {
           status: "Rejected",
           reason: "Family emergency",
           attachmentUrl: "/emergency-doc.pdf",
-          created_at: "2025-05-02T14:45:00Z"
+          created_at: "2025-05-02T14:45:00Z",
         },
         {
           id: "4",
@@ -96,7 +97,7 @@ export function AdminLeaveApplications() {
           days: 2,
           status: "Pending",
           reason: "Personal matters",
-          created_at: "2025-05-05T09:20:00Z"
+          created_at: "2025-05-05T09:20:00Z",
         },
       ] as LeaveApplication[];
     },
@@ -107,20 +108,21 @@ export function AdminLeaveApplications() {
     setViewDetailsOpen(true);
   };
 
-  const filteredApplications = leaveApplications?.filter(leave => {
-    const matchesStatus = statusFilter === "all" || leave.status.toLowerCase() === statusFilter;
-    const matchesSearch = 
+  const filteredApplications = leaveApplications?.filter((leave) => {
+    const matchesStatus =
+      statusFilter === "all" || leave.status.toLowerCase() === statusFilter;
+    const matchesSearch =
       leave.staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       leave.type.toLowerCase().includes(searchQuery.toLowerCase()) ||
       leave.reason.toLowerCase().includes(searchQuery.toLowerCase());
-    
+
     return matchesStatus && matchesSearch;
   });
 
   const statusColors: Record<string, string> = {
     Pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
     Approved: "bg-green-100 text-green-800 border-green-200",
-    Rejected: "bg-red-100 text-red-800 border-red-200"
+    Rejected: "bg-red-100 text-red-800 border-red-200",
   };
 
   return (
@@ -135,10 +137,7 @@ export function AdminLeaveApplications() {
           />
         </div>
         <div className="flex items-center space-x-2 w-full sm:w-auto">
-          <Select
-            value={statusFilter}
-            onValueChange={setStatusFilter}
-          >
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
             <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Filter by status" />
             </SelectTrigger>
@@ -172,7 +171,9 @@ export function AdminLeaveApplications() {
                   <div className="flex justify-center">
                     <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
                   </div>
-                  <p className="mt-2 text-muted-foreground">Loading applications...</p>
+                  <p className="mt-2 text-muted-foreground">
+                    Loading applications...
+                  </p>
                 </TableCell>
               </TableRow>
             ) : filteredApplications && filteredApplications.length > 0 ? (
@@ -180,14 +181,19 @@ export function AdminLeaveApplications() {
                 <TableRow key={leave.id}>
                   <TableCell>{leave.staff.name}</TableCell>
                   <TableCell>{leave.type}</TableCell>
-                  <TableCell>{format(new Date(leave.created_at), "dd MMM yyyy")}</TableCell>
                   <TableCell>
-                    {format(new Date(leave.startDate), "dd MMM yyyy")} - 
+                    {format(new Date(leave.created_at), "dd MMM yyyy")}
+                  </TableCell>
+                  <TableCell>
+                    {format(new Date(leave.startDate), "dd MMM yyyy")} -
                     {format(new Date(leave.endDate), "dd MMM yyyy")}
                   </TableCell>
                   <TableCell>{leave.days}</TableCell>
                   <TableCell>
-                    <Badge variant="outline" className={statusColors[leave.status]}>
+                    <Badge
+                      variant="outline"
+                      className={statusColors[leave.status]}
+                    >
                       {leave.status}
                     </Badge>
                   </TableCell>
@@ -206,7 +212,9 @@ export function AdminLeaveApplications() {
             ) : (
               <TableRow>
                 <TableCell colSpan={7} className="text-center py-6">
-                  <p className="text-muted-foreground">No leave applications found</p>
+                  <p className="text-muted-foreground">
+                    No leave applications found
+                  </p>
                 </TableCell>
               </TableRow>
             )}

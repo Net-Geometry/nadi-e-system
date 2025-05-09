@@ -1,6 +1,5 @@
-
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
@@ -18,7 +17,11 @@ import { TableRowNumber } from "@/components/ui/TableRowNumber";
 export function ClaimList() {
   const { toast } = useToast();
 
-  const { data: claims, isLoading, refetch } = useQuery({
+  const {
+    data: claims,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["claims"],
     queryFn: async () => {
       console.log("Fetching claims...");
@@ -37,7 +40,10 @@ export function ClaimList() {
     },
   });
 
-  const updateClaimStatus = async (id: string, status: "approved" | "rejected") => {
+  const updateClaimStatus = async (
+    id: string,
+    status: "approved" | "rejected"
+  ) => {
     try {
       const { error } = await supabase
         .from("claims")

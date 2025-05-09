@@ -1,18 +1,9 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { ProfileHeader } from "@/components/profile/components/ProfileHeader";
-import StaffProfileSettings from "@/components/profile/StaffProfileSettings";
-import MemberProfileSettings from "@/components/profile/MemberProfileSettings";
-import SuperAdminProfileSettings from "@/components/profile/SuperAdminProfileSettings";
-import McmcProfileSettings from "@/components/profile/McmcProfileSettings";
-import DuspProfileSettings from "@/components/profile/DuspProfileSettings";
-import SsoProfileSettings from "@/components/profile/SsoProfileSettings";
-import TpProfileSettings from "@/components/profile/TpProfileSettings";
-import VendorProfileSettings from "@/components/profile/VendorProfileSettings";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
-import BillingPage from "@/components/site/component/BillingPage";
 import BillingOverview from "@/components/site/billing/hook/BillingOverview";
 
-const Billing = () => {
+const UtilitiesBilling = () => {
     const userMetadata = useUserMetadata();
     const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
     const userGroup = parsedMetadata?.user_group;
@@ -48,4 +39,4 @@ const Billing = () => {
     );
 };
 
-export default Billing;
+export default UtilitiesBilling;

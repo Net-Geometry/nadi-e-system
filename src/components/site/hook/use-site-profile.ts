@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useSiteProfile = (id: string) => {
   const [data, setData] = useState<any>(null);
@@ -15,7 +15,8 @@ export const useSiteProfile = (id: string) => {
         // Fetch site profile
         const { data: siteData, error: siteError } = await supabase
           .from("nd_site_profile")
-          .select(`
+          .select(
+            `
             *,
             region_id (eng, bm),
             phase_id (name),
@@ -30,7 +31,8 @@ export const useSiteProfile = (id: string) => {
             zone_id (zone, area),
             area_id (name),
             level_id (eng, bm)
-          `)
+          `
+          )
           .eq("id", id)
           .single();
 
@@ -39,16 +41,21 @@ export const useSiteProfile = (id: string) => {
         setData(siteData);
 
         // Fetch socioeconomic data
-        const { data: socioeconomicData, error: socioeconomicError } = await supabase
-          .from("nd_site_socioeconomic")
-          .select(`
+        const { data: socioeconomicData, error: socioeconomicError } =
+          await supabase
+            .from("nd_site_socioeconomic")
+            .select(
+              `
             socioeconomic_id (eng, bm)
-          `)
-          .eq("site_id", id);
+          `
+            )
+            .eq("site_id", id);
 
         if (socioeconomicError) throw socioeconomicError;
 
-        setSocioeconomics(socioeconomicData.map((item) => item.socioeconomic_id));
+        setSocioeconomics(
+          socioeconomicData.map((item) => item.socioeconomic_id)
+        );
 
         // Fetch space data
         const { data: spaceData, error: spaceError } = await supabase
@@ -63,14 +70,16 @@ export const useSiteProfile = (id: string) => {
         // Fetch address data
         const { data: addressData, error: addressError } = await supabase
           .from("nd_site_address")
-          .select(`
+          .select(
+            `
             address1,
             address2,
             district_id (code, name),
             state_id (code, abbr, name),
             city,
             postcode
-          `)
+          `
+          )
           .eq("site_id", id)
           .single();
 

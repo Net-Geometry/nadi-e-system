@@ -21,7 +21,7 @@ import {
 } from "@/utils/notification-utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export function NotificationUsageGuide() {
   const { toast } = useToast();

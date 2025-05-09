@@ -2,7 +2,7 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { KPIHeader } from "@/components/site/kpi/KPIHeader";
 import KPIDynamic from "@/components/site/kpi/KPIDynamic";
 
-const KPI = () => {
+const KPIPerformance = () => {
 
     return (
         <DashboardLayout>
@@ -12,4 +12,4 @@ const KPI = () => {
     );
 };
 
-export default KPI;
+export default KPIPerformance;

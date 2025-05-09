@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAuth } from './useAuth';
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "./useAuth";
 
 interface AttendanceRecord {
   id: string;
@@ -46,26 +46,28 @@ export const useStaffAttendance = (): StaffAttendance => {
       try {
         // Get the organization ID of the user
         const { data: userProfile, error: profileError } = await supabase
-          .from('profiles')
-          .select('organization_id')
-          .eq('id', user.id)
+          .from("profiles")
+          .select("organization_id")
+          .eq("id", user.id)
           .single();
 
         if (profileError) {
-          throw new Error(`Error fetching user profile: ${profileError.message}`);
+          throw new Error(
+            `Error fetching user profile: ${profileError.message}`
+          );
         }
 
         const organizationId = userProfile?.organization_id;
 
         if (!organizationId) {
-          throw new Error('Organization ID not found for the user.');
+          throw new Error("Organization ID not found for the user.");
         }
 
         // Get all sites under the organization
         const { data: sitesData } = await supabase
-          .from('sites')
-          .select('id, sitename, organization_id')
-          .eq('organization_id', organizationId);
+          .from("sites")
+          .select("id, sitename, organization_id")
+          .eq("organization_id", organizationId);
 
         const sites = sitesData || [];
 
@@ -73,13 +75,18 @@ export const useStaffAttendance = (): StaffAttendance => {
 
         // Fetch attendance records for the staff and the sites
         const { data: attendanceData, error: attendanceError } = await supabase
-          .from('staff_attendance')
-          .select('*')
-          .eq('staff_id', user.id)
-          .in('site_id', sites.map((site) => site.id));
+          .from("staff_attendance")
+          .select("*")
+          .eq("staff_id", user.id)
+          .in(
+            "site_id",
+            sites.map((site) => site.id)
+          );
 
         if (attendanceError) {
-          throw new Error(`Error fetching attendance: ${attendanceError.message}`);
+          throw new Error(
+            `Error fetching attendance: ${attendanceError.message}`
+          );
         }
 
         setAttendance(attendanceData || []);
@@ -98,14 +105,14 @@ export const useStaffAttendance = (): StaffAttendance => {
     setError(null);
 
     if (!user?.id) {
-      setError('User ID not found.');
+      setError("User ID not found.");
       setLoading(false);
       return;
     }
 
     try {
       const { data, error: insertError } = await supabase
-        .from('staff_attendance')
+        .from("staff_attendance")
         .insert([
           {
             staff_id: user.id,
@@ -113,7 +120,7 @@ export const useStaffAttendance = (): StaffAttendance => {
             time_in: new Date().toISOString(),
           },
         ])
-        .select()
+        .select();
 
       if (insertError) {
         throw new Error(`Error recording attendance: ${insertError.message}`);
@@ -132,24 +139,26 @@ export const useStaffAttendance = (): StaffAttendance => {
     setError(null);
 
     if (!user?.id) {
-      setError('User ID not found.');
+      setError("User ID not found.");
       setLoading(false);
       return;
     }
 
     try {
       // Find the latest attendance record without a time_out
-      const latestRecord = attendance.find((record) => record.staff_id === user.id && record.time_out === null);
+      const latestRecord = attendance.find(
+        (record) => record.staff_id === user.id && record.time_out === null
+      );
 
       if (!latestRecord) {
-        throw new Error('No attendance record found to update.');
+        throw new Error("No attendance record found to update.");
       }
 
       const { data, error: updateError } = await supabase
-        .from('staff_attendance')
+        .from("staff_attendance")
         .update({ time_out: new Date().toISOString() })
-        .eq('id', latestRecord.id)
-        .select()
+        .eq("id", latestRecord.id)
+        .select();
 
       if (updateError) {
         throw new Error(`Error updating attendance: ${updateError.message}`);
@@ -157,7 +166,9 @@ export const useStaffAttendance = (): StaffAttendance => {
 
       // Update the attendance state with the updated record
       setAttendance((prevAttendance) =>
-        prevAttendance.map((record) => (record.id === latestRecord.id ? data![0] : record))
+        prevAttendance.map((record) =>
+          record.id === latestRecord.id ? data![0] : record
+        )
       );
     } catch (err: any) {
       setError(err.message);
@@ -166,5 +177,12 @@ export const useStaffAttendance = (): StaffAttendance => {
     }
   };
 
-  return { attendance, sites, loading, error, recordAttendance, updateAttendance };
+  return {
+    attendance,
+    sites,
+    loading,
+    error,
+    recordAttendance,
+    updateAttendance,
+  };
 };

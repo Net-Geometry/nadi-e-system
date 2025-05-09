@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useSuperAdminProfile = () => {
   const fetchSuperAdminProfile = async () => {
@@ -15,9 +15,11 @@ export const useSuperAdminProfile = () => {
     // Fetch the SuperAdmin profile data
     const { data: profile, error: profileError } = await supabase
       .from("nd_super_admin_profile")
-      .select(`
+      .select(
+        `
       *
-    `)
+    `
+      )
       .eq("user_id", userId)
       .single();
 

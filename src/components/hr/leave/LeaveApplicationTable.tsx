@@ -1,9 +1,8 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Eye } from "lucide-react";
@@ -31,7 +30,9 @@ type LeaveApplication = {
 
 export function LeaveApplicationTable() {
   const { user } = useAuth();
-  const [selectedLeave, setSelectedLeave] = useState<LeaveApplication | null>(null);
+  const [selectedLeave, setSelectedLeave] = useState<LeaveApplication | null>(
+    null
+  );
   const [viewDetailsOpen, setViewDetailsOpen] = useState(false);
 
   const { data: leaveApplications, isLoading } = useQuery({
@@ -48,7 +49,7 @@ export function LeaveApplicationTable() {
           days: 3,
           status: "Pending",
           reason: "Family vacation",
-          created_at: "2025-05-01T08:30:00Z"
+          created_at: "2025-05-01T08:30:00Z",
         },
         {
           id: "2",
@@ -59,7 +60,7 @@ export function LeaveApplicationTable() {
           status: "Approved",
           reason: "Doctor's appointment",
           attachmentUrl: "/medical-certificate.pdf",
-          created_at: "2025-04-05T10:15:00Z"
+          created_at: "2025-04-05T10:15:00Z",
         },
         {
           id: "3",
@@ -70,8 +71,8 @@ export function LeaveApplicationTable() {
           status: "Rejected",
           reason: "Family emergency",
           attachmentUrl: "/emergency-doc.pdf",
-          created_at: "2025-03-19T14:45:00Z"
-        }
+          created_at: "2025-03-19T14:45:00Z",
+        },
       ] as LeaveApplication[];
     },
   });
@@ -84,7 +85,7 @@ export function LeaveApplicationTable() {
   const statusColors: Record<string, string> = {
     Pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
     Approved: "bg-green-100 text-green-800 border-green-200",
-    Rejected: "bg-red-100 text-red-800 border-red-200"
+    Rejected: "bg-red-100 text-red-800 border-red-200",
   };
 
   return (
@@ -107,21 +108,28 @@ export function LeaveApplicationTable() {
                 <div className="flex justify-center">
                   <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-gray-900"></div>
                 </div>
-                <p className="mt-2 text-muted-foreground">Loading applications...</p>
+                <p className="mt-2 text-muted-foreground">
+                  Loading applications...
+                </p>
               </TableCell>
             </TableRow>
           ) : leaveApplications && leaveApplications.length > 0 ? (
             leaveApplications.map((leave) => (
               <TableRow key={leave.id}>
-                <TableCell>{format(new Date(leave.created_at), "dd MMM yyyy")}</TableCell>
+                <TableCell>
+                  {format(new Date(leave.created_at), "dd MMM yyyy")}
+                </TableCell>
                 <TableCell>{leave.type}</TableCell>
                 <TableCell>
-                  {format(new Date(leave.startDate), "dd MMM yyyy")} - 
+                  {format(new Date(leave.startDate), "dd MMM yyyy")} -
                   {format(new Date(leave.endDate), "dd MMM yyyy")}
                 </TableCell>
                 <TableCell>{leave.days}</TableCell>
                 <TableCell>
-                  <Badge variant="outline" className={statusColors[leave.status]}>
+                  <Badge
+                    variant="outline"
+                    className={statusColors[leave.status]}
+                  >
                     {leave.status}
                   </Badge>
                 </TableCell>
@@ -140,7 +148,9 @@ export function LeaveApplicationTable() {
           ) : (
             <TableRow>
               <TableCell colSpan={6} className="text-center py-6">
-                <p className="text-muted-foreground">No leave applications found</p>
+                <p className="text-muted-foreground">
+                  No leave applications found
+                </p>
               </TableCell>
             </TableRow>
           )}

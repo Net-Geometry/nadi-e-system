@@ -5,9 +5,20 @@ import Address from "./Address"; // Import Address component
 import SiteBanner from "./SiteBanner";
 import { SUPABASE_URL } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
-const OverviewPage = ({ site, socioeconomics, space, address }: { site: any; socioeconomics: any[]; space: any[]; address: any }) => { // Add address prop
+const OverviewPage = ({
+  site,
+  socioeconomics,
+  space,
+  address,
+}: {
+  site: any;
+  socioeconomics: any[];
+  space: any[];
+  address: any;
+}) => {
+  // Add address prop
   const [bannerImages, setBannerImages] = useState<string[]>([
     "/nadi-site.jpg",
     "/nadi-site2.jpg",
@@ -30,7 +41,9 @@ const OverviewPage = ({ site, socioeconomics, space, address }: { site: any; soc
 
       if (data && data.length > 0) {
         const filePaths = data[0].file_path || [];
-        const publicUrls = filePaths.map((path: string) => `${SUPABASE_URL}${path}`);
+        const publicUrls = filePaths.map(
+          (path: string) => `${SUPABASE_URL}${path}`
+        );
         setBannerImages(publicUrls);
       }
     };
@@ -59,7 +72,11 @@ const OverviewPage = ({ site, socioeconomics, space, address }: { site: any; soc
           <GeneralInformation site={site} />
         </TabsContent>
         <TabsContent value="technical" className="space-y-6">
-          <TechnicalBuilding site={site} socioeconomics={socioeconomics} space={space} />
+          <TechnicalBuilding
+            site={site}
+            socioeconomics={socioeconomics}
+            space={space}
+          />
         </TabsContent>
         <TabsContent value="address" className="space-y-6">
           <Address address={address} /> {/* Pass address */}

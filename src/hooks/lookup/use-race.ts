@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export const useRace = () => {
@@ -71,10 +70,7 @@ export const useRace = () => {
 
   const deleteRace = async (id: number) => {
     try {
-      const { error } = await supabase
-        .from("nd_races")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("nd_races").delete().eq("id", id);
       if (error) throw error;
       await fetchRaces();
     } catch (error: any) {

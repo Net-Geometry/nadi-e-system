@@ -63,15 +63,15 @@ const SiteDetail: React.FC<SiteDetailProps> = ({ siteId }) => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-2xl font-bold">{data.fullname || "Site Name"}</h1>
+          <h1 className="text-2xl font-bold">{data?.fullname ?? "Site Name"}</h1>
           <h3 className="text-muted-foreground">
-            Site Code: <span className="font-bold">{siteCode || "N/A"}</span>
+            Site Code: <span className="font-bold">{siteCode ?? "N/A"}</span>
           </h3>
           <div className="font-medium flex items-center gap-2">
             <span className="text-muted-foreground">Status: </span>
             <span className="font-medium flex items-center gap-2">
-              {data.active_status?.eng || "N/A"}
-              {data.is_active ? (
+              {data?.active_status?.eng ?? "N/A"}
+              {data?.is_active ? (
                 <Eye className="h-4 w-4" />
               ) : (
                 <EyeOff className="h-4 w-4" />

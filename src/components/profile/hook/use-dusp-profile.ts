@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useDUSPProfile = () => {
   const fetchDUSPProfile = async () => {
@@ -14,10 +14,12 @@ export const useDUSPProfile = () => {
     // Fetch the dusp profile data
     const { data: profile, error: profileError } = await supabase
       .from("nd_dusp_profile")
-      .select(`
+      .select(
+        `
       *, position_id (id, name),
       dusp_id (id, code, name)
-    `)
+    `
+      )
       .eq("user_id", userId)
       .single();
 
