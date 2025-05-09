@@ -22,7 +22,7 @@ export const bookingClient = {
         }
     },
 
-    getBooking: async (bookingAssetTypeId: string): Promise<Booking[]> => {
+    getBooking: async (bookingAssetTypeId: number): Promise<Booking[]> => {
         const { data, error } = await supabase
             .from("nd_booking")
             .select("*")

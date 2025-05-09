@@ -20,7 +20,7 @@ export const useBookingQueries = () => {
         site_id = siteId;
     }
 
-    const useBookingQuery = (bookingAssetTypeId: string) =>
+    const useBookingQuery = (bookingAssetTypeId: number) =>
         useQuery({
             queryKey: ["booking", organizationId, site_id],
             queryFn: () => bookingClient.getBooking(bookingAssetTypeId),
