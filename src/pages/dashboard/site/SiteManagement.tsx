@@ -40,6 +40,7 @@ const SiteManagement = () => {
       </DashboardLayout>
     );
   }
+  
   if (userGroup === 1) { // DUSP
     return (
       <DashboardLayout>
@@ -47,7 +48,7 @@ const SiteManagement = () => {
       </DashboardLayout>
     );
   }
-
+  
   if (userGroup === 2) { // MCMC
     return (
       <DashboardLayout>
@@ -55,7 +56,7 @@ const SiteManagement = () => {
       </DashboardLayout>
     );
   }
-
+  
   if (userGroup === 3) { // TP
     return (
       <DashboardLayout>

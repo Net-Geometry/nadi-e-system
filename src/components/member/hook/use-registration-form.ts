@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const insertMemberData = async (formData: {
   identity_no: string;
@@ -68,7 +68,8 @@ export const insertMemberData = async (formData: {
     if (existingmemberError && existingmemberError.code !== "PGRST116") {
       // PGRST116 indicates no rows found; ignore this error
       throw new Error(
-        existingmemberError?.message || "Error checking existing member profile."
+        existingmemberError?.message ||
+          "Error checking existing member profile."
       );
     }
 
@@ -104,7 +105,7 @@ export const insertMemberData = async (formData: {
           status_entrepreneur: formData.status_entrepreneur,
           supervision: formData.supervision,
           nationality_id: formData.nationality_id,
-          registration_status: formData.registration_status
+          registration_status: formData.registration_status,
         })
         .eq("id", memberId);
 
@@ -115,45 +116,47 @@ export const insertMemberData = async (formData: {
       }
     } else {
       // If the member does not exist, insert a new record
-      const { data: memberProfileData, error: memberProfileError } = await supabase
-        .from("nd_member_profile")
-        .insert({
-          identity_no: formData.identity_no,
-          fullname: formData.fullname,
-          ref_id: formData.ref_id,
-          community_status: formData.community_status,
-          dob: formData.dob,
-          mobile_no: formData.mobile_no,
-          email: formData.email,
-          gender: formData.gender,
-          race_id: formData.race_id,
-          ethnic_id: formData.ethnic_id,
-          occupation_id: formData.occupation_id,
-          type_sector: formData.type_sector,
-          socio_id: formData.socio_id,
-          ict_knowledge: formData.ict_knowledge,
-          education_level: formData.education_level,
-          oku_status: formData.oku_status,
-          income_range: formData.income_range,
-          distance: formData.distance,
-          join_date: formData.join_date,
-          register_method: formData.register_method,
-          pdpa_declare: formData.pdpa_declare,
-          agree_declare: formData.agree_declare,
-          status_membership: formData.status_membership,
-          status_entrepreneur: formData.status_entrepreneur,
-          supervision: formData.supervision,
-          nationality_id: formData.nationality_id,
-          registration_status: formData.registration_status,
+      const { data: memberProfileData, error: memberProfileError } =
+        await supabase
+          .from("nd_member_profile")
+          .insert({
+            identity_no: formData.identity_no,
+            fullname: formData.fullname,
+            ref_id: formData.ref_id,
+            community_status: formData.community_status,
+            dob: formData.dob,
+            mobile_no: formData.mobile_no,
+            email: formData.email,
+            gender: formData.gender,
+            race_id: formData.race_id,
+            ethnic_id: formData.ethnic_id,
+            occupation_id: formData.occupation_id,
+            type_sector: formData.type_sector,
+            socio_id: formData.socio_id,
+            ict_knowledge: formData.ict_knowledge,
+            education_level: formData.education_level,
+            oku_status: formData.oku_status,
+            income_range: formData.income_range,
+            distance: formData.distance,
+            join_date: formData.join_date,
+            register_method: formData.register_method,
+            pdpa_declare: formData.pdpa_declare,
+            agree_declare: formData.agree_declare,
+            status_membership: formData.status_membership,
+            status_entrepreneur: formData.status_entrepreneur,
+            supervision: formData.supervision,
+            nationality_id: formData.nationality_id,
+            registration_status: formData.registration_status,
 
-          user_id: userId,
-        })
-        .select("id")
-        .single();
+            user_id: userId,
+          })
+          .select("id")
+          .single();
 
       if (memberProfileError || !memberProfileData) {
         throw new Error(
-          memberProfileError?.message || "Failed to insert into nd_member_profile."
+          memberProfileError?.message ||
+            "Failed to insert into nd_member_profile."
         );
       }
 
@@ -163,29 +166,36 @@ export const insertMemberData = async (formData: {
     // Update or insert into nd_member_address
     const { error: memberAddressError } = await supabase
       .from("nd_member_address")
-      .upsert({
-        member_id: memberId,
-        address1: formData.address1,
-        address2: formData.address2,
-        district_id: formData.district_id,
-        state_id: formData.state_id,
-        city: formData.city,
-        postcode: formData.postcode,
-      }, { onConflict: "member_id" }); // Use upsert to handle insert or update
+      .upsert(
+        {
+          member_id: memberId,
+          address1: formData.address1,
+          address2: formData.address2,
+          district_id: formData.district_id,
+          state_id: formData.state_id,
+          city: formData.city,
+          postcode: formData.postcode,
+        },
+        { onConflict: "member_id" }
+      ); // Use upsert to handle insert or update
 
     if (memberAddressError) {
       throw new Error(
-        memberAddressError.message || "Failed to update/insert nd_member_address."
+        memberAddressError.message ||
+          "Failed to update/insert nd_member_address."
       );
     }
 
     // Update or insert into nd_member_photo
     const { error: memberPhotoError } = await supabase
       .from("nd_member_photo")
-      .upsert({
-        user_id: userId,
-        member_id: memberId,
-      }, { onConflict: "member_id" }); // Use upsert to handle insert or update
+      .upsert(
+        {
+          user_id: userId,
+          member_id: memberId,
+        },
+        { onConflict: "member_id" }
+      ); // Use upsert to handle insert or update
 
     if (memberPhotoError) {
       throw new Error(

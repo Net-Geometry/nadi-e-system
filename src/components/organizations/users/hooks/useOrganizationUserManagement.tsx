@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { UserType } from "@/types/auth";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 // Define an extended interface for the user profile that includes user_group_name
 interface ExtendedUserProfile {
@@ -41,10 +41,11 @@ export const useOrganizationUserManagement = () => {
       : [
           "tp_admin",
           "tp_management",
-          "tp_region",
+          "tp_pic",
           "tp_hr",
           "tp_finance",
           "tp_operation",
+          "tp_site",
         ];
 
   // Get user groups based on organization type

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const usePositionData = () => {
   const [positions, setPositions] = useState<any[]>([]);
@@ -8,7 +8,9 @@ const usePositionData = () => {
   useEffect(() => {
     const fetchPositions = async () => {
       try {
-        const { data, error } = await supabase.from("nd_position").select("id, name");
+        const { data, error } = await supabase
+          .from("nd_position")
+          .select("id, name");
         if (error) throw error;
         setPositions(data);
       } catch (error) {
@@ -16,7 +18,6 @@ const usePositionData = () => {
         setError(error.message);
       }
     };
-
 
     fetchPositions();
   }, []);

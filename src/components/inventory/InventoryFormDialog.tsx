@@ -19,7 +19,7 @@ import { useInventories } from "@/hooks/use-inventories";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useToast } from "@/hooks/use-toast";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Inventory } from "@/types/inventory";
 import { Site } from "@/types/site";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

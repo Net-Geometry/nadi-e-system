@@ -1,4 +1,3 @@
-
 import { ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -13,7 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const HeaderProfile = () => {
   const { logout, user } = useAuth();
@@ -51,7 +50,7 @@ export const HeaderProfile = () => {
   // Format user type for display
   const formatUserType = (userType: string) => {
     if (!userType) return "";
-    return userType.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    return userType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   return (
@@ -62,11 +61,7 @@ export const HeaderProfile = () => {
           className="pl-2 pr-3 py-2 h-auto hover:bg-gray-100 flex items-center gap-2 rounded-full"
         >
           <Avatar className="h-8 w-8 border border-gray-200">
-            <AvatarImage
-              src=""
-              alt="Profile"
-              className="object-cover"
-            />
+            <AvatarImage src="" alt="Profile" className="object-cover" />
             <AvatarFallback className="bg-primary text-white">
               {getNameInitial()}
             </AvatarFallback>
@@ -76,7 +71,9 @@ export const HeaderProfile = () => {
               {profile?.full_name || "User"}
             </span>
             <span className="text-xs text-gray-500">
-              {profile?.user_type ? formatUserType(profile.user_type) : "Loading..."}
+              {profile?.user_type
+                ? formatUserType(profile.user_type)
+                : "Loading..."}
             </span>
           </div>
           <ChevronDown className="h-4 w-4 text-gray-500" />

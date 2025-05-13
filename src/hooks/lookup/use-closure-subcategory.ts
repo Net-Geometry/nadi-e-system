@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export type ClosureSubcategory = {
@@ -43,7 +42,9 @@ export function useClosureSubcategory() {
 
   const addMutation = useMutation({
     mutationFn: async (subcategory: Partial<ClosureSubcategory>) => {
-      const { error } = await supabase.from("nd_closure_subcategories").insert([subcategory]);
+      const { error } = await supabase
+        .from("nd_closure_subcategories")
+        .insert([subcategory]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -82,7 +83,10 @@ export function useClosureSubcategory() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from("nd_closure_subcategories").delete().eq("id", id);
+      const { error } = await supabase
+        .from("nd_closure_subcategories")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -98,11 +102,16 @@ export function useClosureSubcategory() {
     },
   });
 
-  const addClosureSubcategory = async (subcategory: Partial<ClosureSubcategory>) => {
+  const addClosureSubcategory = async (
+    subcategory: Partial<ClosureSubcategory>
+  ) => {
     return addMutation.mutateAsync(subcategory);
   };
 
-  const updateClosureSubcategory = async (id: number, data: Partial<ClosureSubcategory>) => {
+  const updateClosureSubcategory = async (
+    id: number,
+    data: Partial<ClosureSubcategory>
+  ) => {
     return updateMutation.mutateAsync({ id, ...data });
   };
 

@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export type CategoryArea = {
@@ -80,7 +79,10 @@ export function useCategoryArea() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from("nd_category_area").delete().eq("id", id);
+      const { error } = await supabase
+        .from("nd_category_area")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -100,7 +102,10 @@ export function useCategoryArea() {
     return addMutation.mutateAsync(area);
   };
 
-  const updateCategoryArea = async (id: number, data: Partial<CategoryArea>) => {
+  const updateCategoryArea = async (
+    id: number,
+    data: Partial<CategoryArea>
+  ) => {
     return updateMutation.mutateAsync({ id, ...data });
   };
 

@@ -1,6 +1,5 @@
-
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Profile } from "@/types/auth";
 
 export const useUsers = () => {
@@ -14,10 +13,11 @@ export const useUsers = () => {
     return data as Profile[];
   };
 
-  const useUsersQuery = () => useQuery({
-    queryKey: ["users"],
-    queryFn: fetchUsers,
-  });
+  const useUsersQuery = () =>
+    useQuery({
+      queryKey: ["users"],
+      queryFn: fetchUsers,
+    });
 
   return { useUsersQuery };
 };

@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export type ClosureCategory = {
@@ -42,7 +41,9 @@ export function useClosureCategory() {
 
   const addMutation = useMutation({
     mutationFn: async (category: Partial<ClosureCategory>) => {
-      const { error } = await supabase.from("nd_closure_categories").insert([category]);
+      const { error } = await supabase
+        .from("nd_closure_categories")
+        .insert([category]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -81,7 +82,10 @@ export function useClosureCategory() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from("nd_closure_categories").delete().eq("id", id);
+      const { error } = await supabase
+        .from("nd_closure_categories")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -101,7 +105,10 @@ export function useClosureCategory() {
     return addMutation.mutateAsync(category);
   };
 
-  const updateClosureCategory = async (id: number, data: Partial<ClosureCategory>) => {
+  const updateClosureCategory = async (
+    id: number,
+    data: Partial<ClosureCategory>
+  ) => {
     return updateMutation.mutateAsync({ id, ...data });
   };
 

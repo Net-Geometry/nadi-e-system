@@ -1,6 +1,5 @@
-
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAuth } from "@/hooks/useAuth";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,10 +21,34 @@ export function LeaveBalanceCards() {
       // In a real app, this would fetch from the database
       // For now, returning mock data
       return [
-        { type: "Annual", total: 16, used: 5, remaining: 11, pendingApprovals: 2 },
-        { type: "Medical", total: 14, used: 2, remaining: 12, pendingApprovals: 0 },
-        { type: "Replacement", total: 5, used: 0, remaining: 5, pendingApprovals: 1 },
-        { type: "Emergency", total: 3, used: 1, remaining: 2, pendingApprovals: 0 }
+        {
+          type: "Annual",
+          total: 16,
+          used: 5,
+          remaining: 11,
+          pendingApprovals: 2,
+        },
+        {
+          type: "Medical",
+          total: 14,
+          used: 2,
+          remaining: 12,
+          pendingApprovals: 0,
+        },
+        {
+          type: "Replacement",
+          total: 5,
+          used: 0,
+          remaining: 5,
+          pendingApprovals: 1,
+        },
+        {
+          type: "Emergency",
+          total: 3,
+          used: 1,
+          remaining: 2,
+          pendingApprovals: 0,
+        },
       ] as LeaveBalance[];
     },
   });

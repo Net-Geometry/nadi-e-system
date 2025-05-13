@@ -1,7 +1,6 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Profile,
   AuditLog,
@@ -10,7 +9,7 @@ import {
   processAuditLogs,
   processSessions,
   filterLogs,
-  filterSessions
+  filterSessions,
 } from "@/components/activity/utils/activity-utils";
 
 type FilterType = "all" | "login" | "logout" | "actions";
@@ -20,9 +19,9 @@ interface UseActivityLogsProps {
   defaultFilter?: FilterType;
 }
 
-export const useActivityLogs = ({ 
-  userFilter, 
-  defaultFilter = "all"
+export const useActivityLogs = ({
+  userFilter,
+  defaultFilter = "all",
 }: UseActivityLogsProps = {}) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterBy, setFilterBy] = useState<FilterType>(defaultFilter);
@@ -31,10 +30,8 @@ export const useActivityLogs = ({
   const { data: profiles = [] } = useQuery({
     queryKey: ["profiles", userFilter],
     queryFn: async () => {
-      let query = supabase
-        .from("profiles")
-        .select("id, email, user_type");
-      
+      let query = supabase.from("profiles").select("id, email, user_type");
+
       // If userFilter is provided, only fetch those profiles
       if (userFilter && userFilter.length > 0) {
         query = query.in("id", userFilter);
@@ -47,14 +44,14 @@ export const useActivityLogs = ({
         throw error;
       }
       return data as Profile[];
-    }
+    },
   });
 
   // Create a lookup map for profiles
   const profileMap = createProfileMap(profiles);
 
   // Get array of profile IDs if needed
-  const profileIds = profiles.map(profile => profile.id);
+  const profileIds = profiles.map((profile) => profile.id);
 
   // Fetch audit logs
   const {
@@ -73,7 +70,7 @@ export const useActivityLogs = ({
       if (userFilter && userFilter.length > 0) {
         query = query.in("user_id", userFilter);
       }
-      
+
       // Apply action type filter
       if (filterBy === "login") {
         query = query.eq("action", "login");
@@ -147,6 +144,6 @@ export const useActivityLogs = ({
     isLoadingLogs,
     isLoadingSessions,
     handleRefresh,
-    profileMap
+    profileMap,
   };
 };

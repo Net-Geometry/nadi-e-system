@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { UserTypeChips } from "@/components/user-groups/UserTypeChips";
 import { formatDate } from "@/utils/date-utils";
 import { Info } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
 interface Announcement {

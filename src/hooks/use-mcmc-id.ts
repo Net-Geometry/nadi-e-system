@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const useMCMCPID = () => {
   const [mcmcID, setMCMCID] = useState<number | null>(null);
@@ -9,7 +9,9 @@ const useMCMCPID = () => {
   useEffect(() => {
     const fetchMCMCID = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
 
         const { data: mcmc, error: mcmcError } = await supabase

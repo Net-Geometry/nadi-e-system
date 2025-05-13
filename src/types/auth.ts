@@ -5,7 +5,7 @@ export type UserType =
   | "sso"
   | "dusp_admin"
   | "super_admin"
-  | "tp_region"
+  | "tp_pic"
   | "tp_hr"
   | "tp_finance"
   | "tp_admin"

@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface BillingFormDialogProps {
   open: boolean;
@@ -74,7 +74,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true); 
+    setIsSubmitting(true);
     const utilityData = {
       site_id: Number(siteId),
       type_id: Number(formState.type_id),
@@ -84,7 +84,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
       amount_bill: Number(formState.amount_bill),
       remark: formState.remark,
     };
-  
+
     let result;
     try {
       if (initialData) {
@@ -105,7 +105,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
           siteId
         );
       }
-  
+
       if (result.success) {
         toast({
           title: "Success",
@@ -205,7 +205,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
                   </SelectContent>
                 </Select>
               </div>
-  
+
               <div className="flex space-x-4">
                 <div className="w-1/2">
                   <Label htmlFor="year">Year</Label>
@@ -218,7 +218,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
                     required
                   />
                 </div>
-  
+
                 <div className="w-1/2">
                   <Label htmlFor="month">Month</Label>
                   <Select
@@ -253,7 +253,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
                   </Select>
                 </div>
               </div>
-  
+
               <div className="space-y-2">
                 <Label htmlFor="reference_no">Reference No</Label>
                 <Input
@@ -310,8 +310,15 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || insertLoading || updateLoading}>
-              {isSubmitting ? "Submitting..." : initialData ? "Update" : "Submit"}
+            <Button
+              type="submit"
+              disabled={isSubmitting || insertLoading || updateLoading}
+            >
+              {isSubmitting
+                ? "Submitting..."
+                : initialData
+                ? "Update"
+                : "Submit"}
             </Button>
           </DialogFooter>
         </form>

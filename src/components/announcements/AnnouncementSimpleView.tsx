@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { UserType } from "@/types/auth";

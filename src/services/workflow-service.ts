@@ -1,6 +1,10 @@
-
-import { supabase } from "@/lib/supabase";
-import { ApprovalAction, WorkOrderData, WorkOrderStatus, WorkflowDefinition } from "@/types/workflow";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  ApprovalAction,
+  WorkOrderData,
+  WorkOrderStatus,
+  WorkflowDefinition,
+} from "@/types/workflow";
 
 // Predefined workflow definitions
 const workOrderApprovalFlow: WorkflowDefinition = {
@@ -9,7 +13,7 @@ const workOrderApprovalFlow: WorkflowDefinition = {
   name: "Work Order Approval Flow",
   description: "Approval process for work orders completion",
   initialStep: "completion-approval",
-  isActive: true,  // Added the required isActive property
+  isActive: true, // Added the required isActive property
   moduleId: "work-orders", // Added optional moduleId property
   steps: [
     {
@@ -21,7 +25,7 @@ const workOrderApprovalFlow: WorkflowDefinition = {
       nextStepOnReject: "rejection-reason-approval",
       statusOnApprove: "complete",
       statusOnReject: "incomplete",
-      requireReason: true
+      requireReason: true,
     },
     {
       id: "rejection-reason-approval",
@@ -32,9 +36,9 @@ const workOrderApprovalFlow: WorkflowDefinition = {
       nextStepOnReject: null,
       statusOnApprove: "in_progress",
       statusOnReject: "cancelled",
-      requireReason: true
-    }
-  ]
+      requireReason: true,
+    },
+  ],
 };
 
 const trainingReportApprovalFlow: WorkflowDefinition = {
@@ -43,7 +47,7 @@ const trainingReportApprovalFlow: WorkflowDefinition = {
   name: "Staff Training Report Approval",
   description: "Approval process for staff training reports",
   initialStep: "tp-approval",
-  isActive: true,  // Added the required isActive property
+  isActive: true, // Added the required isActive property
   moduleId: "training", // Added optional moduleId property
   steps: [
     {
@@ -55,9 +59,9 @@ const trainingReportApprovalFlow: WorkflowDefinition = {
       nextStepOnReject: null,
       statusOnApprove: "complete",
       statusOnReject: "rejected",
-      requireReason: true
-    }
-  ]
+      requireReason: true,
+    },
+  ],
 };
 
 const centerManagementApprovalFlow: WorkflowDefinition = {
@@ -66,7 +70,7 @@ const centerManagementApprovalFlow: WorkflowDefinition = {
   name: "Center Management Approval",
   description: "Approval process for center relocation or temporary closure",
   initialStep: "admin-review",
-  isActive: true,  // Added the required isActive property
+  isActive: true, // Added the required isActive property
   moduleId: "center-management", // Added optional moduleId property
   steps: [
     {
@@ -78,16 +82,16 @@ const centerManagementApprovalFlow: WorkflowDefinition = {
       nextStepOnReject: null,
       statusOnApprove: "approved",
       statusOnReject: "rejected",
-      requireReason: true
-    }
-  ]
+      requireReason: true,
+    },
+  ],
 };
 
 // Map of workflow definitions by ID
 const workflowDefinitions: Record<string, WorkflowDefinition> = {
   "work-order-approval": workOrderApprovalFlow,
   "training-report-approval": trainingReportApprovalFlow,
-  "center-management-approval": centerManagementApprovalFlow
+  "center-management-approval": centerManagementApprovalFlow,
 };
 
 export const WorkflowService = {
@@ -102,15 +106,20 @@ export const WorkflowService = {
   },
 
   // Start a new workflow process for a work order
-  async startWorkOrderWorkflow(workOrderId: string, createdBy: string): Promise<WorkOrderData | null> {
+  async startWorkOrderWorkflow(
+    workOrderId: string,
+    createdBy: string
+  ): Promise<WorkOrderData | null> {
     const workflow = workflowDefinitions["work-order-approval"];
-    const initialStep = workflow.steps.find(step => step.id === workflow.initialStep);
-    
+    const initialStep = workflow.steps.find(
+      (step) => step.id === workflow.initialStep
+    );
+
     if (!initialStep) {
       console.error("Initial step not found in workflow definition");
       return null;
     }
-    
+
     // Create a work order record with workflow data
     const workOrderData: Partial<WorkOrderData> = {
       id: workOrderId,
@@ -119,21 +128,19 @@ export const WorkflowService = {
       createdAt: new Date().toISOString(),
       currentStepId: initialStep.id,
       requiredApprovals: initialStep.approverRoles,
-      approvals: []
+      approvals: [],
     };
 
     try {
       // Update the work order in the database with workflow data
-      const { data, error } = await supabase
-        .from("workflows")
-        .insert({
-          entity_id: workOrderId,
-          entity_type: "work_order",
-          workflow_id: workflow.id,
-          current_step: initialStep.id,
-          status: "pending_approval",
-          data: workOrderData
-        });
+      const { data, error } = await supabase.from("workflows").insert({
+        entity_id: workOrderId,
+        entity_type: "work_order",
+        workflow_id: workflow.id,
+        current_step: initialStep.id,
+        status: "pending_approval",
+        data: workOrderData,
+      });
 
       if (error) {
         console.error("Error starting workflow:", error);
@@ -176,12 +183,15 @@ export const WorkflowService = {
       // Get the workflow definition
       const workflowDef = workflowDefinitions[workflowData.workflow_id];
       if (!workflowDef) {
-        console.error("Workflow definition not found", workflowData.workflow_id);
+        console.error(
+          "Workflow definition not found",
+          workflowData.workflow_id
+        );
         return { success: false };
       }
 
       // Get the current step
-      const currentStep = workflowDef.steps.find(step => step.id === stepId);
+      const currentStep = workflowDef.steps.find((step) => step.id === stepId);
       if (!currentStep) {
         console.error("Current step not found in workflow definition");
         return { success: false };
@@ -189,8 +199,12 @@ export const WorkflowService = {
 
       // Determine the next step and status based on the action
       const isApproved = action === "approve";
-      const nextStepId = isApproved ? currentStep.nextStepOnApprove : currentStep.nextStepOnReject;
-      const newStatus = isApproved ? currentStep.statusOnApprove : currentStep.statusOnReject;
+      const nextStepId = isApproved
+        ? currentStep.nextStepOnApprove
+        : currentStep.nextStepOnReject;
+      const newStatus = isApproved
+        ? currentStep.statusOnApprove
+        : currentStep.statusOnReject;
 
       // Add the approval to the work order data
       const workOrderData = workflowData.data as WorkOrderData;
@@ -201,8 +215,8 @@ export const WorkflowService = {
           approverId,
           approved: isApproved,
           reason,
-          timestamp: new Date().toISOString()
-        }
+          timestamp: new Date().toISOString(),
+        },
       ];
 
       // Update the work order data with the new approval
@@ -210,7 +224,7 @@ export const WorkflowService = {
         ...workOrderData,
         approvals: updatedApprovals,
         status: newStatus,
-        currentStepId: nextStepId || null
+        currentStepId: nextStepId || null,
       };
 
       if (!isApproved && reason) {
@@ -223,7 +237,7 @@ export const WorkflowService = {
         .update({
           current_step: nextStepId,
           status: newStatus,
-          data: updatedData
+          data: updatedData,
         })
         .eq("entity_id", workOrderId)
         .eq("entity_type", "work_order");
@@ -242,13 +256,16 @@ export const WorkflowService = {
         .eq("id", workOrderId);
 
       if (workOrderUpdateError) {
-        console.error("Error updating work order status:", workOrderUpdateError);
+        console.error(
+          "Error updating work order status:",
+          workOrderUpdateError
+        );
       }
 
       return {
         success: true,
         newStatus,
-        nextStep: nextStepId || undefined
+        nextStep: nextStepId || undefined,
       };
     } catch (error) {
       console.error("Error in processApproval:", error);
@@ -257,7 +274,10 @@ export const WorkflowService = {
   },
 
   // Get active workflows for a user based on their roles
-  async getActiveWorkflowsForUser(userId: string, userRoles: string[]): Promise<any[]> {
+  async getActiveWorkflowsForUser(
+    userId: string,
+    userRoles: string[]
+  ): Promise<any[]> {
     try {
       // Get workflows that require approval from any of the user's roles
       const { data: workflows, error } = await supabase
@@ -271,19 +291,23 @@ export const WorkflowService = {
       }
 
       // Filter workflows where the current step requires approval from the user's roles
-      return workflows.filter(workflow => {
+      return workflows.filter((workflow) => {
         const workflowDef = workflowDefinitions[workflow.workflow_id];
         if (!workflowDef) return false;
-        
-        const currentStep = workflowDef.steps.find(step => step.id === workflow.current_step);
+
+        const currentStep = workflowDef.steps.find(
+          (step) => step.id === workflow.current_step
+        );
         if (!currentStep) return false;
-        
+
         // Check if any of the user's roles are in the required approver roles
-        return currentStep.approverRoles.some(role => userRoles.includes(role));
+        return currentStep.approverRoles.some((role) =>
+          userRoles.includes(role)
+        );
       });
     } catch (error) {
       console.error("Error in getActiveWorkflowsForUser:", error);
       return [];
     }
-  }
+  },
 };

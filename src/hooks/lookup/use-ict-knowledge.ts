@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export type ICTKnowledge = {
@@ -42,7 +41,9 @@ export function useICTKnowledge() {
 
   const addMutation = useMutation({
     mutationFn: async (knowledge: Partial<ICTKnowledge>) => {
-      const { error } = await supabase.from("nd_ict_knowledge").insert([knowledge]);
+      const { error } = await supabase
+        .from("nd_ict_knowledge")
+        .insert([knowledge]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -81,7 +82,10 @@ export function useICTKnowledge() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from("nd_ict_knowledge").delete().eq("id", id);
+      const { error } = await supabase
+        .from("nd_ict_knowledge")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -101,7 +105,10 @@ export function useICTKnowledge() {
     return addMutation.mutateAsync(knowledge);
   };
 
-  const updateICTKnowledge = async (id: number, data: Partial<ICTKnowledge>) => {
+  const updateICTKnowledge = async (
+    id: number,
+    data: Partial<ICTKnowledge>
+  ) => {
     return updateMutation.mutateAsync({ id, ...data });
   };
 

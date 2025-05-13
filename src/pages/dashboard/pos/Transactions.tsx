@@ -9,17 +9,17 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const Transactions = () => {
   const { data: transactions, isLoading } = useQuery({
-    queryKey: ['transactions'],
+    queryKey: ["transactions"],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('transactions')
-        .select('*')
-        .order('created_at', { ascending: false });
-      
+        .from("transactions")
+        .select("*")
+        .order("created_at", { ascending: false });
+
       if (error) throw error;
       return data;
     },

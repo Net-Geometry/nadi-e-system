@@ -2,7 +2,7 @@ import { useState } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { PermissionGroup } from "@/components/permissions/PermissionGroup";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Permission, groupPermissionsByModule } from "@/lib/permissions";
 
 const fetchPermissions = async () => {
@@ -28,11 +28,13 @@ const AccessControl = () => {
     meta: {
       onError: (error: Error) => {
         console.error("Query error:", error);
-      }
-    }
+      },
+    },
   });
 
-  const permissionGroups = permissions ? groupPermissionsByModule(permissions) : [];
+  const permissionGroups = permissions
+    ? groupPermissionsByModule(permissions)
+    : [];
   const [selectedPermissions, setSelectedPermissions] = useState<string[]>([]);
 
   const handleTogglePermission = (permissionId: string) => {
@@ -73,4 +75,3 @@ const AccessControl = () => {
 };
 
 export default AccessControl;
-

@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WorkflowConfig, WorkflowConfigStep } from "@/types/workflow";
 import { useParams } from "react-router-dom";
@@ -77,22 +76,23 @@ export function useConfigData() {
         };
 
         // Map database fields (snake_case) to our model fields (camelCase)
-        const mappedSteps: WorkflowConfigStep[] = stepsData.map((step: any) => ({
-          id: step.id,
-          name: step.name,
-          description: step.description || "",
-          order: step.order_index,
-          approverUserTypes: step.approver_user_types || [],
-          conditions: step.conditions || [],
-          nextStepId: step.next_step_id,
-          isStartStep: step.is_start_step || false,
-          isEndStep: step.is_end_step || false,
-          slaHours: step.sla_hours || 24,
-        }));
+        const mappedSteps: WorkflowConfigStep[] = stepsData.map(
+          (step: any) => ({
+            id: step.id,
+            name: step.name,
+            description: step.description || "",
+            order: step.order_index,
+            approverUserTypes: step.approver_user_types || [],
+            conditions: step.conditions || [],
+            nextStepId: step.next_step_id,
+            isStartStep: step.is_start_step || false,
+            isEndStep: step.is_end_step || false,
+            slaHours: step.sla_hours || 24,
+          })
+        );
 
         setConfig(mappedConfig);
         setSteps(mappedSteps);
-
       } catch (error) {
         console.error("Error fetching workflow configuration:", error);
         toast({
@@ -114,6 +114,6 @@ export function useConfigData() {
     steps,
     setSteps,
     isLoading,
-    isNew
+    isNew,
   };
 }

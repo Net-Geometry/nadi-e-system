@@ -12,10 +12,21 @@ import { TableRowNumber } from "@/components/ui/TableRowNumber";
 import { Edit, Eye, FilePlus, Settings, Trash2 } from "lucide-react";
 import InsuranceFormDialog from "../InsuranceFormDialog";
 import { useSiteInsurance } from "../hook/use-site-insurance";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { BUCKET_NAME_SITE_INSURANCE } from "@/integrations/supabase/client";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast"; // Import the useToast hook
 import InsurancePageView from "./InsurancePageView";
 
@@ -33,7 +44,6 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
   const { toast } = useToast(); // Initialize the toast hook
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false); // State for view dialog
   const [viewData, setViewData] = useState<any>(null); // State for selected data to view
-
 
   const handleView = (insurance: any) => {
     setViewData(insurance); // Set the selected insurance data
@@ -63,12 +73,17 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
         .single();
 
       if (attachmentError) {
-        console.warn("No associated file found or error fetching file path:", attachmentError);
+        console.warn(
+          "No associated file found or error fetching file path:",
+          attachmentError
+        );
       } else if (attachmentData?.file_path) {
         const filePath = attachmentData.file_path;
 
         // Extract the part of the file path after the bucket name
-        const relativeFilePath = filePath.split(`${BUCKET_NAME_SITE_INSURANCE}/`)[1];
+        const relativeFilePath = filePath.split(
+          `${BUCKET_NAME_SITE_INSURANCE}/`
+        )[1];
 
         // Step 2: Delete the file from storage
         const { error: storageError } = await supabase.storage
@@ -79,7 +94,8 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
           console.error("Error deleting file from storage:", storageError);
           toast({
             title: "Error",
-            description: "Failed to delete the associated file. Please try again.",
+            description:
+              "Failed to delete the associated file. Please try again.",
             variant: "destructive",
           });
           return;
@@ -92,10 +108,14 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
           .eq("site_remark_id", deleteRecordId);
 
         if (attachmentDeleteError) {
-          console.error("Error deleting from nd_site_attachment:", attachmentDeleteError);
+          console.error(
+            "Error deleting from nd_site_attachment:",
+            attachmentDeleteError
+          );
           toast({
             title: "Error",
-            description: "Failed to delete the attachment record. Please try again.",
+            description:
+              "Failed to delete the attachment record. Please try again.",
             variant: "destructive",
           });
           return;
@@ -112,7 +132,8 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
         console.error("Error deleting from nd_insurance_report:", reportError);
         toast({
           title: "Error",
-          description: "Failed to delete the insurance report. Please try again.",
+          description:
+            "Failed to delete the insurance report. Please try again.",
           variant: "destructive",
         });
         return;
@@ -204,17 +225,25 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
                 <TableCell>{item.insurance_type_name ?? "N/A"}</TableCell>
                 <TableCell>
                   {item.start_date
-                    ? new Intl.DateTimeFormat("en-GB").format(new Date(item.start_date))
+                    ? new Intl.DateTimeFormat("en-GB").format(
+                        new Date(item.start_date)
+                      )
                     : "N/A"}
                 </TableCell>
                 <TableCell>
                   {item.end_date
-                    ? new Intl.DateTimeFormat("en-GB").format(new Date(item.end_date))
+                    ? new Intl.DateTimeFormat("en-GB").format(
+                        new Date(item.end_date)
+                      )
                     : "N/A"}
                 </TableCell>
                 <TableCell>
                   {item.file_path ? (
-                    <a href={item.file_path} target="_blank" rel="noopener noreferrer">
+                    <a
+                      href={item.file_path}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
                       View File
                     </a>
                   ) : (
@@ -223,18 +252,26 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
                 </TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
-                  <Tooltip>
+                    <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" onClick={() => handleView(item)}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleView(item)}
+                        >
                           <Eye className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
                       <TooltipContent>View</TooltipContent>
                     </Tooltip>
-                    
+
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" onClick={() => handleEdit(item)}>
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => handleEdit(item)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
@@ -270,7 +307,7 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
         onOpenChange={setIsViewDialogOpen}
         data={viewData}
       />
-      
+
       <InsuranceFormDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
@@ -284,11 +321,15 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this record? This action cannot be undone.
+              Are you sure you want to delete this record? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete}>

@@ -1,5 +1,4 @@
-
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState } from "react";
 
 export type SiteProfile = {
@@ -16,17 +15,17 @@ export function useSiteProfiles() {
 
   useEffect(() => {
     let isMounted = true;
-    
+
     async function fetchProfiles() {
       try {
         setLoading(true);
-        
+
         const { data, error } = await supabase
-          .from('nd_site_profile_name')
-          .select('id, sitename, fullname, standard_code');
+          .from("nd_site_profile_name")
+          .select("id, sitename, fullname, standard_code");
 
         if (error) throw error;
-        
+
         // Only update state if component is still mounted
         if (isMounted) {
           // Ensure we always set a valid array
@@ -35,7 +34,9 @@ export function useSiteProfiles() {
       } catch (err) {
         console.error("Error fetching site profiles:", err);
         if (isMounted) {
-          setError(err instanceof Error ? err.message : "Failed to load site profiles");
+          setError(
+            err instanceof Error ? err.message : "Failed to load site profiles"
+          );
           // Set empty array on error to prevent undefined errors
           setProfiles([]);
         }
@@ -47,7 +48,7 @@ export function useSiteProfiles() {
     }
 
     fetchProfiles();
-    
+
     // Cleanup function to prevent state updates after unmounting
     return () => {
       isMounted = false;

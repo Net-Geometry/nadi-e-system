@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { type Holiday } from "@/utils/holidayUtils";
 import { formatDateForDB } from "@/utils/holidayUtils";
 import { type HolidayFormValues } from "@/components/holidays/forms/HolidayFormSchema";

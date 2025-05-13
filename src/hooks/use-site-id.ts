@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useSiteId = () => {
   const [siteId, setSiteId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchSiteId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         console.error("User ID is undefined");
         return;

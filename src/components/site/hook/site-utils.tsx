@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Organization } from "@/types/organization";
 
 import {
@@ -476,9 +476,7 @@ export const fetchOrganization = async (): Promise<Organization[]> => {
 
 export const fetchAllStates = async (): Promise<State[]> => {
   try {
-    const { data, error } = await supabase
-      .from("nd_state")
-      .select("*");
+    const { data, error } = await supabase.from("nd_state").select("*");
 
     if (error) throw error;
     return data as State[];
@@ -490,9 +488,7 @@ export const fetchAllStates = async (): Promise<State[]> => {
 
 export const fetchAllDistricts = async (): Promise<District[]> => {
   try {
-    const { data, error } = await supabase
-      .from("nd_district")
-      .select("*");
+    const { data, error } = await supabase.from("nd_district").select("*");
 
     if (error) throw error;
     return data as District[];
@@ -504,9 +500,7 @@ export const fetchAllDistricts = async (): Promise<District[]> => {
 
 export const fetchAllMukims = async (): Promise<Mukim[]> => {
   try {
-    const { data, error } = await supabase
-      .from("nd_mukims")
-      .select("*");
+    const { data, error } = await supabase.from("nd_mukims").select("*");
     if (error) throw error;
     return data as Mukim[];
   } catch (error) {
@@ -517,9 +511,7 @@ export const fetchAllMukims = async (): Promise<Mukim[]> => {
 
 export const fetchAllParliaments = async (): Promise<Parliament[]> => {
   try {
-    const { data, error } = await supabase
-      .from("nd_parliaments")
-      .select("*");
+    const { data, error } = await supabase.from("nd_parliaments").select("*");
 
     if (error) throw error;
     return data as Parliament[];
@@ -531,9 +523,7 @@ export const fetchAllParliaments = async (): Promise<Parliament[]> => {
 
 export const fetchAllDuns = async (): Promise<Dun[]> => {
   try {
-    const { data, error } = await supabase
-      .from("nd_duns")
-      .select("*");
+    const { data, error } = await supabase.from("nd_duns").select("*");
 
     if (error) throw error;
     return data as Dun[];

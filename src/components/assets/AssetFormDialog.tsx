@@ -20,7 +20,7 @@ import { useBrand } from "@/hooks/use-brand";
 import { useOrganizations } from "@/hooks/use-organizations";
 import { useToast } from "@/hooks/use-toast";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Asset } from "@/types/asset";
 import { Site, Space } from "@/types/site";
 import { useQuery, useQueryClient } from "@tanstack/react-query";

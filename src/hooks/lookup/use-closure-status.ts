@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export type ClosureStatus = {
@@ -42,7 +41,9 @@ export function useClosureStatus() {
 
   const addMutation = useMutation({
     mutationFn: async (status: Partial<ClosureStatus>) => {
-      const { error } = await supabase.from("nd_closure_status").insert([status]);
+      const { error } = await supabase
+        .from("nd_closure_status")
+        .insert([status]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -81,7 +82,10 @@ export function useClosureStatus() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from("nd_closure_status").delete().eq("id", id);
+      const { error } = await supabase
+        .from("nd_closure_status")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -101,7 +105,10 @@ export function useClosureStatus() {
     return addMutation.mutateAsync(status);
   };
 
-  const updateClosureStatus = async (id: number, data: Partial<ClosureStatus>) => {
+  const updateClosureStatus = async (
+    id: number,
+    data: Partial<ClosureStatus>
+  ) => {
     return updateMutation.mutateAsync({ id, ...data });
   };
 

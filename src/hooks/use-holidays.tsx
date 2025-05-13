@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { type Holiday, type State } from "@/utils/holidayUtils";
 
 export function useHolidays(initialYear: number = new Date().getFullYear()) {

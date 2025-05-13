@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const useMemberID = () => {
   const [memberID, setMemberID] = useState<number | null>(null);
@@ -9,7 +9,9 @@ const useMemberID = () => {
   useEffect(() => {
     const fetchMemberID = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
 
         const { data: member, error: memberError } = await supabase

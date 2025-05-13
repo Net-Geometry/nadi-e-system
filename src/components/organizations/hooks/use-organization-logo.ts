@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useFileUpload } from "@/hooks/use-file-upload";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useOrganizationLogo(initialLogoUrl: string = "") {
   const [logoFile, setLogoFile] = useState<File | null>(null);

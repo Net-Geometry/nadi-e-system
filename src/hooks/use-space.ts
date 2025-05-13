@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Space } from "@/types/site";
 import { useEffect, useState } from "react";
 

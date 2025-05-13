@@ -4,16 +4,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Search, Plus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const Products = () => {
   const { data: products, isLoading } = useQuery({
-    queryKey: ['products'],
+    queryKey: ["products"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*');
-      
+      const { data, error } = await supabase.from("products").select("*");
+
       if (error) throw error;
       return data;
     },
@@ -35,10 +33,7 @@ const Products = () => {
           <div className="flex items-center space-x-2">
             <div className="relative flex-1">
               <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search products..."
-                className="pl-8"
-              />
+              <Input placeholder="Search products..." className="pl-8" />
             </div>
           </div>
         </CardHeader>

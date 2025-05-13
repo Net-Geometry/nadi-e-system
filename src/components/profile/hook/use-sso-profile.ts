@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useSSOProfile = () => {
   const fetchSSOProfile = async () => {
@@ -14,9 +14,11 @@ export const useSSOProfile = () => {
     // Fetch the SSO profile data
     const { data: profile, error: profileError } = await supabase
       .from("nd_sso_profile")
-      .select(`
+      .select(
+        `
       *, position_id (id, name)
-    `)
+    `
+      )
       .eq("user_id", userId)
       .single();
 

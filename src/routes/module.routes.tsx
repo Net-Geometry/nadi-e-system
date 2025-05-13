@@ -44,12 +44,22 @@ import CreateAnnouncement from "@/pages/dashboard/announcements/CreateAnnounceme
 import Takwim from "@/pages/dashboard/takwim/Takwim";
 import DashboardPage from "@/pages/dashboard/Dashboard";
 import BookingManagement from "@/pages/dashboard/site/BookingManagement";
-import NADIClosure from "@/pages/dashboard/site/NADIClosure";
+import NADIClosure from "@/pages/dashboard/site/SiteClosure";
 import Usage from "@/pages/dashboard/site/Usage";
 import KPI from "@/pages/dashboard/site/KPIPerformance";
 import NMS from "@/pages/dashboard/site/NMS";
 import SiteManagementDashboard from "@/pages/dashboard/main-dashboard/SiteManagementDashboard";
+import ReportDashboard from "@/pages/report/ReportDashboard";
+import ReportNadiESystem from "@/pages/report/ReportNadiESystem";
+import ReportInternetAccess from "@/pages/report/ReportInternetAccess";
+import ReportSiteManagement from "@/pages/report/ReportSiteManagement";
+import ReportHRSalary from "@/pages/report/ReportHRSalary";
+import ReportTraining from "@/pages/report/ReportTraining";
+import ReportCM from "@/pages/report/ReportCM";
+import ReportSmartService from "@/pages/report/ReportSmartService";
 import UtilitiesBilling from "@/pages/dashboard/site/UtilitiesBilling";
+import NadiDashboard from "@/pages/dashboard/NadiDashboard";
+import IotDashboard from "@/pages/dashboard/IotDashboard";
 
 export const moduleRoutes: RouteObject[] = [
   // HR Routes
@@ -366,7 +376,7 @@ export const moduleRoutes: RouteObject[] = [
     path: "/site-management/utilities-billing",
     element: (
       // <ProtectedRoute requiredPermission="view_site_details">
-      <UtilitiesBilling/>
+      <UtilitiesBilling />
       // </ProtectedRoute>
     ),
   },
@@ -490,6 +500,88 @@ export const moduleRoutes: RouteObject[] = [
     element: (
       // <ProtectedRoute requiredPermission="">
       <SiteManagementDashboard />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports",
+    element: (
+      // <ProtectedRoute requiredPermission="s">
+      <ReportDashboard />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/nadi-e-system",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportNadiESystem />
+      // </ProtectedRoute>
+    )
+
+  },
+
+  {
+    path: "/nadi-dashboard",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <NadiDashboard />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/internet-access",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportInternetAccess />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/site-management",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportSiteManagement />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/hr-salary",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportHRSalary />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/training",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportTraining />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/cm",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportCM />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/reports/smart-services",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <ReportSmartService />
+      // </ProtectedRoute>
+    )
+  },
+  {
+    path: "/iot-dashboard",
+    element: (
+      // <ProtectedRoute requiredPermission="">
+      <IotDashboard />
       // </ProtectedRoute>
     ),
   },

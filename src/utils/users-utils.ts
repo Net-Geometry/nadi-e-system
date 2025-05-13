@@ -1,12 +1,19 @@
-
 import { Profile } from "@/types/auth";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
-export const fetchUsers = async (searchQuery: string, userTypeFilter: string) => {
-  let query = supabase.from("profiles").select("*").order("created_at", { ascending: false });
+export const fetchUsers = async (
+  searchQuery: string,
+  userTypeFilter: string
+) => {
+  let query = supabase
+    .from("profiles")
+    .select("*")
+    .order("created_at", { ascending: false });
 
   if (searchQuery) {
-    query = query.or(`full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`);
+    query = query.or(
+      `full_name.ilike.%${searchQuery}%,email.ilike.%${searchQuery}%`
+    );
   }
 
   if (userTypeFilter && userTypeFilter !== "all") {
@@ -20,10 +27,7 @@ export const fetchUsers = async (searchQuery: string, userTypeFilter: string) =>
 };
 
 export const deleteUsers = async (userIds: string[]) => {
-  const { error } = await supabase
-    .from("profiles")
-    .delete()
-    .in("id", userIds);
+  const { error } = await supabase.from("profiles").delete().in("id", userIds);
 
   if (error) throw error;
 };
