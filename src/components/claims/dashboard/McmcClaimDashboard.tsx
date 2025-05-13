@@ -6,70 +6,10 @@ import { useUserMetadata } from "@/hooks/use-user-metadata";
 import { FileText, Clock, CheckSquare, XSquare, Plus } from "lucide-react";
 import { useState } from "react";
 import { ClaimForm } from "@/components/claims/ClaimForm";
-import { ClaimList } from "@/components/claims/ClaimList";
-import { Badge } from "@/components/ui/badge";
+import { McmcClaimList } from "@/components/claims/McmcClaimList";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { exportSitesToCSV } from "@/utils/export-utils";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "@/components/ui/popover";
-import {
-  Command,
-  CommandInput,
-  CommandList,
-  CommandEmpty,
-  CommandGroup,
-  CommandItem,
-} from "@/components/ui/command";
-import { cn } from "@/lib/utils";
-import { Skeleton } from "@/components/ui/skeleton";
-import { TableSkeleton } from "@/components/site/TableSkeleton";
-import {
-  Box,
-  Package,
-  Settings,
-  DollarSign,
-  CheckCircle,
-  PauseCircle,
-  Building2,
-  Bell,
-  Search,
-  Download,
-  Filter,
-  RotateCcw,
-  Users,
-  Eye,
-  EyeOff,
-  Edit,
-  Trash2,
-  MapPin,
-  Calendar,
-  ChevronsUpDown,
-  X,
-  Check,
-  Building,
-} from "lucide-react";
+import { Search, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-
-import { PaginationComponent } from "@/components/ui/PaginationComponent";
 
 export function McmcClaimDashboard() {
   const userMetadata = useUserMetadata();
@@ -162,6 +102,61 @@ export function McmcClaimDashboard() {
           </CardContent>
         </Card>
       </div>
+      {/* Search and Filter Row */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 mb-4">
+        <div className="relative w-full sm:w-auto flex-1">
+          <Input
+            type="text"
+            placeholder="Search sites..."
+            // value={searchTerm}
+            // onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10 pr-4 h-10 w-full"
+          />
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+        </div>
+        <div className="flex gap-2 self-end">
+          {/* {selectedSites.length > 0 && (
+            <div className="flex items-center gap-2 bg-blue-50 border border-blue-200 rounded-md px-3 py-1.5 text-sm">
+              <span className="font-medium">
+                {selectedSites.length} sites selected
+              </span>
+              <div className="flex gap-2">
+                {isSuperAdmin ||
+                  (isMCMCUser && (
+                    <Button
+                      size="sm"
+                      variant="destructive"
+                      className="h-8"
+                      onClick={() => {
+                        setIsDeleteDialogOpen(true);
+                        setSiteToDelete(null); // Indicate that we're doing batch delete
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 mr-1" />
+                      Delete
+                    </Button>
+                  ))}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8"
+                  onClick={() => setSelectedSites([])}
+                >
+                  Clear
+                </Button>
+              </div>
+            </div>
+          )} */}
+          <Button
+            variant="outline"
+            className="flex items-center gap-2 bg-white"
+            // onClick={handleExport}
+          >
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+        </div>
+      </div>
 
       {showNewClaimForm ? (
         <ClaimForm
@@ -175,7 +170,7 @@ export function McmcClaimDashboard() {
           onCancel={() => setShowNewClaimForm(false)}
         />
       ) : (
-        <ClaimList />
+        <McmcClaimList />
       )}
     </div>
   );

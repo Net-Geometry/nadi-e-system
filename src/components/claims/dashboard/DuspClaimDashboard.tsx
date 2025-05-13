@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { FileText, Clock, CheckSquare, XSquare, Plus } from "lucide-react";
 import { useState } from "react";
 import { ClaimForm } from "@/components/claims/ClaimForm";
-import { ClaimList } from "@/components/claims/ClaimList";
+import { DuspClaimList } from "@/components/claims/DuspClaimList";
 
 export function DuspClaimDashboard() {
   const [showNewClaimForm, setShowNewClaimForm] = useState(false);
@@ -48,10 +48,6 @@ export function DuspClaimDashboard() {
             Manage and view claim submissions status.
           </p>
         </div>
-        <Button onClick={() => setShowNewClaimForm(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Claim
-        </Button>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -116,7 +112,7 @@ export function DuspClaimDashboard() {
           onCancel={() => setShowNewClaimForm(false)}
         />
       ) : (
-        <ClaimList />
+        <DuspClaimList />
       )}
     </div>
   );
