@@ -53,6 +53,14 @@ import Usage from "@/pages/dashboard/site/Usage";
 import UtilitiesBilling from "@/pages/dashboard/site/UtilitiesBilling";
 import Takwim from "@/pages/dashboard/takwim/Takwim";
 import WorkflowConfiguration from "@/pages/dashboard/workflow/WorkflowConfiguration";
+import ReportCM from "@/pages/report/ReportCM";
+import ReportDashboard from "@/pages/report/ReportDashboard";
+import ReportHRSalary from "@/pages/report/ReportHRSalary";
+import ReportInternetAccess from "@/pages/report/ReportInternetAccess";
+import ReportNadiESystem from "@/pages/report/ReportNadiESystem";
+import ReportSiteManagement from "@/pages/report/ReportSiteManagement";
+import ReportSmartService from "@/pages/report/ReportSmartService";
+import ReportTraining from "@/pages/report/ReportTraining";
 import WorkflowDashboard from "@/pages/workflow/Dashboard";
 import { RouteObject } from "react-router-dom";
 
