@@ -17,6 +17,7 @@ const SiteClosure = () => {
       // UserGroup: 7 = Member
       // UserGroup: 9 = Site
       // UserType: "super_admin" = Super Admin
+      // 
 
     return(
     <DashboardLayout>
