@@ -1,7 +1,25 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Mail, Phone, User } from "lucide-react";
 
-const ContactInfo = () => {
+type Staff = {
+  id: number;
+  fullname?: string;
+  work_email?: string;
+  position_id?: { name?: string };
+};
+
+type Site = {
+  website?: string;
+  email?: string;
+  // ...other fields if needed
+};
+
+type ContactInfoProps = {
+  staffData: Staff[];
+  site: Site;
+};
+
+const ContactInfo = ({ staffData, site }: ContactInfoProps) => {
   return (
     <Card className="mb-6" id="contact">
       <CardHeader>
@@ -16,9 +34,11 @@ const ContactInfo = () => {
                 <Phone className="h-5 w-5 text-muted-foreground" />
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
-                    Phone Number
+                    Website
                   </label>
-                  <p className="text-base">+60 3-8888 9999</p>
+                  <p className="text-base">
+                    {site?.website?.trim() ? site.website : "N/A"}
+                  </p>
                 </div>
               </div>
               <div className="flex items-center gap-3">
@@ -27,7 +47,9 @@ const ContactInfo = () => {
                   <label className="text-sm font-medium text-muted-foreground">
                     Email
                   </label>
-                  <p className="text-base">contact@nadi-cyberjaya.my</p>
+                  <p className="text-base">
+                    {site?.email?.trim() ? site.email : "N/A"}
+                  </p>
                 </div>
               </div>
             </div>
@@ -35,30 +57,26 @@ const ContactInfo = () => {
           <div>
             <h3 className="text-lg font-medium mb-4">Management</h3>
             <div className="space-y-4">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <User className="h-4 w-4" />
-                  <h4 className="font-medium">Manager</h4>
-                </div>
-                <div className="pl-6">
-                  <p className="text-sm">Nurul Huda binti Ahmad</p>
-                  <p className="text-sm text-muted-foreground">
-                    manager@nadi-cyberjaya.my
-                  </p>
-                </div>
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <User className="h-4 w-4" />
-                  <h4 className="font-medium">Assistant Manager</h4>
-                </div>
-                <div className="pl-6">
-                  <p className="text-sm">Lee Jia Xin</p>
-                  <p className="text-sm text-muted-foreground">
-                    assistant@nadi-cyberjaya.my
-                  </p>
-                </div>
-              </div>
+              {staffData?.length > 0 ? (
+                staffData.map((staff) => (
+                  <div key={staff.id}>
+                    <div className="flex items-center gap-2 mb-2">
+                      <User className="h-4 w-4" />
+                      <h4 className="font-medium">
+                        {staff.position_id?.name ?? "N/A"}
+                      </h4>
+                    </div>
+                    <div className="pl-6">
+                      <p className="text-sm">{staff.fullname ?? "N/A"}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {staff.work_email ?? "N/A"}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground">No staff data available.</p>
+              )}
             </div>
           </div>
         </div>

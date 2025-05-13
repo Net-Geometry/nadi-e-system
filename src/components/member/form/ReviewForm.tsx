@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogTrigger, DialogContent, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogTrigger, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { FileText, MapPin, User } from "lucide-react";
 
@@ -14,11 +14,22 @@ type ReviewData = {
   mobile_no: string;
   email: string;
   gender: string;
-  supervision: string;
   status_membership: string;
   status_entrepreneur: boolean | string | null;
   join_date: string;
   register_method: string;
+
+  isUnder12: boolean;
+  parent_fullname?: string;
+  parent_ic_no?: string;
+  parent_mobile_no?: string;
+  parent_relationship_id?: string;
+  parent_address1?: string;
+  parent_address2?: string;
+  parent_state_id?: string;
+  parent_district_id?: string;
+  parent_city?: string;
+  parent_postcode?: string;
 
   address1: string;
   address2: string;
@@ -59,6 +70,9 @@ type ReviewFormProps = ReviewData & {
   incomeLevels: { id: string; eng: string }[];
   ictKnowledge: { id: string; eng: string }[];
   educationLevels: { id: string; eng: string }[];
+  typeRelationships?: { id: string; eng: string }[];
+  registrationMethods?: { id: string; eng: string }[];
+
 };
 
 export function ReviewForm({
@@ -70,11 +84,22 @@ export function ReviewForm({
   mobile_no,
   email,
   gender,
-  supervision,
   status_membership,
   status_entrepreneur,
   join_date,
   register_method,
+
+  isUnder12,
+  parent_fullname,
+  parent_ic_no,
+  parent_mobile_no,
+  parent_relationship_id,
+  parent_address1,
+  parent_address2,
+  parent_state_id,
+  parent_district_id,
+  parent_city,
+  parent_postcode,
 
   address1,
   address2,
@@ -109,6 +134,8 @@ export function ReviewForm({
   incomeLevels,
   ictKnowledge,
   educationLevels,
+  typeRelationships,
+  registrationMethods,
 
   pdpa_declare,
   agree_declare,
@@ -128,12 +155,8 @@ export function ReviewForm({
 
   return (
     <>
-      <div className="flex flex-col gap-1 mb-6">
-        <h1 className="font-bold text-xl">Review Details</h1>
-        <p className="text-muted-foreground">
-          Review all the information you have provided and ensure that it is correct.
-        </p>
-      </div>
+      <DialogTitle className="mb-4">Review Details</DialogTitle>
+
       <div className="border rounded-md p-4">
         <h3 className="font-semibold mb-2 flex items-center">
           <User className="h-4 w-4 mr-2" />
@@ -184,12 +207,6 @@ export function ReviewForm({
             </p>
           </div>
 
-          {/* Supervisor IC Number */}
-          <div>
-            <span className="text-muted-foreground">Supervisor IC Number:</span>
-            <p>{supervision || "Not Provided"}</p>
-          </div>
-
           {/* Membership Status */}
           <div>
             <span className="text-muted-foreground">Membership Status:</span>
@@ -215,7 +232,7 @@ export function ReviewForm({
           {/* Date of Birth */}
           <div>
             <span className="text-muted-foreground">Date of Birth:</span>
-            <p>{dob || "Not Provided"}</p>
+            <p>{dob ? dob.split("-").reverse().join("/") : "Not Provided"}</p>
           </div>
 
           {/* Mobile Number */}
@@ -233,18 +250,97 @@ export function ReviewForm({
           {/* Join Date */}
           <div>
             <span className="text-muted-foreground">Join Date:</span>
-            <p>{join_date || "Not Provided"}</p>
+            <p>{join_date ? join_date.split("-").reverse().join("/") : "Not Provided"}</p>
           </div>
+
 
           {/* Registration Method */}
           <div>
             <span className="text-muted-foreground">Registration Method:</span>
-            <p>{register_method || "Not Provided"}</p>
+            <p>
+              {register_method
+                ? registrationMethods.find((registerMethod) => registerMethod.id.toString() === register_method)?.eng || "Not Specified"
+                : "Not Specified"}
+            </p>
           </div>
         </div>
       </div>
 
-      <div className="border rounded-md p-4">
+      {/* Guardian Personal Information - only show if isUnder12 is true */}
+      {isUnder12 && (
+        <div className="border rounded-md p-4 mt-4">
+          <h3 className="font-semibold mb-2 flex items-center">
+            <User className="h-4 w-4 mr-2" />
+            Guardian Personal Information
+          </h3>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            {/* Guardian Full Name */}
+            <div>
+              <span className="text-muted-foreground">Full Name:</span>
+              <p>{parent_fullname || "Not Provided"}</p>
+            </div>
+            {/* Guardian IC Number */}
+            <div>
+              <span className="text-muted-foreground">IC Number:</span>
+              <p>{parent_ic_no || "Not Provided"}</p>
+            </div>
+            {/* Guardian Mobile Number */}
+            <div>
+              <span className="text-muted-foreground">Mobile Number:</span>
+              <p>{parent_mobile_no || "Not Provided"}</p>
+            </div>
+            {/* Guardian Relationship */}
+            <div>
+              <span className="text-muted-foreground">Relationship:</span>
+              <p>
+                {parent_relationship_id
+                  ? typeRelationships?.find((rel) => rel.id.toString() === parent_relationship_id)?.eng || "Not Selected"
+                  : "Not Selected"}
+              </p>
+            </div>
+            {/* Guardian Address 1 */}
+            <div className="col-span-2">
+              <span className="text-muted-foreground">Address Line 1:</span>
+              <p>{parent_address1 || "Not Provided"}</p>
+            </div>
+            {/* Guardian Address 2 */}
+            <div className="col-span-2">
+              <span className="text-muted-foreground">Address Line 2:</span>
+              <p>{parent_address2 || "Not Provided"}</p>
+            </div>
+            {/* Guardian State */}
+            <div>
+              <span className="text-muted-foreground">State:</span>
+              <p>
+                {parent_state_id
+                  ? states.find((state) => state.id.toString() === parent_state_id)?.name || "Not Selected"
+                  : "Not Selected"}
+              </p>
+            </div>
+            {/* Guardian District */}
+            <div>
+              <span className="text-muted-foreground">District:</span>
+              <p>
+                {parent_district_id
+                  ? districts.find((district) => district.id.toString() === parent_district_id)?.name || "Not Selected"
+                  : "Not Selected"}
+              </p>
+            </div>
+            {/* Guardian City */}
+            <div>
+              <span className="text-muted-foreground">City:</span>
+              <p>{parent_city || "Not Provided"}</p>
+            </div>
+            {/* Guardian Postcode */}
+            <div>
+              <span className="text-muted-foreground">Postcode:</span>
+              <p>{parent_postcode || "Not Provided"}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <div className="border rounded-md p-4  mt-4">
         <h3 className="font-semibold mb-2 flex items-center">
           <MapPin className="h-4 w-4 mr-2" />
           Address Information
@@ -302,7 +398,7 @@ export function ReviewForm({
         </div>
       </div>
 
-      <div className="border rounded-md p-4">
+      <div className="border rounded-md p-4  mt-4">
         <h3 className="font-semibold mb-2 flex items-center">
           <FileText className="h-4 w-4 mr-2" />
           Demographic Information
@@ -413,7 +509,7 @@ export function ReviewForm({
       </div>
 
       {/* Agree Declaration */}
-      <div className="space-y-2 flex items-center">
+      <div className="space-y-2 flex items-center mt-4">
         <Dialog open={isAgreeDialogOpen} onOpenChange={setIsAgreeDialogOpen}>
           <DialogTrigger asChild>
             <Checkbox

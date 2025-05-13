@@ -25,22 +25,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "../ui/textarea";
+import { useSiteProfiles } from "../member/hook/useSiteProfile";
+import { SiteProfileSelect } from "../member/components/SiteProfileSelect";
 
 interface InsuranceFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  siteId: string;
   initialData?: any;
 }
 
 const InsuranceFormDialog: React.FC<InsuranceFormDialogProps> = ({
   open,
   onOpenChange,
-  siteId,
   initialData,
 }) => {
   const { toast } = useToast();
   const [formState, setFormState] = useState({
+    site_id: "",
     description: "",
     type_id: "",
     insurance_type_id: "",
@@ -49,6 +50,7 @@ const InsuranceFormDialog: React.FC<InsuranceFormDialogProps> = ({
     end_date: "",   // New field
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const { profiles = [], loading: siteProfilesLoading, error: siteProfilesError } = useSiteProfiles();
   const { incidentTypes, insuranceCoverageTypes, loading: typesLoading } = useFetchInsuranceTypes();
   const { insertInsuranceData, loading: insertLoading } = useInsertInsuranceData();
   const { updateInsuranceData, loading: updateLoading } = useUpdateInsuranceData();
@@ -65,7 +67,7 @@ const InsuranceFormDialog: React.FC<InsuranceFormDialogProps> = ({
     e.preventDefault();
 
     const insuranceData = {
-      site_id: Number(siteId),
+      site_id: Number(formState.site_id), // Use selected site_id
       description: formState.description,
       type_id: Number(formState.type_id),
       insurance_type_id: Number(formState.insurance_type_id),
@@ -76,11 +78,10 @@ const InsuranceFormDialog: React.FC<InsuranceFormDialogProps> = ({
 
     let result;
     if (initialData) {
-      result = await updateInsuranceData(initialData.id, insuranceData, selectedFile, siteId);
+      result = await updateInsuranceData(initialData.id, insuranceData, selectedFile, formState.site_id);
     } else {
-      result = await insertInsuranceData(insuranceData, selectedFile, siteId);
+      result = await insertInsuranceData(insuranceData, selectedFile, formState.site_id);
     }
-
     if (result.success) {
       toast({
         title: "Success",
@@ -103,16 +104,30 @@ const InsuranceFormDialog: React.FC<InsuranceFormDialogProps> = ({
   useEffect(() => {
     if (open && initialData) {
       setFormState({
+        site_id: initialData.site_id?.toString() || "",
         description: initialData.description || "",
         type_id: initialData.type_id.toString(),
         insurance_type_id: initialData.insurance_type_id.toString(),
         report_detail: initialData.report_detail || "",
-        start_date: initialData.start_date || "", // Populate start_date
-        end_date: initialData.end_date || "",     // Populate end_date
+        start_date: initialData.start_date || "",
+        end_date: initialData.end_date || "",
       });
       setExistingFilePath(initialData.file_path || null);
+    } else if (open && profiles.length === 1) {
+      setFormState({
+        site_id: profiles[0].id.toString(),
+        description: "",
+        type_id: "",
+        insurance_type_id: "",
+        report_detail: "",
+        start_date: "",
+        end_date: "",
+      });
+      setSelectedFile(null);
+      setExistingFilePath(null);
     } else if (!open) {
       setFormState({
+        site_id: "",
         description: "",
         type_id: "",
         insurance_type_id: "",
@@ -123,16 +138,35 @@ const InsuranceFormDialog: React.FC<InsuranceFormDialogProps> = ({
       setSelectedFile(null);
       setExistingFilePath(null);
     }
-  }, [open, initialData]);
+  }, [open, initialData, profiles]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{initialData ? "Update Insurance" : "Add Insurance"}</DialogTitle>
           <DialogDescription>Enter insurance details and upload a file.</DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Site Select */}
+          <div className="space-y-2">
+            <Label className="flex items-center">
+              NADI Site (Registered Location)
+              <span className="text-red-500 ml-1">*</span>
+            </Label>
+            <SiteProfileSelect
+              profiles={profiles}
+              value={formState.site_id ? parseInt(formState.site_id) : null}
+              onValueChange={(value) => setField("site_id", value.toString())}
+              disabled={siteProfilesLoading}
+            />
+            {siteProfilesLoading && (
+              <p className="text-sm text-muted-foreground">Loading NADI site...</p>
+            )}
+            {siteProfilesError && (
+              <p className="text-sm text-destructive">{siteProfilesError}</p>
+            )}
+          </div>
           <div className="space-y-2">
             <Label htmlFor="description">Description</Label>
             <Textarea
@@ -224,9 +258,9 @@ const InsuranceFormDialog: React.FC<InsuranceFormDialogProps> = ({
             existingFile={
               initialData
                 ? {
-                    url: existingFilePath,
-                    name: existingFilePath?.split("/").pop(),
-                  }
+                  url: existingFilePath,
+                  name: existingFilePath?.split("/").pop(),
+                }
                 : null
             }
           />

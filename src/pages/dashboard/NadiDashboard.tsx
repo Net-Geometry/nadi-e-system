@@ -1,69 +1,98 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import NADIInfo from "@/components/dashboard/nadi-site/NadiInfo";
-import Membership from "@/components/dashboard/nadi-site/Membership";
-import Events from "@/components/dashboard/nadi-site/Events";
-import LocationMap from "@/components/dashboard/nadi-site/LocationMap";
-import OperationHours from "@/components/dashboard/nadi-site/OperationHours";
-import ServiceProvider from "@/components/dashboard/nadi-site/ServiceProvider";
-import ContactInfo from "@/components/dashboard/nadi-site/ContactInfo";
-import OtherDetails from "@/components/dashboard/nadi-site/OtherDetails";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ProfileHeader } from "@/components/profile/components/ProfileHeader";
+import { useUserMetadata } from "@/hooks/use-user-metadata";
+import SiteDetail from "@/components/site/SiteDetail";
+import NoAccess from "@/pages/NoAccess";
+import SiteDashboard from "@/pages/dashboard/site/SiteDashboard";
+import AdminNoAccess from "@/components/dashboard/nadi-site/AdminNoAccess";
 
 const NadiDashboard = () => {
-  return (
-    <DashboardLayout>
-      <div className="max-w-7xl mx-auto space-y-6">
-        <h1 className="text-3xl font-bold mb-6">NADI Dashboard</h1>
+    const userMetadata = useUserMetadata();
+    const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
+    const userGroup = parsedMetadata?.user_group;
+    const userType = parsedMetadata?.user_type;
+    const siteId = parsedMetadata?.group_profile?.site_profile_id;
+    // UserGroup: 1 = DUSP
+    // UserGroup: 2 = MCMC
+    // UserGroup: 3 = TP
+    // UserGroup: 4 = SSO
+    // UserGroup: 5 = Vendor
+    // UserGroup: 6 = Staff
+    // UserGroup: 7 = Member
+    // UserGroup: 9 = Site
+    // UserType: "super_admin" = Super Admin
 
-        <Tabs defaultValue="info" className="w-full">
-          <TabsList className="grid w-full grid-cols-3 lg:grid-cols-5">
-            <TabsTrigger value="info">Information</TabsTrigger>
-            <TabsTrigger value="membership">Membership</TabsTrigger>
-            <TabsTrigger value="events">Events</TabsTrigger>
-            <TabsTrigger value="location">Location</TabsTrigger>
-            <TabsTrigger value="contact">Contact & Others</TabsTrigger>
-          </TabsList>
 
-          <TabsContent value="info" className="mt-6">
-            <div className="grid grid-cols-1 gap-6">
-              <NADIInfo />
-            </div>
-          </TabsContent>
 
-          <TabsContent value="membership" className="mt-6">
-            <div className="grid grid-cols-1 gap-6">
-              <Membership />
-            </div>
-          </TabsContent>
+    if (userType === "super_admin") { // Super Admin
+        return (
+            <AdminNoAccess />
+        );
+    }
 
-          <TabsContent value="events" className="mt-6">
-            <div className="grid grid-cols-1 gap-6">
-              <Events />
-            </div>
-          </TabsContent>
+    if (!userGroup) {
+        return (
+            <DashboardLayout>
+                <div className="flex items-center justify-center p-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                </div>
+            </DashboardLayout>
+        );
+    }
 
-          <TabsContent value="location" className="mt-6">
-            <div className="grid grid-cols-1 gap-6">
-              <div className="mb-6">
-                <LocationMap />
-              </div>
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <OperationHours />
-                <ServiceProvider />
-              </div>
-            </div>
-          </TabsContent>
+    if (userGroup === 1) { // DUSP
+        return (
+            <NoAccess />
+        );
+    }
 
-          <TabsContent value="contact" className="mt-6">
-            <div className="grid grid-cols-1 gap-6">
-              <ContactInfo />
-              <OtherDetails />
-            </div>
-          </TabsContent>
-        </Tabs>
-      </div>
-    </DashboardLayout>
-  );
+    if (userGroup === 2) { // MCMC
+        return (
+            <NoAccess />
+        );
+    }
+
+    if (userGroup === 3) { // TP
+        return (
+            <NoAccess />
+        );
+    }
+
+    if (userGroup === 4) { // SSO
+        return (
+            <NoAccess />
+        );
+    }
+
+    if (userGroup === 5) { // Vendor
+        return (
+            <NoAccess />
+        );
+    }
+
+    if (userGroup === 6) { // Staff
+        return (
+            <NoAccess />
+        );
+    }
+
+    if (userGroup === 7) { // Member
+        return (
+            <NoAccess />
+        );
+    }
+
+    if (userGroup === 9) { // Site
+        return (
+            <DashboardLayout>
+                <SiteDetail siteId={siteId} />
+            </DashboardLayout>
+        );
+    }
+
+    return (
+        <NoAccess />
+    );
 };
 
 export default NadiDashboard;

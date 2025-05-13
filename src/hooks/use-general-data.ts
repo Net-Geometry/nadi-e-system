@@ -16,6 +16,9 @@ const useGeneralData = () => {
   const [positions, setPositions] = useState<any[]>([]);
   const [ethnics, setEthnics] = useState<any[]>([]);
   const [statusMemberships, setStatusMemberships] = useState<any[]>([]);
+  const [identityNoTypes, setIdentityNoTypes] = useState<any[]>([]);
+  const [typeRelationships, setTypeRelationships] = useState<any[]>([]);
+  const [registrationMethods, setRegistrationMethods] = useState<any[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -201,6 +204,45 @@ const useGeneralData = () => {
       }
     };
 
+    const fetchIdentityNoTypes = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("nd_identity_no_type")
+          .select("id, eng, bm");
+        if (error) throw error;
+        setIdentityNoTypes(data);
+      } catch (error) {
+        console.error("Error fetching Identity No Types:", error);
+        setError(error.message);
+      }
+    };
+
+    const fetchTypeRelationships = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("nd_type_relationship")
+          .select("id, eng, bm");
+        if (error) throw error;
+        setTypeRelationships(data);
+      } catch (error) {
+        console.error("Error fetching Type Relatonship:", error);
+        setError(error.message);
+      }
+    };
+
+    const fetchRegistrationMethods = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("nd_registration_method")
+          .select("id, eng, bm");
+        if (error) throw error;
+        setRegistrationMethods(data);
+      } catch (error) {
+        console.error("Error fetching Registration Method:", error);
+        setError(error.message);
+      }
+    };
+
     fetchGenders();
     fetchMaritalStatuses();
     fetchRaces();
@@ -215,6 +257,9 @@ const useGeneralData = () => {
     fetchPositions();
     fetchEthnics();
     fetchStatusMemberships();
+    fetchIdentityNoTypes();
+    fetchTypeRelationships();
+    fetchRegistrationMethods();
   }, []);
 
   return {
@@ -232,6 +277,9 @@ const useGeneralData = () => {
     positions,
     ethnics,
     statusMemberships,
+    identityNoTypes,
+    typeRelationships,
+    registrationMethods,
     error,
   };
 };

@@ -1,147 +1,102 @@
+import { useState } from "react";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { DialogTitle } from "@/components/ui/dialog";
 
-type AddressData = {
-  address1: string;
-  address2: string;
-  state_id: string;
-  district_id: string;
-  city: string;
-  postcode: string;
-  distance: string;
+type AccountData = {
+  email: string;
+  password: string;
+  confirmPassword: string;
 };
 
-type AccountFormProps = AddressData & {
-  updateFields: (fields: Partial<AddressData>) => void;
-  states: { id: string; name: string }[]; // Add states prop
-  districts: { id: string; name: string }[]; // Add districts prop
+type AccountFormProps = AccountData & {
+  updateFields: (fields: Partial<AccountData>) => void;
 };
 
 export function AccountForm({
-  address1,
-  address2,
-  state_id,
-  district_id,
-  city,
-  postcode,
-  distance,
+  email,
+  password,
+  confirmPassword,
   updateFields,
-  states,
-  districts,
-  fetchDistrictsByState, // Add fetchDistrictsByState as a prop
-}: AccountFormProps & { fetchDistrictsByState: (stateId: string) => Promise<void> }) {
-  useEffect(() => {
-    if (state_id) {
-      fetchDistrictsByState(state_id); // Fetch districts when state_id changes
-    }
-  }, [state_id, fetchDistrictsByState]);
+}: AccountFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const passwordsMatch = password === confirmPassword;
+
   return (
     <>
-      <div className="flex flex-col gap-1 mb-6">
-        <h1 className="font-bold text-xl">Address Information</h1>
-        <p className="text-muted-foreground">
-          Fill in member's address information
-        </p>
-      </div>
-      {/* Address Line 1 */}
-      <div className="space-y-2 mb-4">
-        <Label className="flex items-center">Address Line 1 <span className="text-red-500 ml-1">*</span></Label>
-        <Input
-          autoFocus
-          required
-          type="text"
-          value={address1}
-          onChange={(e) => updateFields({ address1: e.target.value })}
-        />
-      </div>
+      <DialogTitle className="mb-4">Account Information</DialogTitle>
 
-      {/* Address Line 2 */}
+      {/* Username */}
       <div className="space-y-2 mb-4">
-        <Label className="flex items-center">Address Line 2</Label>
+        <Label className="flex items-center">Username</Label>
         <Input
           type="text"
-          value={address2}
-          onChange={(e) => updateFields({ address2: e.target.value })}
+          value={email}
+          readOnly
+          className="bg-gray-100 cursor-not-allowed"
         />
       </div>
 
-      {/* State */}
+      {/* Password */}
       <div className="space-y-2 mb-4">
-        <Label className="flex items-center">State <span className="text-red-500 ml-1">*</span></Label>
-        <Select
-          value={state_id}
-          onValueChange={(value) => {
-            updateFields({ state_id: value, district_id: null }); // Set district_id to null when state changes
-          }}
-          required
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select state" />
-          </SelectTrigger>
-          <SelectContent>
-            {states.map((state) => (
-              <SelectItem key={state.id} value={state.id.toString()}>
-                {state.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Label className="flex items-center">
+          Password <span className="text-red-500 ml-1">*</span>
+        </Label>
+        <div className="relative">
+          <Input
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => updateFields({ password: e.target.value })}
+            required
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            className="absolute inset-y-0 right-0 flex items-center pr-3"
+            onClick={() => setShowPassword((prev) => !prev)}
+          >
+            {showPassword ? "Hide" : "Show"}
+          </Button>
+        </div>
       </div>
 
-      {/* District */}
+      {/* Confirm Password */}
       <div className="space-y-2 mb-4">
-        <Label className="flex items-center">District <span className="text-red-500 ml-1">*</span></Label>
-        <Select
-          value={district_id}
-          onValueChange={(value) => updateFields({ district_id: value })}
-          disabled={!state_id} // Disable if state_id is not selected
-          required
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select district" />
-          </SelectTrigger>
-          <SelectContent>
-            {districts.map((district) => (
-              <SelectItem key={district.id} value={district.id.toString()}>
-                {district.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* City */}
-      <div className="space-y-2 mb-4">
-        <Label className="flex items-center">City <span className="text-red-500 ml-1">*</span></Label>
-        <Input
-          required
-          type="text"
-          value={city}
-          onChange={(e) => updateFields({ city: e.target.value })}
-        />
-      </div>
-
-      {/* Postcode */}
-      <div className="space-y-2 mb-4">
-        <Label className="flex items-center">Postcode <span className="text-red-500 ml-1">*</span></Label>
-        <Input
-          required
-          type="text"
-          value={postcode}
-          onChange={(e) => updateFields({ postcode: e.target.value })}
-        />
-      </div>
-
-      {/* Distance */}
-      <div className="space-y-2 mb-4">
-        <Label className="flex items-center">Distance from NADI (km)</Label>
-        <Input
-          type="number"
-          value={distance}
-          onChange={(e) => updateFields({ distance: e.target.value })}
-        />
+        <Label className="flex items-center">
+          Confirm Password <span className="text-red-500 ml-1">*</span>
+        </Label>
+        <div className="relative">
+          <Input
+            type={showConfirmPassword ? "text" : "password"}
+            value={confirmPassword}
+            onChange={(e) => updateFields({ confirmPassword: e.target.value })}
+            required
+            className={
+              confirmPassword && !passwordsMatch
+                ? "border-red-500"
+                : confirmPassword && passwordsMatch
+                ? "border-green-500"
+                : ""
+            }
+          />
+          <Button
+            type="button"
+            variant="ghost"
+            className="absolute inset-y-0 right-0 flex items-center pr-3"
+            onClick={() => setShowConfirmPassword((prev) => !prev)}
+          >
+            {showConfirmPassword ? "Hide" : "Show"}
+          </Button>
+        </div>
+        {confirmPassword && !passwordsMatch && (
+          <p className="text-red-500 text-sm mt-1">Passwords do not match</p>
+        )}
+        {confirmPassword && passwordsMatch && (
+          <p className="text-green-500 text-sm mt-1">Passwords match</p>
+        )}
       </div>
     </>
   );

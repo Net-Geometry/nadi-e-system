@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { UserPlus } from "lucide-react";
 
@@ -7,7 +6,10 @@ interface StaffHeaderProps {
   onAddStaff: () => void;
 }
 
-export const StaffHeader = ({ organizationName, onAddStaff }: StaffHeaderProps) => {
+export const StaffHeader = ({
+  organizationName,
+  onAddStaff,
+}: StaffHeaderProps) => {
   return (
     <>
       <div className="flex justify-between items-center mb-8">
@@ -15,6 +17,9 @@ export const StaffHeader = ({ organizationName, onAddStaff }: StaffHeaderProps) 
         <Button onClick={onAddStaff}>
           <UserPlus className="h-4 w-4 mr-2" />
           Add Staff
+        </Button>
+        <Button onClick={() => (window.location.href = "/hr/site-staff")}>
+          Go to Site Staff
         </Button>
       </div>
 

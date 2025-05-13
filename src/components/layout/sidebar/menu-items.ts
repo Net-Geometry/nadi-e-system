@@ -31,6 +31,7 @@ export const hrMenuItems = [
 export const posMenuItems = [
   { title: "POS Dashboard", path: "/pos" },
   { title: "Products", path: "/pos/products" },
+  { title: "Sales", path: "/pos/sales" },
   { title: "Transactions", path: "/pos/transactions" },
   { title: "PUDO", path: "/pos/pudo" },
 ];
@@ -92,7 +93,6 @@ export const workflowItems = [
 
 export const memberManagementItems = [
   { title: "Member Management", path: "/member-management" },
-  { title: "Registration", path: "/member-management/registration" },
   { title: "Activity Logs", path: "/member-management/activity" },
 ];
 

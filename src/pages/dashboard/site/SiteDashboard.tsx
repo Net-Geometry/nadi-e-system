@@ -70,16 +70,16 @@ const SiteDashboard = () => {
   const [selectedRegionFilters, setSelectedRegionFilters] = useState<string[]>([]);
   const [selectedStateFilters, setSelectedStateFilters] = useState<string[]>([]);
   const [selectedStatusFilters, setSelectedStatusFilters] = useState<string[]>([]);
-  const [duspFilter, setDuspFilter] = useState<string | null>(null);
-  const [tpFilter, setTpFilter] = useState<string | null>(null);
+  const [selectedDuspFilters, setSelectedDuspFilters] = useState<string[]>([]);
+  const [selectedTpFilters, setSelectedTpFilters] = useState<string[]>([]);
 
   // Applied filters (used in actual filtering)
   const [phaseFilters, setPhaseFilters] = useState<string[]>([]);
   const [regionFilters, setRegionFilters] = useState<string[]>([]);
   const [stateFilters, setStateFilters] = useState<string[]>([]);
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
-  const [appliedDuspFilter, setAppliedDuspFilter] = useState<string | null>(null);
-  const [appliedTpFilter, setAppliedTpFilter] = useState<string | null>(null);
+  const [appliedDuspFilters, setAppliedDuspFilters] = useState<string[]>([]);
+  const [appliedTpFilters, setAppliedTpFilters] = useState<string[]>([]);
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [siteToEdit, setSiteToEdit] = useState<Site | null>(null);
@@ -93,7 +93,7 @@ const SiteDashboard = () => {
 
   // Fetch sites data with sorting and filtering
   const { data: sitesData, isLoading } = useQuery({
-    queryKey: ['sites', organizationId, searchTerm, sortField, sortDirection, currentPage, phaseFilters, regionFilters, stateFilters, statusFilters, appliedDuspFilter, appliedTpFilter],
+    queryKey: ['sites', organizationId, searchTerm, sortField, sortDirection, currentPage, phaseFilters, regionFilters, stateFilters, statusFilters, appliedDuspFilters, appliedTpFilters],
     queryFn: async () => {
       console.log("ismcmcuser", isMCMCUser);
       const sites = await fetchSites(organizationId, isTPUser, isDUSPUser, isMCMCUser);
@@ -114,9 +114,9 @@ const SiteDashboard = () => {
           true) &&
         (statusFilters.length > 0 ? statusFilters.includes(site.nd_site_status?.eng || "") : true) &&
         // Apply DUSP filter
-        (appliedDuspFilter ? site.dusp_tp?.parent?.id === appliedDuspFilter : true) &&
+        (appliedDuspFilters.length > 0 ? appliedDuspFilters.includes(site.dusp_tp?.parent?.id || "") : true) &&
         // Apply TP filter
-        (appliedTpFilter ? site.dusp_tp?.id === appliedTpFilter : true)
+        (appliedTpFilters.length > 0 ? appliedTpFilters.includes(site.dusp_tp?.id || "") : true)
       );
 
       // Apply sorting
@@ -256,16 +256,16 @@ const SiteDashboard = () => {
     setSelectedRegionFilters([]);
     setSelectedStateFilters([]);
     setSelectedStatusFilters([]);
-    setDuspFilter(null);
-    setTpFilter(null);
+    setSelectedDuspFilters([]);
+    setSelectedTpFilters([]);
 
     // Reset applied filters (active)
     setPhaseFilters([]);
     setRegionFilters([]);
     setStateFilters([]);
     setStatusFilters([]);
-    setAppliedDuspFilter(null);
-    setAppliedTpFilter(null);
+    setAppliedDuspFilters([]);
+    setAppliedTpFilters([]);
 
     // Reset sorting
     setSortField(null);
@@ -298,9 +298,9 @@ const SiteDashboard = () => {
           true) &&
         (statusFilters.length > 0 ? statusFilters.includes(site.nd_site_status?.eng || "") : true) &&
         // Apply DUSP filter
-        (appliedDuspFilter ? site.dusp_tp?.parent?.id === appliedDuspFilter : true) &&
+        (appliedDuspFilters.length > 0 ? appliedDuspFilters.includes(site.dusp_tp?.parent?.id || "") : true) &&
         // Apply TP filter
-        (appliedTpFilter ? site.dusp_tp?.id === appliedTpFilter : true)
+        (appliedTpFilters.length > 0 ? appliedTpFilters.includes(site.dusp_tp?.id || "") : true)
       );
 
       // Apply the same sorting if specified
@@ -374,30 +374,24 @@ const SiteDashboard = () => {
   const getStatusBadge = (status: string | undefined) => {
     if (!status) return <Badge variant="outline">Unknown</Badge>;
 
-    let variant: "default" | "destructive" | "outline" | "secondary" = "default";
-
     switch (status) {
       case "In Operation":
-        variant = "default";
-        break;
-      case "Permanently Close":
-        variant = "outline";
-        break;
+        return <Badge className="bg-green-500 hover:bg-green-600">{status}</Badge>;
       case "In Progress":
-        variant = "secondary";
-        break;
+        return <Badge className="bg-yellow-500 hover:bg-yellow-600">{status}</Badge>;
       case "Temporarily Close":
-        variant = "destructive";
-        break;
+        return <Badge className="bg-orange-500 hover:bg-orange-600">{status}</Badge>;
+      case "Permanently Close":
+        return <Badge className="bg-red-500 hover:bg-red-600">{status}</Badge>;
+      default:
+        return <Badge variant="outline">{status.replace('_', ' ')}</Badge>;
     }
-
-    return <Badge variant={variant}>{status.replace('_', ' ')}</Badge>;
   };
 
-  const hasActiveFilters = phaseFilters.length > 0 || regionFilters.length > 0 || stateFilters.length > 0 || statusFilters.length > 0 || appliedDuspFilter || appliedTpFilter;
+  const hasActiveFilters = phaseFilters.length > 0 || regionFilters.length > 0 || stateFilters.length > 0 || statusFilters.length > 0 || appliedDuspFilters.length > 0 || appliedTpFilters.length > 0;
 
   const getActiveFilterCount = () => {
-    return phaseFilters.length + regionFilters.length + stateFilters.length + statusFilters.length + (appliedDuspFilter ? 1 : 0) + (appliedTpFilter ? 1 : 0);
+    return phaseFilters.length + regionFilters.length + stateFilters.length + statusFilters.length + appliedDuspFilters.length + appliedTpFilters.length;
   };
 
   // Checkbox selection handlers
@@ -707,24 +701,29 @@ const SiteDashboard = () => {
                             <CommandItem
                               key={dusp.id}
                               onSelect={() => {
-                                setDuspFilter(duspFilter === dusp.id ? null : dusp.id);
+                                const value = dusp.id;
+                                setSelectedDuspFilters(
+                                  selectedDuspFilters.includes(value)
+                                    ? selectedDuspFilters.filter((item) => item !== value)
+                                    : [...selectedDuspFilters, value]
+                                );
                               }}
                             >
                               <div
                                 className={cn(
                                   "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary/30",
-                                  duspFilter === dusp.id
+                                  selectedDuspFilters.includes(dusp.id)
                                     ? "bg-primary border-primary"
                                     : "opacity-50"
                                 )}
                               >
-                                {duspFilter === dusp.id && (
+                                {selectedDuspFilters.includes(dusp.id) && (
                                   <Check className="h-3 w-3 text-white" />
                                 )}
                               </div>
                               {dusp.name}
                             </CommandItem>
-                        ))}
+                          ))}
                       </CommandGroup>
                     </CommandList>
                   </Command>
@@ -753,8 +752,8 @@ const SiteDashboard = () => {
                       <CommandGroup className="max-h-[300px] overflow-y-auto">
                         {sitesData?.allSites && Array.from(new Set(sitesData.allSites
                           .filter(site => {
-                            if (duspFilter) {
-                              return site.dusp_tp?.id && site.dusp_tp?.name && site.dusp_tp?.parent?.id === duspFilter;
+                            if (selectedDuspFilters.length > 0) {
+                              return site.dusp_tp?.id && site.dusp_tp?.name && selectedDuspFilters.includes(site.dusp_tp?.parent?.id || "");
                             }
                             return site.dusp_tp?.id && site.dusp_tp?.name;
                           })
@@ -766,30 +765,85 @@ const SiteDashboard = () => {
                             <CommandItem
                               key={tp.id}
                               onSelect={() => {
-                                setTpFilter(tpFilter === tp.id ? null : tp.id);
+                                const value = tp.id;
+                                setSelectedTpFilters(
+                                  selectedTpFilters.includes(value)
+                                    ? selectedTpFilters.filter((item) => item !== value)
+                                    : [...selectedTpFilters, value]
+                                );
                               }}
                             >
                               <div
                                 className={cn(
                                   "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary/30",
-                                  tpFilter === tp.id
+                                  selectedTpFilters.includes(tp.id)
                                     ? "bg-primary border-primary"
                                     : "opacity-50"
                                 )}
                               >
-                                {tpFilter === tp.id && (
+                                {selectedTpFilters.includes(tp.id) && (
                                   <Check className="h-3 w-3 text-white" />
                                 )}
                               </div>
                               {tp.name}
                             </CommandItem>
-                        ))}
+                          ))}
                       </CommandGroup>
                     </CommandList>
                   </Command>
                 </PopoverContent>
               </Popover>
             )}
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="flex items-center gap-2 h-10"
+                >
+                  <Box className="h-4 w-4 text-gray-500" />
+                  Status
+                  <ChevronsUpDown className="h-3.5 w-3.5 opacity-50" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-[220px] p-0">
+                <Command>
+                  <CommandInput placeholder="Search statuses..." />
+                  <CommandList>
+                    <CommandEmpty>No statuses found.</CommandEmpty>
+                    <CommandGroup className="max-h-[300px] overflow-y-auto">
+                      {statuses.map((status) => (
+                        <CommandItem
+                          key={status.id}
+                          onSelect={() => {
+                            const value = status.eng;
+                            setSelectedStatusFilters(
+                              selectedStatusFilters.includes(value)
+                                ? selectedStatusFilters.filter((item) => item !== value)
+                                : [...selectedStatusFilters, value]
+                            );
+                          }}
+                        >
+                          <div
+                            className={cn(
+                              "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary/30",
+                              selectedStatusFilters.includes(status.eng)
+                                ? "bg-primary border-primary"
+                                : "opacity-50"
+                            )}
+                          >
+                            {selectedStatusFilters.includes(status.eng) && (
+                              <Check className="h-3 w-3 text-white" />
+                            )}
+                          </div>
+                          {status.eng}
+                        </CommandItem>
+                      ))}
+                    </CommandGroup>
+                  </CommandList>
+                </Command>
+              </PopoverContent>
+            </Popover>
 
             <Button
               variant="outline"
@@ -809,8 +863,8 @@ const SiteDashboard = () => {
               setRegionFilters(selectedRegionFilters);
               setStateFilters(selectedStateFilters);
               setStatusFilters(selectedStatusFilters);
-              setAppliedDuspFilter(duspFilter);
-              setAppliedTpFilter(tpFilter);
+              setAppliedDuspFilters(selectedDuspFilters);
+              setAppliedTpFilters(selectedTpFilters);
               setCurrentPage(1);
 
               toast({
@@ -891,32 +945,32 @@ const SiteDashboard = () => {
                 </Button>
               </Badge>
             )}
-            {appliedDuspFilter && (
+            {appliedDuspFilters.length > 0 && (
               <Badge variant="outline" className="gap-1 px-3 py-1 h-6">
-                <span>DUSP Filter</span>
+                <span>DUSP Filter: {appliedDuspFilters.length}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-4 w-4 p-0 ml-1"
                   onClick={() => {
-                    setAppliedDuspFilter(null);
-                    setDuspFilter(null);
+                    setAppliedDuspFilters([]);
+                    setSelectedDuspFilters([]);
                   }}
                 >
                   <X className="h-3 w-3" />
                 </Button>
               </Badge>
             )}
-            {appliedTpFilter && (
+            {appliedTpFilters.length > 0 && (
               <Badge variant="outline" className="gap-1 px-3 py-1 h-6">
-                <span>TP Filter</span>
+                <span>TP Filter: {appliedTpFilters.length}</span>
                 <Button
                   variant="ghost"
                   size="sm"
                   className="h-4 w-4 p-0 ml-1"
                   onClick={() => {
-                    setAppliedTpFilter(null);
-                    setTpFilter(null);
+                    setAppliedTpFilters([]);
+                    setSelectedTpFilters([]);
                   }}
                 >
                   <X className="h-3 w-3" />

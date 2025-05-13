@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast"; // Import the useToast hook
 import BillingPageView from "./BillingPageView";
+import { useDeleteBillingData } from "../hook/use-utilities-data";
 
 interface BillingPageProps {
   siteId: string;
@@ -57,6 +58,7 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
   const { toast } = useToast(); // Initialize the toast hook
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false); // State to manage view dialog visibility
   const [viewData, setViewData] = useState<any>(null); // State to store the data to view
+  const { deleteBillingData, loading: deleteLoading } = useDeleteBillingData(); // Use the new hook
 
   const handleSort = (field: SortField) => {
     if (sortField === field) {
@@ -111,73 +113,11 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
   const handleDelete = async () => {
     if (!deleteRecordId) return;
 
-    try {
-      const { data: attachmentData, error: attachmentError } = await supabase
-        .from("nd_utilities_attachment")
-        .select("file_path")
-        .eq("utilities_id", deleteRecordId)
-        .single();
-
-      if (attachmentError) {
-        console.warn(
-          "No associated file found or error fetching file path:",
-          attachmentError
-        );
-      } else if (attachmentData?.file_path) {
-        const filePath = attachmentData.file_path;
-        const relativeFilePath = filePath.split(`${BUCKET_NAME_UTILITIES}/`)[1];
-
-        const { error: storageError } = await supabase.storage
-          .from(BUCKET_NAME_UTILITIES)
-          .remove([relativeFilePath]);
-
-        if (storageError) {
-          console.error("Error deleting file from storage:", storageError);
-          toast({
-            title: "Error",
-            description:
-              "Failed to delete the associated file. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      const { error } = await supabase
-        .from("nd_utilities")
-        .delete()
-        .eq("id", deleteRecordId);
-
-      if (error) {
-        console.error("Error deleting record:", error);
-        toast({
-          title: "Error",
-          description: "An error occurred while deleting the record.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Success",
-        description: "Record and associated file deleted successfully.",
-        variant: "default",
-      });
-
-      setRefreshBilling((prev) => !prev); // Trigger re-fetch
-    } catch (error) {
-      console.error("Error deleting record:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleteDialogOpen(false); // Close the dialog
-      setDeleteRecordId(null); // Reset the record ID
-    }
+    await deleteBillingData(deleteRecordId, toast); // Call the hook function
+    setRefreshBilling((prev) => !prev); // Trigger re-fetch
+    setIsDeleteDialogOpen(false); // Close the dialog
+    setDeleteRecordId(null); // Reset the record ID
   };
-
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -266,64 +206,72 @@ const BillingPage: React.FC<BillingPageProps> = ({ siteId }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((item, index) => (
-              <TableRow key={item.id}>
-                <TableRowNumber index={index} />
-                <TableCell>{item.id}</TableCell>
-                <TableCell>{item.type_name}</TableCell>
-                <TableCell>{item.year}</TableCell>
-                <TableCell>{item.month}</TableCell>
-                <TableCell>{item.reference_no}</TableCell>
-                <TableCell>{item.amount_bill}</TableCell>
-                <TableCell>{item.remark}</TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleView(item)} // Open view dialog with data
-                        >
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>View</TooltipContent>
-                    </Tooltip>
+            {sorted.length > 0 ? (
+              sorted.map((item, index) => (
+                <TableRow key={item.id}>
+                  <TableRowNumber index={index} />
+                  <TableCell>{item.id}</TableCell>
+                  <TableCell>{item.type_name}</TableCell>
+                  <TableCell>{item.year}</TableCell>
+                  <TableCell>{item.month}</TableCell>
+                  <TableCell>{item.reference_no}</TableCell>
+                  <TableCell>{item.amount_bill}</TableCell>
+                  <TableCell>{item.remark}</TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleView(item)} // Open view dialog with data
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>View</TooltipContent>
+                      </Tooltip>
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => handleEdit(item)} // Open dialog with initial data
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit</TooltipContent>
-                    </Tooltip>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleEdit(item)} // Open dialog with initial data
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit</TooltipContent>
+                      </Tooltip>
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="text-destructive"
-                          onClick={() => {
-                            setDeleteRecordId(item.id); // Set the record ID to delete
-                            setIsDeleteDialogOpen(true); // Open the dialog
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete</TooltipContent>
-                    </Tooltip>
-                  </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="text-destructive"
+                            onClick={() => {
+                              setDeleteRecordId(item.id); // Set the record ID to delete
+                              setIsDeleteDialogOpen(true); // Open the dialog
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={8} className="text-center text-gray-500">
+                  No data available
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>

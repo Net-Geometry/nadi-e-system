@@ -4,60 +4,71 @@ import React, { useEffect, useRef, useState } from "react";
 import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 
-const LocationMap = () => {
+type Site = {
+  latitude?: string | number | null;
+  longtitude?: string | number | null;
+  state_id?: { abbr?: string; name?: string };
+  parliament_rfid?: { fullname?: string };
+  dun_rfid?: { full_name?: string };
+  region_id?: { bm?: string; eng?: string };
+  // phase_id?: { name?: string };
+  // ...other fields as needed
+};
+
+type Address = {
+  address1?: string;
+  address2?: string;
+  city?: string | null;
+  postcode?: string;
+  district_id?: { code?: number; name?: string };
+  state_id?: { abbr?: string; name?: string } | null;
+};
+
+interface LocationMapProps {
+  site: Site;
+  address: Address;
+}
+
+const LocationMap: React.FC<LocationMapProps> = ({ site, address }) => {
   const mapContainer = useRef<HTMLDivElement>(null);
   const map = useRef<mapboxgl.Map | null>(null);
   const [mapLoaded, setMapLoaded] = useState(false);
 
+  // Parse latitude and longitude as numbers, fallback to Cyberjaya if missing
+  const latitude = site?.latitude ? parseFloat(site.latitude as string) : 2.9231;
+  const longitude = site?.longitude ? parseFloat(site.longitude as string) : 101.6567;
+
   useEffect(() => {
     if (!mapContainer.current) return;
 
-    // Set the Mapbox access token
     mapboxgl.accessToken =
       "pk.eyJ1IjoiZGV2bmV0Z2VvIiwiYSI6ImNtOWJnZGd0ajBjcXQya3M3YzhyM25wcG0ifQ.wX1oaZ5GF0Pztse1Cd2hhQ";
 
     try {
-      console.log("Initializing map...");
-
-      // Initialize the map with Cyberjaya, Malaysia coordinates
       map.current = new mapboxgl.Map({
         container: mapContainer.current,
         style: "mapbox://styles/mapbox/streets-v12",
-        center: [101.6567, 2.9231], // Cyberjaya coordinates
+        center: [longitude, latitude],
         zoom: 12,
         attributionControl: true,
       });
 
-      // Log when map loads
-      map.current.on("load", () => {
-        console.log("Map loaded successfully!");
-        setMapLoaded(true);
-      });
+      map.current.on("load", () => setMapLoaded(true));
+      map.current.on("error", (e) => console.error("Map error:", e));
 
-      // Log any map errors
-      map.current.on("error", (e) => {
-        console.error("Map error:", e);
-      });
-
-      // Add a marker for the specific location
       new mapboxgl.Marker({ color: "#FF0000" })
-        .setLngLat([101.6567, 2.9231]) // Cyberjaya coordinates
+        .setLngLat([longitude, latitude])
         .addTo(map.current);
 
-      // Add navigation controls
       map.current.addControl(new mapboxgl.NavigationControl(), "top-right");
     } catch (error) {
       console.error("Error creating map:", error);
     }
 
-    // Cleanup on unmount
     return () => {
-      if (map.current) {
-        console.log("Removing map...");
-        map.current.remove();
-      }
+      if (map.current) map.current.remove();
     };
-  }, []);
+  }, [latitude, longitude]);
 
   return (
     <Card
@@ -80,15 +91,18 @@ const LocationMap = () => {
                   <label className="text-sm font-medium text-muted-foreground">
                     Address
                   </label>
-                  <p className="text-sm text-primary-foreground">
-                    123 Persiaran Multimedia, Cyberjaya
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    {address?.address1 ?? "N/A"}
+                    {address?.address2 ? `, ${address.address2}` : ""}
                   </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     State
                   </label>
-                  <p className="text-sm text-green-700">Selangor</p>
+                  <p className="text-sm text-green-700">
+                    {site?.state_id?.name ?? "N/A"}
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -96,28 +110,54 @@ const LocationMap = () => {
                   <label className="text-sm font-medium text-muted-foreground">
                     District
                   </label>
-                  <p className="text-sm text-blue-700">Sepang</p>
+                  <p className="text-sm text-blue-700">
+                    {address?.district_id?.name ?? "N/A"}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
                     Parliament
                   </label>
-                  <p className="text-sm text-purple-700">P123</p>
+                  <p className="text-sm text-purple-700">
+                    {site?.parliament_rfid?.fullname ?? "N/A"}
+                  </p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
-                    Latitude
+                    DUN
                   </label>
-                  <p className="text-sm text-teal-700">2.9231</p>
+                  <p className="text-sm text-pink-700">
+                    {site?.dun_rfid?.full_name ?? "N/A"}
+                  </p>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-muted-foreground">
-                    Longitude
+                    Latitude / Longitude
                   </label>
-                  <p className="text-sm text-orange-700">101.6567</p>
+                  <p className="text-sm text-teal-700">
+                    {latitude ?? "N/A"} / {longitude ?? "N/A"}
+                  </p>
                 </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Region
+                  </label>
+                  <p className="text-sm text-orange-700">
+                    {site?.region_id?.eng ?? "N/A"}
+                  </p>
+                </div>
+                {/* <div>
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Phase
+                  </label>
+                  <p className="text-sm text-gray-700 dark:text-gray-300">
+                    {site?.phase_id?.name ?? "N/A"}
+                  </p>
+                </div> */}
               </div>
             </div>
           </div>

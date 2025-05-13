@@ -5,14 +5,13 @@ import FilterBar from "./component/FilterBar";
 import { Badge } from "../ui/badge";
 import DataCard from "./component/DataCard";
 import { useEffect, useState } from "react";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
+import { useAssets } from "@/hooks/use-assets";
+import { UseQueryResult } from "@tanstack/react-query";
+import { Asset } from "@/types/asset";
+import { useBookingMutation } from "@/hooks/booking/use-booking-mutation";
+import { BookingListsTable } from "./component/BookingListTable";
+import { BookingCalendar } from "./component/BookingCalendar";
+import { useBookingQueries } from "@/hooks/booking/use-booking-queries";
 
 type FilterParams = {
     pcAvailability: string,
@@ -41,8 +40,10 @@ const BookingHeader = () => {
 }
 
 const BookingContent = () => {
-    // Upcoming function to get booking data
-    // const { data, error, isLoading } = useBookingData();
+    const { useAssetsByTypeQuery } = useAssets();
+
+    const pcIdAsset = 1;
+    const { data: pcs = [], isLoading } = useAssetsByTypeQuery(pcIdAsset);
 
     return (
         <Tabs defaultValue="PC Bookings" className="w-full grid place-items-center mt-7">
@@ -53,20 +54,43 @@ const BookingContent = () => {
                     ))
                 }
             </TabsList>
-            <PcBookings value="PC Bookings"/>
-            <PcCalender value="PC Calendar" />
-            <FacilityBooking value="Facility Bookings" />
-            <FacilityCalender value="Facility Calendar" />
+            <PcBookings 
+                value="PC Bookings" 
+                pcStats={{
+                    totalPcs: isLoading ? "Loading..." : pcs.length,
+                    pcInUse: 0,
+                    pcAvailable: 0
+                }}
+            />
+            <PcCalender 
+                value="PC Calendar" 
+                pcsData={pcs.map((pc) => pc.name)}
+            />
+            <FacilityBooking 
+                value="Facility Bookings" 
+            />
+            <FacilityCalender 
+                value="Facility Calendar" 
+            />
         </Tabs>
     )
 }
 
-const PcBookings = ({value}) => {
+interface PcBookingProps {
+    value: string,
+    pcStats: {
+        totalPcs: number | string,
+        pcInUse: number,
+        pcAvailable: number
+    }
+}
+
+const PcBookings = ({value, pcStats}: PcBookingProps) => {
 
     const statsItems = [
         {
             title: "Total PCs",
-            value: "0",
+            value: String(pcStats.totalPcs),
             icon: Server,
             description: "",
             iconBgColor: "bg-gray-200",
@@ -74,14 +98,14 @@ const PcBookings = ({value}) => {
         },
         {
             title: "In Use",
-            value: "0",
+            value: String(pcStats.pcInUse),
             icon: RotateCcwSquare,
             description: "",
             iconBgColor: "bg-red-100",
             iconTextColor: "text-red-500",
         },{
             title: "Available",
-            value: "0",
+            value: String(pcStats.pcAvailable),
             icon: CircleCheckBig,
             description: "",
             iconBgColor: "bg-green-100",
@@ -103,11 +127,38 @@ const PcBookings = ({value}) => {
     )
 }
 
-const PcCalender = ({value}) => {
+interface PcCalenderProps {
+    value: string,
+    pcsData: string[]
+}
+
+const PcCalender = ({
+    value, 
+    pcsData
+}: PcCalenderProps) => {
+    // Handle post new booking
+    const { useAssetMutation } = useBookingMutation();
+
+    const pcAssetTypeId = 1;
+    const { useBookingQuery } = useBookingQueries();
+    const { data: pcsBooking, isLoading } = useBookingQuery(pcAssetTypeId);
+
+    const onChangeFilter = (date: Date, assetTypeName: string) => {
+
+    }
+
     return (
-        <TabsContent value={value}>
-            {/* just for an example content */}
-            <h1>{`${value} content`}</h1>
+        <TabsContent className="w-full" value={value}>
+            <BookingCalendar 
+                assetTypeNames={[
+                    "all pc",
+                    ...pcsData
+                ]}
+                bookingType="pc"
+                bookingData={pcsBooking}
+                isLoading={isLoading}
+                onChangeFilter={onChangeFilter}
+            />
         </TabsContent>
     )
 }
@@ -131,11 +182,49 @@ const FacilityCalender = ({value}) => {
 }
 
 const PcMainContent = () => {
+    const headTable = ["User", "PC", "Start Time", "End Time", "Duration"];
+
+    // Upcoming custom hooks to get PC booking data
+    // const { data, isLoading, error } = useBookingPc();
+    const recentBooking = [
+        {
+            userName: "siti aminah",
+            bookingAssetTypeName: "PC-001",
+            startTime: "14:30",
+            endTime: "16:00",
+            duration: "1h 30m"
+        },
+        {
+            userName: "siti aminah",
+            bookingAssetTypeName: "PC-001",
+            startTime: "14:30",
+            endTime: "16:00",
+            duration: "1h 30m"
+        },{
+            userName: "siti aminah",
+            bookingAssetTypeName: "PC-001",
+            startTime: "14:30",
+            endTime: "16:00",
+            duration: "1h 30m"
+        },{
+            userName: "siti aminah",
+            bookingAssetTypeName: "PC-001",
+            startTime: "14:30",
+            endTime: "16:00",
+            duration: "1h 30m"
+        },{
+            userName: "siti aminah",
+            bookingAssetTypeName: "PC-001",
+            startTime: "14:30",
+            endTime: "16:00",
+            duration: "1h 30m"
+        }
+    ];
 
     return (
         <section className="mt-6 flex flex-col" id="pc status">
             <PcStatus />
-            <ResentPcBooking />
+            <BookingListsTable headTable={headTable} bodyTableData={recentBooking}/>
         </section>
     )
 }
@@ -297,79 +386,5 @@ const PcStatus = () => {
                 </div>
             </div>
         </>
-    )
-}
-
-const ResentPcBooking = () => {
-
-    const headTable = ["User", "PC", "Start Time", "End Time", "Duration"];
-
-    // Upcoming custom hooks to get PC booking data
-    // const { data, isLoading, error } = useBookingPc();
-    const recentBooking = [
-        {
-            userName: "siti aminah",
-            pcName: "PC-001",
-            startTime: "14:30",
-            endTime: "16:00",
-            duration: "1h 30m"
-        },
-        {
-            userName: "siti aminah",
-            pcName: "PC-001",
-            startTime: "14:30",
-            endTime: "16:00",
-            duration: "1h 30m"
-        },{
-            userName: "siti aminah",
-            pcName: "PC-001",
-            startTime: "14:30",
-            endTime: "16:00",
-            duration: "1h 30m"
-        },{
-            userName: "siti aminah",
-            pcName: "PC-001",
-            startTime: "14:30",
-            endTime: "16:00",
-            duration: "1h 30m"
-        },{
-            userName: "siti aminah",
-            pcName: "PC-001",
-            startTime: "14:30",
-            endTime: "16:00",
-            duration: "1h 30m"
-        }
-    ];
-
-    return (
-        <div className="mt-8 space-y-7 overflow-hidden">
-                <h1 className="font-bold text-2xl text-center">Recent Booking</h1>
-                <div className="overflow-hidden rounded-xl border border-gray-200 shadow-sm">
-                <Table className="w-full table-auto border-collapse text-sm">
-                <TableHeader>
-                    <TableRow>
-                        {
-                            headTable.map((head) => (
-                                <TableHead key={head}>{head}</TableHead>
-                            ))
-                        }
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {
-                        recentBooking.map((bookingItem, index) => (
-                            <TableRow className="hover:bg-gray-200">
-                                <TableCell>{bookingItem.userName}</TableCell>
-                                <TableCell>{bookingItem.pcName}</TableCell>
-                                <TableCell>{bookingItem.startTime}</TableCell>
-                                <TableCell>{bookingItem.endTime}</TableCell>
-                                <TableCell>{bookingItem.duration}</TableCell>
-                            </TableRow>
-                        ))
-                    }
-                </TableBody>
-                </Table>
-                </div>
-            </div>
     )
 }

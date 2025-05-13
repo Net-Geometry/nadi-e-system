@@ -727,11 +727,13 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
 
             {/* File Upload */}
             <div className="space-y-2">
-              <Label htmlFor="attachment">Attachment</Label>
+              <Label htmlFor="attachment">
+                Attachment <span className="text-red-500">*</span>
+              </Label>
               <FileUpload
                 ref={fileUploadRef}
                 maxFiles={6}
-                acceptedFileTypes=".pdf"
+                acceptedFileTypes=".pdf,.jpg,.jpeg,.png"
                 maxSizeInMB={2}
                 buttonText="Choose File"
                 onFilesSelected={handleAttachmentsChange}
@@ -740,7 +742,13 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 onExistingFilesChange={(files) =>
                   handleExistingAttachmentsChange(files, SUPABASE_URL)
                 }
+                className={validationErrors.attachment ? "border-red-500" : ""}
               />
+              {validationErrors.attachment && (
+                <p className="text-sm text-red-500">
+                  {validationErrors.attachment}
+                </p>
+              )}
             </div>
 
             {/* Form Buttons */}

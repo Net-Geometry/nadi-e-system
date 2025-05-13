@@ -296,18 +296,16 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
   const [selectedStatusFilters, setSelectedStatusFilters] = useState<string[]>(
     []
   );
-  const [selectedDuspFilter, setSelectedDuspFilter] = useState<string | null>(
-    null
-  );
-  const [selectedTpFilter, setSelectedTpFilter] = useState<string | null>(null);
+  const [selectedDuspFilters, setSelectedDuspFilters] = useState<string[]>([]);
+  const [selectedTpFilters, setSelectedTpFilters] = useState<string[]>([]);
 
   // Applied filters (used in actual filtering)
   const [categoryFilters, setCategoryFilters] = useState<string[]>([]);
   const [regionFilters, setRegionFilters] = useState<string[]>([]);
   const [stateFilters, setStateFilters] = useState<string[]>([]);
   const [statusFilters, setStatusFilters] = useState<string[]>([]);
-  const [duspFilter, setDuspFilter] = useState<string | null>(null);
-  const [tpFilter, setTpFilter] = useState<string | null>(null);
+  const [duspFilters, setDuspFilters] = useState<string[]>([]);
+  const [tpFilters, setTpFilters] = useState<string[]>([]);
 
   const { formatDuration } = useFormatDuration();
   const { formatDate } = useFormatDate();
@@ -316,7 +314,7 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const staffSiteId = useSiteId();
+  // const staffSiteId = useSiteId();
 
   const userMetadata = useUserMetadata();
   const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
@@ -328,8 +326,12 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
     parsedMetadata?.user_group_name === "DUSP" &&
     !!parsedMetadata?.organization_id;
   const isMCMCUser = parsedMetadata?.user_group_name === "MCMC"; // MCMC users don't require organization_id
+  // const isStaffUser =
+  //   parsedMetadata?.user_group_name === "Centre Staff" ||
+  //   parsedMetadata?.user_type === "staff_manager" ||
+  //   parsedMetadata?.user_type === "staff_assistant_manager";
   const isStaffUser =
-    parsedMetadata?.user_group_name === "Centre Staff" ||
+    parsedMetadata?.user_group_name === "Site" ||
     parsedMetadata?.user_type === "staff_manager" ||
     parsedMetadata?.user_type === "staff_assistant_manager";
 
@@ -339,7 +341,7 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
     parsedMetadata?.organization_id
       ? parsedMetadata.organization_id
       : null;
-
+  const staffSiteId = parsedMetadata?.group_profile?.site_profile_id || null;
   const effectiveSiteId = siteId || (isStaffUser ? staffSiteId : null);
 
   if (!effectiveSiteId && isStaffUser) {
@@ -470,16 +472,16 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
     setSelectedRegionFilters([]);
     setSelectedStateFilters([]);
     setSelectedStatusFilters([]);
-    setSelectedDuspFilter(null);
-    setSelectedTpFilter(null);
+    setSelectedDuspFilters([]);
+    setSelectedTpFilters([]);
 
     // Reset applied filters (active)
     setCategoryFilters([]);
     setRegionFilters([]);
     setStateFilters([]);
     setStatusFilters([]);
-    setDuspFilter(null);
-    setTpFilter(null);
+    setDuspFilters([]);
+    setTpFilters([]);
 
     // Reset sorting
     setSortField(null);
@@ -499,8 +501,8 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
     setRegionFilters(selectedRegionFilters);
     setStateFilters(selectedStateFilters);
     setStatusFilters(selectedStatusFilters);
-    setDuspFilter(selectedDuspFilter);
-    setTpFilter(selectedTpFilter);
+    setDuspFilters(selectedDuspFilters);
+    setTpFilters(selectedTpFilters);
     setCurrentPage(1);
 
     toast({
@@ -515,8 +517,8 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
       regionFilters.length +
       stateFilters.length +
       statusFilters.length +
-      (duspFilter ? 1 : 0) +
-      (tpFilter ? 1 : 0)
+      duspFilters.length +
+      tpFilters.length
     );
   };
 
@@ -525,8 +527,8 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
     regionFilters.length > 0 ||
     stateFilters.length > 0 ||
     statusFilters.length > 0 ||
-    duspFilter ||
-    tpFilter;
+    duspFilters.length > 0 ||
+    tpFilters.length > 0;
 
   // Export to CSV
   const handleExport = () => {
@@ -847,18 +849,19 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
       return item.created_by === user.id;
     });
 
-    // Apply DUSP filter
-    if (duspFilter) {
-      filtered = filtered.filter(
-        (item) =>
-          item.nd_site_profile?.organizations?.parent_id?.id === duspFilter
+    // Apply DUSP filter - updated to use array
+    if (duspFilters.length > 0) {
+      filtered = filtered.filter((item) =>
+        duspFilters.includes(
+          item.nd_site_profile?.organizations?.parent_id?.id || ""
+        )
       );
     }
 
-    // Apply TP filter
-    if (tpFilter) {
-      filtered = filtered.filter(
-        (item) => item.nd_site_profile?.organizations?.id === tpFilter
+    // Apply TP filter - updated to use array
+    if (tpFilters.length > 0) {
+      filtered = filtered.filter((item) =>
+        tpFilters.includes(item.nd_site_profile?.organizations?.id || "")
       );
     }
 
@@ -965,8 +968,8 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
     regionFilters,
     stateFilters,
     statusFilters,
-    duspFilter,
-    tpFilter,
+    duspFilters,
+    tpFilters,
     sortField,
     sortDirection,
   ]);
@@ -1508,20 +1511,24 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
                           key={dusp.id}
                           onSelect={() => {
                             const value = dusp.id;
-                            setSelectedDuspFilter(
-                              selectedDuspFilter === value ? null : value
+                            setSelectedDuspFilters(
+                              selectedDuspFilters.includes(value)
+                                ? selectedDuspFilters.filter(
+                                    (item) => item !== value
+                                  )
+                                : [...selectedDuspFilters, value]
                             );
                           }}
                         >
                           <div
                             className={cn(
                               "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary/30",
-                              selectedDuspFilter === dusp.id
+                              selectedDuspFilters.includes(dusp.id)
                                 ? "bg-primary border-primary"
                                 : "opacity-50"
                             )}
                           >
-                            {selectedDuspFilter === dusp.id && (
+                            {selectedDuspFilters.includes(dusp.id) && (
                               <Check className="h-3 w-3 text-white" />
                             )}
                           </div>
@@ -1559,20 +1566,24 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
                           key={tp.id}
                           onSelect={() => {
                             const value = tp.id;
-                            setSelectedTpFilter(
-                              selectedTpFilter === value ? null : value
+                            setSelectedTpFilters(
+                              selectedTpFilters.includes(value)
+                                ? selectedTpFilters.filter(
+                                    (item) => item !== value
+                                  )
+                                : [...selectedTpFilters, value]
                             );
                           }}
                         >
                           <div
                             className={cn(
                               "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary/30",
-                              selectedTpFilter === tp.id
+                              selectedTpFilters.includes(tp.id)
                                 ? "bg-primary border-primary"
                                 : "opacity-50"
                             )}
                           >
-                            {selectedTpFilter === tp.id && (
+                            {selectedTpFilters.includes(tp.id) && (
                               <Check className="h-3 w-3 text-white" />
                             )}
                           </div>
@@ -1673,32 +1684,32 @@ const ClosurePage: React.FC<ClosurePageProps> = ({ siteId }) => {
               </Button>
             </Badge>
           )}
-          {duspFilter && (
+          {duspFilters.length > 0 && (
             <Badge variant="outline" className="gap-1 px-3 py-1 h-6">
-              <span>DUSP</span>
+              <span>DUSP: {duspFilters.length}</span>
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0 ml-1"
                 onClick={() => {
-                  setDuspFilter(null);
-                  setSelectedDuspFilter(null);
+                  setDuspFilters([]);
+                  setSelectedDuspFilters([]);
                 }}
               >
                 <X className="h-3 w-3" />
               </Button>
             </Badge>
           )}
-          {tpFilter && (
+          {tpFilters.length > 0 && (
             <Badge variant="outline" className="gap-1 px-3 py-1 h-6">
-              <span>TP</span>
+              <span>TP: {tpFilters.length}</span>
               <Button
                 variant="ghost"
                 size="sm"
                 className="h-4 w-4 p-0 ml-1"
                 onClick={() => {
-                  setTpFilter(null);
-                  setSelectedTpFilter(null);
+                  setTpFilters([]);
+                  setSelectedTpFilters([]);
                 }}
               >
                 <X className="h-3 w-3" />

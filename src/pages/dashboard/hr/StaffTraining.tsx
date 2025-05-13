@@ -191,7 +191,7 @@ const StaffTraining = () => {
       : userTrainingModules.filter((m) => m.status === "Not completed");
   return (
     <DashboardLayout>
-      <div className="max-w-6xl mx-auto space-y-6">
+      <div>
         <Card className="relative overflow-hidden animate-fade-in shadow">
           <div
             className="absolute inset-0 pointer-events-none opacity-10 z-0"

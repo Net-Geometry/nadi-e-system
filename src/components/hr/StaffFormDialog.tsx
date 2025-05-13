@@ -1255,7 +1255,7 @@ export function StaffFormDialog({
                     name="userType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>User Type*</FormLabel>
+                        <FormLabel>Role*</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}

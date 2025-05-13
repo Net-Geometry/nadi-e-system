@@ -5,7 +5,7 @@ import { StaffFormDialog } from "@/components/hr/StaffFormDialog";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserAccess } from "@/hooks/use-user-access";
 import { createStaffMember, deleteStaffMember } from "@/lib/staff";
-import { StaffFilters } from "@/components/hr/StaffFilters";
+import { TPStaffFilters } from "@/components/hr/TPStaffFilters";
 import { TPStaffTable } from "@/components/hr/TPStaffTable";
 import { StaffToolbar } from "@/components/hr/StaffToolbar";
 import { useStaffData } from "@/hooks/hr/use-staff-data";
@@ -20,8 +20,8 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
+import { useToast } from "@/hooks/use-toast";
 
 const statusColors = {
   Active: "bg-green-100 text-green-800",
@@ -34,6 +34,8 @@ const Employees = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [userTypeFilter, setUserTypeFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
   const [isEditStaffOpen, setIsEditStaffOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
@@ -51,6 +53,10 @@ const Employees = () => {
     organization_id: null,
     organization_name: null,
   });
+
+  // Extract user types and roles from staff list for filtering options
+  const [userTypeOptions, setUserTypeOptions] = useState<string[]>([]);
+  const [roleOptions, setRoleOptions] = useState<string[]>([]);
 
   useEffect(() => {
     if (userMetadataString) {
@@ -75,6 +81,21 @@ const Employees = () => {
     removeStaffMember,
   } = useStaffData(user, organizationInfo);
 
+  // Extract unique user types and roles once staff list is loaded
+  useEffect(() => {
+    if (staffList && staffList.length > 0) {
+      const uniqueUserTypes = [
+        ...new Set(staffList.map((staff) => staff.userType)),
+      ].filter(Boolean);
+      const uniqueRoles = [
+        ...new Set(staffList.map((staff) => staff.role)),
+      ].filter(Boolean);
+
+      setUserTypeOptions(uniqueUserTypes);
+      setRoleOptions(uniqueRoles);
+    }
+  }, [staffList]);
+
   const filteredStaff = staffList.filter((staff) => {
     const matchesSearch =
       staff.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -86,12 +107,19 @@ const Employees = () => {
     const matchesStatus =
       statusFilter === "all" || staff.status === statusFilter;
 
-    return matchesSearch && matchesStatus;
+    const matchesUserType =
+      userTypeFilter === "all" || staff.userType === userTypeFilter;
+
+    const matchesRole = roleFilter === "all" || staff.role === roleFilter;
+
+    return matchesSearch && matchesStatus && matchesUserType && matchesRole;
   });
 
   const handleResetFilters = () => {
     setSearchQuery("");
     setStatusFilter("all");
+    setUserTypeFilter("all");
+    setRoleFilter("all");
   };
 
   const handleEditStaff = (staffId) => {
@@ -106,7 +134,6 @@ const Employees = () => {
     try {
       // Convert staffId to string if it's not already, to avoid type mismatches
       const idToUse = String(staffId);
-
       // Fetch complete staff profile data from nd_tech_partner_profile
       const { data, error } = await supabase
         .from("nd_tech_partner_profile")
@@ -157,7 +184,6 @@ const Employees = () => {
     try {
       // Convert staffId to string if it's not already
       const idToUse = String(staffToDelete.id);
-
       // Perform actual deletion from the database
       const { error } = await supabase
         .from("nd_tech_partner_profile")
@@ -195,7 +221,6 @@ const Employees = () => {
     try {
       // Convert staffId to string if it's not already
       const idToUse = String(staffId);
-
       // Update staff status in the database
       const { error } = await supabase
         .from("nd_tech_partner_profile")
@@ -354,7 +379,7 @@ const Employees = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto max-w-6xl">
+      <div>
         <StaffToolbar
           selectedStaff={getSelectedStaffObjects()}
           allStaff={staffList}
@@ -363,12 +388,18 @@ const Employees = () => {
           staffType="tp"
         />
 
-        <StaffFilters
+        <TPStaffFilters
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
           statusOptions={statusOptions}
+          userTypeFilter={userTypeFilter}
+          setUserTypeFilter={setUserTypeFilter}
+          userTypeOptions={userTypeOptions}
+          roleFilter={roleFilter}
+          setRoleFilter={setRoleFilter}
+          roleOptions={roleOptions}
           onResetFilters={handleResetFilters}
         />
 

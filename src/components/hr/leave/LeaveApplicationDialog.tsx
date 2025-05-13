@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -7,6 +6,7 @@ import { format, differenceInCalendarDays, addDays, isWeekend } from "date-fns";
 import { Calendar as CalendarIcon, FileUp } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
+import { useLeaveType } from "@/hooks/lookup/use-leave-type";
 
 import {
   Dialog,
@@ -41,10 +41,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  RadioGroup,
-  RadioGroupItem,
-} from "@/components/ui/radio-group";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 
 interface LeaveApplicationDialogProps {
@@ -52,44 +49,48 @@ interface LeaveApplicationDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const leaveSchema = z.object({
-  leaveType: z.string({
-    required_error: "Please select a leave type",
-  }),
-  dateRange: z.object({
-    from: z.date({
-      required_error: "Please select a start date",
+const leaveSchema = z
+  .object({
+    leaveType: z.string({
+      required_error: "Please select a leave type",
     }),
-    to: z.date({
-      required_error: "Please select an end date",
+    dateRange: z.object({
+      from: z.date({
+        required_error: "Please select a start date",
+      }),
+      to: z.date({
+        required_error: "Please select an end date",
+      }),
     }),
-  }),
-  period: z.enum(["full_day", "half_day_am", "half_day_pm"], {
-    required_error: "Please select a period",
-  }),
-  reason: z.string().min(5, {
-    message: "Reason must be at least 5 characters",
-  }),
-  attachment: z.instanceof(FileList).optional().transform(file => {
-    return file && file.length > 0 ? file : undefined;
-  }),
-}).refine((data) => {
-  // If leave type is not Annual Leave, attachment is required
-  if (data.leaveType !== "annual" && (!data.attachment || data.attachment.length === 0)) {
-    return false;
-  }
-  return true;
-}, {
-  message: "Attachment is required for this leave type",
-  path: ["attachment"],
-});
-
-const LEAVE_TYPES = [
-  { value: "annual", label: "Annual Leave" },
-  { value: "medical", label: "Medical Leave" },
-  { value: "replacement", label: "Replacement Leave" },
-  { value: "emergency", label: "Emergency Leave" },
-];
+    period: z.enum(["full_day", "half_day_am", "half_day_pm"], {
+      required_error: "Please select a period",
+    }),
+    reason: z.string().min(5, {
+      message: "Reason must be at least 5 characters",
+    }),
+    attachment: z
+      .instanceof(FileList)
+      .optional()
+      .transform((file) => {
+        return file && file.length > 0 ? file : undefined;
+      }),
+  })
+  .refine(
+    (data) => {
+      // If leave type is not Annual Leave, attachment is required
+      if (
+        data.leaveType !== "annual" &&
+        (!data.attachment || data.attachment.length === 0)
+      ) {
+        return false;
+      }
+      return true;
+    },
+    {
+      message: "Attachment is required for this leave type",
+      path: ["attachment"],
+    }
+  );
 
 export function LeaveApplicationDialog({
   open,
@@ -97,14 +98,15 @@ export function LeaveApplicationDialog({
 }: LeaveApplicationDialogProps) {
   const { toast } = useToast();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  
+  const { leaveTypes, isLoading: isLoadingLeaveTypes } = useLeaveType();
+
   const form = useForm<z.infer<typeof leaveSchema>>({
     resolver: zodResolver(leaveSchema),
     defaultValues: {
       period: "full_day",
     },
   });
-  
+
   const selectedLeaveType = form.watch("leaveType");
   const dateRange = form.watch("dateRange");
   const period = form.watch("period");
@@ -116,31 +118,31 @@ export function LeaveApplicationDialog({
       setSelectedFile(null);
     }
   }, [open, form]);
-  
+
   // Calculate number of days
   const [workingDays, setWorkingDays] = useState(0);
   useEffect(() => {
     if (dateRange?.from && dateRange?.to) {
       let days = 0;
       const currentDate = new Date(dateRange.from);
-      
+
       while (currentDate <= dateRange.to) {
         if (!isWeekend(currentDate)) {
           days++;
         }
         currentDate.setDate(currentDate.getDate() + 1);
       }
-      
+
       if (period !== "full_day") {
         days -= 0.5;
       }
-      
+
       setWorkingDays(Math.max(days, 0));
     } else {
       setWorkingDays(0);
     }
   }, [dateRange, period]);
-  
+
   // Get leave balance
   const { data: leaveBalance = {} } = useQuery({
     queryKey: ["leave-balance", selectedLeaveType],
@@ -156,7 +158,7 @@ export function LeaveApplicationDialog({
     },
     enabled: !!selectedLeaveType,
   });
-  
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
@@ -164,20 +166,21 @@ export function LeaveApplicationDialog({
       form.setValue("attachment", files as unknown as FileList);
     }
   };
-  
-  const isAttachmentRequired = selectedLeaveType && selectedLeaveType !== "annual";
-  
+
+  const isAttachmentRequired =
+    selectedLeaveType && selectedLeaveType !== "annual";
+
   const onSubmit = async (data: z.infer<typeof leaveSchema>) => {
     try {
       console.log("Submitting leave application:", data);
-      
+
       // In a real app, you would send this to your backend
-      
+
       toast({
         title: "Leave application submitted",
         description: "Your leave application has been submitted for approval.",
       });
-      
+
       onOpenChange(false);
     } catch (error) {
       toast({
@@ -199,7 +202,10 @@ export function LeaveApplicationDialog({
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+          <form
+            onSubmit={form.handleSubmit(onSubmit)}
+            className="space-y-4 pt-4"
+          >
             <FormField
               control={form.control}
               name="leaveType"
@@ -216,11 +222,20 @@ export function LeaveApplicationDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {LEAVE_TYPES.map((type) => (
-                        <SelectItem key={type.value} value={type.value}>
-                          {type.label}
+                      {isLoadingLeaveTypes ? (
+                        <SelectItem value="loading" disabled>
+                          Loading...
                         </SelectItem>
-                      ))}
+                      ) : (
+                        leaveTypes?.map((type) => (
+                          <SelectItem
+                            key={String(type.id)}
+                            value={String(type.id)}
+                          >
+                            {type.name || "Unknown"}
+                          </SelectItem>
+                        )) || []
+                      )}
                     </SelectContent>
                   </Select>
                   <FormMessage />
@@ -241,7 +256,7 @@ export function LeaveApplicationDialog({
                           variant={"outline"}
                           className={cn(
                             "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
+                            !field.value?.from && "text-muted-foreground"
                           )}
                         >
                           {field.value?.from ? (
@@ -263,17 +278,20 @@ export function LeaveApplicationDialog({
                     <PopoverContent className="w-auto p-0" align="start">
                       <Calendar
                         mode="range"
-                        selected={field.value}
+                        selected={{
+                          from: field.value?.from,
+                          to: field.value?.to,
+                        }}
                         onSelect={field.onChange}
                         disabled={(date) => date < new Date()}
                         initialFocus
-                        className={cn("p-3 pointer-events-auto")}
                       />
                     </PopoverContent>
                   </Popover>
                   {selectedLeaveType && (
                     <FormDescription>
-                      Remaining balance: <span className="font-medium">{leaveBalance}</span> days
+                      Remaining balance:{" "}
+                      <span className="font-medium">{leaveBalance}</span> days
                     </FormDescription>
                   )}
                   <FormMessage />
@@ -321,7 +339,9 @@ export function LeaveApplicationDialog({
                       </RadioGroup>
                     </FormControl>
                     <FormDescription>
-                      Working days: <span className="font-medium">{workingDays}</span> {workingDays === 1 ? "day" : "days"}
+                      Working days:{" "}
+                      <span className="font-medium">{workingDays}</span>{" "}
+                      {workingDays === 1 ? "day" : "days"}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -354,11 +374,14 @@ export function LeaveApplicationDialog({
                 <FormItem>
                   <FormLabel>
                     Upload Attachment
-                    {isAttachmentRequired && <span className="text-red-500">*</span>}
+                    {isAttachmentRequired && (
+                      <span className="text-red-500">*</span>
+                    )}
                   </FormLabel>
                   <FormControl>
                     <div className="flex items-center gap-2">
                       <Input
+                        id="file-upload"
                         type="file"
                         accept=".pdf,.jpg,.jpeg,.png,.doc,.docx"
                         onChange={handleFileChange}
@@ -369,7 +392,9 @@ export function LeaveApplicationDialog({
                         type="button"
                         variant="outline"
                         size="icon"
-                        onClick={() => document.getElementById("file-upload")?.click()}
+                        onClick={() =>
+                          document.getElementById("file-upload")?.click()
+                        }
                         className="shrink-0"
                       >
                         <FileUp className="h-4 w-4" />
@@ -383,7 +408,8 @@ export function LeaveApplicationDialog({
                   </FormDescription>
                   {selectedFile && (
                     <FormDescription>
-                      Selected: {selectedFile.name} ({(selectedFile.size / 1024).toFixed(2)} KB)
+                      Selected: {selectedFile.name} (
+                      {(selectedFile.size / 1024).toFixed(2)} KB)
                     </FormDescription>
                   )}
                   <FormMessage />

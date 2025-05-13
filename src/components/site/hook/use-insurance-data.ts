@@ -196,3 +196,120 @@ export const useUpdateInsuranceData = () => {
   };
   return { updateInsuranceData, loading, error };
 };
+
+export const useDeleteInsuranceData = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const deleteInsuranceData = async (deleteRecordId: string, toast: any) => {
+    setLoading(true);
+    try {
+      // Step 1: Delete from `nd_site_attachment` and get file path
+      const { data: attachmentData, error: attachmentError } = await supabase
+        .from("nd_site_attachment")
+        .select("file_path")
+        .eq("site_remark_id", deleteRecordId)
+        .single();
+
+      if (attachmentError) {
+        console.warn(
+          "No associated file found or error fetching file path:",
+          attachmentError
+        );
+      } else if (attachmentData?.file_path) {
+        const filePath = attachmentData.file_path;
+
+        // Extract the part of the file path after the bucket name
+        const relativeFilePath = filePath.split(
+          `${BUCKET_NAME_SITE_INSURANCE}/`
+        )[1];
+
+        // Step 2: Delete the file from storage
+        const { error: storageError } = await supabase.storage
+          .from(BUCKET_NAME_SITE_INSURANCE)
+          .remove([relativeFilePath]);
+
+        if (storageError) {
+          console.error("Error deleting file from storage:", storageError);
+          toast({
+            title: "Error",
+            description:
+              "Failed to delete the associated file. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        // Step 3: Delete the record from `nd_site_attachment`
+        const { error: attachmentDeleteError } = await supabase
+          .from("nd_site_attachment")
+          .delete()
+          .eq("site_remark_id", deleteRecordId);
+
+        if (attachmentDeleteError) {
+          console.error(
+            "Error deleting from nd_site_attachment:",
+            attachmentDeleteError
+          );
+          toast({
+            title: "Error",
+            description:
+              "Failed to delete the attachment record. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Step 4: Delete from `nd_insurance_report`
+      const { error: reportError } = await supabase
+        .from("nd_insurance_report")
+        .delete()
+        .eq("site_remark_id", deleteRecordId);
+
+      if (reportError) {
+        console.error("Error deleting from nd_insurance_report:", reportError);
+        toast({
+          title: "Error",
+          description:
+            "Failed to delete the insurance report. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Step 5: Delete from `nd_site_remark`
+      const { error: remarkError } = await supabase
+        .from("nd_site_remark")
+        .delete()
+        .eq("id", deleteRecordId);
+
+      if (remarkError) {
+        console.error("Error deleting from nd_site_remark:", remarkError);
+        toast({
+          title: "Error",
+          description: "Failed to delete the remark. Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      toast({
+        title: "Success",
+        description: "Record and associated file deleted successfully.",
+        variant: "default",
+      });
+    } catch (error) {
+      console.error("Error deleting record:", error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { deleteInsuranceData, loading, error };
+};

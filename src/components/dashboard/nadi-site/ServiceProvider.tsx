@@ -1,7 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wifi, Network, WifiHigh } from "lucide-react";
 
-const ServiceProvider = () => {
+type ServiceProviderProps = {
+  technology?: { name?: string } | null;
+  bandwidth?: { name?: string } | string | null;
+};
+
+const ServiceProvider: React.FC<ServiceProviderProps> = ({ technology, bandwidth }) => {
   return (
     <Card className="mb-6 bg-gradient-to-br from-blue-50 to-purple-50 hover:shadow-lg transition-all duration-300">
       <CardHeader className="border-b bg-white/50 backdrop-blur-sm">
@@ -15,20 +20,22 @@ const ServiceProvider = () => {
           <div className="p-4 rounded-lg border bg-white hover:border-blue-300 hover:shadow-md transition-all duration-300 group">
             <div className="flex items-center gap-3 mb-2">
               <Network className="h-5 w-5 text-blue-500 group-hover:text-blue-600 transition-colors" />
-              <h3 className="font-medium">Network</h3>
+              <h3 className="font-medium">Network Technology</h3>
             </div>
-            <p className="text-sm text-muted-foreground">NADI Staff Network</p>
+            <p className="text-sm text-muted-foreground">
+              {technology?.name ?? "N/A"}
+            </p>
           </div>
 
           <div className="p-4 rounded-lg border bg-white hover:border-blue-300 hover:shadow-md transition-all duration-300 group">
             <div className="flex items-center gap-3 mb-2">
               <WifiHigh className="h-5 w-5 text-green-500 group-hover:text-green-600 transition-colors" />
-              <h3 className="font-medium">Internet Speed (Mbps)</h3>
+              <h3 className="font-medium">Bandwidth</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Download: 500 Mbps
-              <br />
-              Upload: 200 Mbps
+              {typeof bandwidth === "object"
+                ? bandwidth?.name ?? "N/A"
+                : bandwidth ?? "N/A"}
             </p>
           </div>
 
@@ -38,7 +45,8 @@ const ServiceProvider = () => {
               <h3 className="font-medium">Internet Provider</h3>
             </div>
             <p className="text-sm text-muted-foreground">
-              Unifi Business Fiber
+              {/* You can add provider info here if available */}
+              N/A
             </p>
           </div>
         </div>

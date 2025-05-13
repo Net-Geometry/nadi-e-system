@@ -19,8 +19,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { SiteStaffTable } from "@/components/hr/SiteStaffTable";
 import { StaffToolbar } from "@/components/hr/StaffToolbar";
-import { StaffFilters } from "@/components/hr/StaffFilters";
-import { supabase } from "@/integrations/supabase/client";
+import { SiteStaffFilters } from "@/components/hr/SiteStaffFilters";
+import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/ui/use-toast";
 
 const statusColors = {
@@ -35,6 +35,7 @@ const SiteStaff = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [locationFilter, setLocationFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [userTypeFilter, setUserTypeFilter] = useState("all");
   const [isAddStaffOpen, setIsAddStaffOpen] = useState(false);
   const [isEditStaffOpen, setIsEditStaffOpen] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
@@ -77,6 +78,15 @@ const SiteStaff = () => {
     removeStaffMember,
   } = useSiteStaffData(user, organizationInfo);
 
+  // Extract unique user types from staff list
+  const userTypeOptions = useMemo(() => {
+    if (!staffList?.length) return [];
+    const uniqueTypes = [
+      ...new Set(staffList.map((staff) => staff.userType).filter(Boolean)),
+    ];
+    return uniqueTypes.sort();
+  }, [staffList]);
+
   const filteredStaff = useMemo(() => {
     return staffList.filter((staff) => {
       const matchesSearch =
@@ -96,14 +106,20 @@ const SiteStaff = () => {
       const matchesStatus =
         statusFilter === "all" || staff.status === statusFilter;
 
-      return matchesSearch && matchesLocation && matchesStatus;
+      const matchesUserType =
+        userTypeFilter === "all" || staff.userType === userTypeFilter;
+
+      return (
+        matchesSearch && matchesLocation && matchesStatus && matchesUserType
+      );
     });
-  }, [staffList, searchQuery, locationFilter, statusFilter]);
+  }, [staffList, searchQuery, locationFilter, statusFilter, userTypeFilter]);
 
   const handleResetFilters = () => {
     setSearchQuery("");
     setLocationFilter("all");
     setStatusFilter("all");
+    setUserTypeFilter("all");
   };
 
   const handleEditStaff = (staffId) => {
@@ -175,7 +191,6 @@ const SiteStaff = () => {
     try {
       // Convert staffId to string if it's not already
       const idToUse = String(staffToDelete.id);
-
       // Delete staff profile from nd_staff_profile
       const { error } = await supabase
         .from("nd_staff_profile")
@@ -213,7 +228,6 @@ const SiteStaff = () => {
     try {
       // Convert staffId to string if it's not already
       const idToUse = String(staffId);
-
       // Update staff status in the database
       const { error } = await supabase
         .from("nd_staff_profile")
@@ -372,7 +386,7 @@ const SiteStaff = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto max-w-6xl">
+      <div>
         <StaffToolbar
           selectedStaff={getSelectedStaffObjects()}
           allStaff={staffList}
@@ -381,12 +395,18 @@ const SiteStaff = () => {
           staffType="site"
         />
 
-        <StaffFilters
+        <SiteStaffFilters
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}
           statusFilter={statusFilter}
           setStatusFilter={setStatusFilter}
           statusOptions={statusOptions}
+          userTypeFilter={userTypeFilter}
+          setUserTypeFilter={setUserTypeFilter}
+          userTypeOptions={userTypeOptions}
+          locationFilter={locationFilter}
+          setLocationFilter={setLocationFilter}
+          locationOptions={locationOptions}
           onResetFilters={handleResetFilters}
         />
 

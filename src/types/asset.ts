@@ -11,8 +11,8 @@ export interface Asset {
   is_active?: boolean;
   remark?: string;
   asset_group?: string;
-  type_id: number;
-  type: AssetType;
+  type_id?: number;
+  type?: AssetType;
   retail_type?: number;
   subtype_id?: number;
   serial_number?: string;

@@ -290,3 +290,21 @@
     padding-right: 1rem;
   }
 }
+
+@media print {
+  .tabs-print {
+    display: block !important; /* Ensure the tabs container is visible */
+  }
+
+  .tabs-content {
+    display: block !important; /* Ensure all tabs' content is visible */
+  }
+
+  .print\:hidden {
+    display: none !important; /* Hide elements with the print:hidden class */
+  }
+
+  .tabs-print > div {
+    page-break-before: always; /* Start each tab's content on a new page */
+  }
+}
