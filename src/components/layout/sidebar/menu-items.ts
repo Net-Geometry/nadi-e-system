@@ -78,10 +78,10 @@ export const reportItems = [
   { title: "Nadi e-System", path: "/reports/nadi-e-system" },
   { title: "Internet Access", path: "/reports/internet-access" },
   { title: "Site Management", path: "/reports/site-management" },
-  { title: "HR & Salary", path: "/reports/internet-access" },
+  { title: "HR & Salary", path: "/reports/hr-salary" },
   { title: "Training", path: "/reports/training" },
   { title: "Comprehensive Maintenance", path: "/reports/cm" },
-  { title: "Smart Services", path: "/reports/internet-access" },
+  { title: "Smart Services", path: "/reports/smart-services" },
   // { title: "Preset Reports", path: "/reports/preset-reports" },
   // { title: "Custom Reports", path: "/reports/custom-reports" },
 ];
