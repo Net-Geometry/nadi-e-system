@@ -66,6 +66,16 @@ export const useLogin = () => {
           profile.nd_user_group?.group_name || null;
       }
 
+      if (profile?.user_type == "tp_site") {
+        const siteId = await supabase
+          .from("nd_site_user")
+          .select("site_profile_id")
+          .eq("user_id", authData.user.id)
+          .single();
+        userMetadata.group_profile.site_profile_id =
+          siteId.data?.site_profile_id || null;
+      }
+
       console.log("User metadata:", userMetadata);
 
       // ✅ Store session
