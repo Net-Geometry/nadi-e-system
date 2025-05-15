@@ -39,9 +39,9 @@ export const posMenuItems = [
 export const claimItems = [
   { title: "Claims Dashboard", path: "/claim" },
   { title: "Claims Settings", path: "/claim/settings" },
-  { title: "Registration", path: "/claim/registration" },
-  { title: "List Record", path: "/claim/list-record" },
-  { title: "Reports", path: "/claim/report" },
+  // { title: "Registration", path: "/claim/registration" },
+  // { title: "List Record", path: "/claim/list-record" },
+  // { title: "Reports", path: "/claim/report" },
 ];
 
 export const assetItems = [
@@ -74,17 +74,19 @@ export const programmesItems = [
 ];
 
 export const reportItems = [
+  // { title: "Reports Dashboard", path: "/report/dashboard" },
   // { title: "Usage Sessions", path: "/report/usage-sessions" },
-  { title: "Dashboard", path: "/reports" },
-  { title: "Nadi e-System", path: "/reports/nadi-e-system" },
+  // { title: "Internet Access", path: "/report/internet-access" },
+  // { title: "Preset Reports", path: "/report/preset-reports" },
+  // { title: "Custom Reports", path: "/report/custom-reports" },
+  { title: "Overview", path: "/reports" },
+  { title: "NADI E-System", path: "/reports/nadi-e-system" },
   { title: "Internet Access", path: "/reports/internet-access" },
   { title: "Site Management", path: "/reports/site-management" },
   { title: "HR & Salary", path: "/reports/hr-salary" },
   { title: "Training", path: "/reports/training" },
   { title: "Comprehensive Maintenance", path: "/reports/cm" },
   { title: "Smart Services", path: "/reports/smart-services" },
-  // { title: "Preset Reports", path: "/reports/preset-reports" },
-  // { title: "Custom Reports", path: "/reports/custom-reports" },
 ];
 
 export const workflowItems = [

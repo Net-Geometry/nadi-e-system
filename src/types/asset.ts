@@ -1,5 +1,6 @@
 import { Brand } from "./brand";
 import { Site } from "./site";
+import { Booking } from "./booking";
 
 export interface Asset {
   id: number;
@@ -7,8 +8,9 @@ export interface Asset {
   site_id?: number;
   site?: Site;
   brand_id?: number;
-  brand?: Brand;
+  nd_brand?: Brand;
   is_active?: boolean;
+  nd_booking?: Booking[];
   remark?: string;
   asset_group?: string;
   type_id?: number;

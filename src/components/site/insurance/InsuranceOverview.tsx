@@ -251,15 +251,18 @@ const InsuranceOverview = () => {
       </div>
 
       <div className="flex justify-end mb-4">
-        <Button
-          onClick={() => {
-            setSelectedInsurance(null);
-            setIsDialogOpen(true);
-          }}
-        >
-          <FilePlus className="mr-2 h-4 w-4" />
-          Add New Insurance
-        </Button>
+        {Number(userGroup) === 9 && (
+          <Button
+            onClick={() => {
+              setSelectedInsurance(null);
+              setIsDialogOpen(true);
+            }}
+          >
+            <FilePlus className="mr-2 h-4 w-4" />
+            Add New Insurance
+          </Button>
+        )}
+
       </div>
 
       {/* Table */}

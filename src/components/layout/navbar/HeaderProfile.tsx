@@ -21,48 +21,67 @@ export const HeaderProfile = () => {
   const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
   const userGroup = parsedMetadata?.user_group;
   const siteId = parsedMetadata?.group_profile?.site_profile_id;
+  const positionId = parsedMetadata?.group_profile?.position_id;
 
   // Fetch user profile based on userGroup
-  const { data: profile } = useQuery({
-    queryKey: ["user-profile", user?.id, userGroup, siteId],
-    queryFn: async () => {
-      if (userGroup === 9 && siteId) {
-        // Fetch from nd_site_profile_name if userGroup is 9
-        const { data, error } = await supabase
-          .from("nd_site_profile_name")
-          .select("id, sitename, fullname")
-          .eq("id", siteId)
-          .maybeSingle();
+const { data: profile } = useQuery({
+  queryKey: ["user-profile", user?.id, userGroup, siteId, positionId],
+  queryFn: async () => {
+    if (userGroup === 9 && siteId) {
+      // Fetch from nd_site_profile_name if userGroup is 9
+      const { data: siteData, error: siteError } = await supabase
+        .from("nd_site_profile_name")
+        .select("id, sitename, fullname")
+        .eq("id", siteId)
+        .maybeSingle();
 
-        if (error) {
-          console.error("Error fetching site profile:", error);
-          throw error;
-        }
-
-        return {
-          full_name: data?.fullname || "N/A",
-          user_type: "tp_site",
-        };
-      } else if (user?.id) {
-        // Fetch from profiles table for other user groups
-        const { data, error } = await supabase
-          .from("profiles")
-          .select("full_name, user_type")
-          .eq("id", user.id)
-          .maybeSingle();
-
-        if (error) {
-          console.error("Error fetching profile:", error);
-          throw error;
-        }
-
-        return data;
+      if (siteError) {
+        console.error("Error fetching site profile:", siteError);
+        throw siteError;
       }
 
-      return null;
-    },
-    enabled: !!user?.id || (userGroup === 9 && !!siteId),
-  });
+      let userType = "tp_site";
+
+      // Map positionId to nd_position table
+      if (positionId) {
+        const { data: positionData, error: positionError } = await supabase
+          .from("nd_position")
+          .select("name")
+          .eq("id", positionId)
+          .maybeSingle();
+
+        if (positionError) {
+          console.error("Error fetching position:", positionError);
+          throw positionError;
+        }
+
+        userType = positionData?.name || userType;
+      }
+
+      return {
+        full_name: siteData?.fullname || "N/A",
+        user_type: userType,
+      };
+    } else if (user?.id) {
+      // Fetch from profiles table for other user groups
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("full_name, user_type")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("Error fetching profile:", error);
+        throw error;
+      }
+
+      return data;
+    }
+
+    return null;
+  },
+  enabled: !!user?.id || (userGroup === 9 && !!siteId),
+});
 
   // Get first character of name for avatar fallback
   const getNameInitial = () => {

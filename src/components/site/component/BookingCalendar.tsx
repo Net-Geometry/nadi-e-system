@@ -34,6 +34,7 @@ export const BookingCalendar = ({
 }: BookingCalendarProp) => {
     const [date, setDate] = useState<Date>(new Date());
     const [assetTypeName, setAssetTypeName ] = useState<string>(`all ${bookingType}`);
+    const [open, setOpen] = useState(false);
 
     const handleFilter = (date: Date, assetTypeName: string) => {
         onChangeFilter(date, assetTypeName);
@@ -53,8 +54,8 @@ export const BookingCalendar = ({
                 <SelectContent>
                     <SelectGroup>
                         {
-                            assetTypeNames.map((assetName) => (
-                                <SelectItem key={assetName} value={assetName}>{assetName}</SelectItem>
+                            assetTypeNames.map((assetName, i) => (
+                                <SelectItem key={`assetName${i}`} value={assetName}>{assetName}</SelectItem>
                             ))
                         }
                     </SelectGroup>
@@ -72,14 +73,14 @@ export const BookingCalendar = ({
                 </div>
             </div>
             <div className="flex flex-col items-end gap-4 flex-grow" id="booking-contents">
-                <Dialog>
-                    <DialogTrigger>
+                <Dialog open={open} onOpenChange={setOpen}>
+                    <DialogTrigger >
                         <Button className="text-base font-semibold">
                             +
                             <span>add new booking</span>
                         </Button>
                     </DialogTrigger>
-                    <BookingFormDialog pcsName={assetTypeNames.filter((name) => name !== "all pc")}/>
+                    <BookingFormDialog setOpen={setOpen} open={open} isLoading={isLoading} pcsName={assetTypeNames.filter((name) => name !== "all pc")}/>
                 </Dialog>
                 <div className="w-full border-2 p-6 border-gray-300 rounded-lg flex flex-col gap-5 items-center flex-grow">
                     <header className="flex flex-col items-center">
@@ -96,7 +97,7 @@ export const BookingCalendar = ({
                                 description="There are no PC bookings scheduled for this date."
                             />
                         ) : bookingData.map((booking) => (
-                            <div>{booking.status}</div>
+                            <div key={booking.id}>{booking.status}</div>
                         ))
                     }
                 </div>

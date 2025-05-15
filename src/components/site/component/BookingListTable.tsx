@@ -38,6 +38,7 @@ export const BookingListsTable = ({
                     </TableRow>
                 </TableHeader>
                 <TableBody>
+                    {/* SOON: UI for 0 booking */}
                     {
                         bodyTableData.map((bookingItem, index) => (
                             <TableRow className="hover:bg-gray-200">

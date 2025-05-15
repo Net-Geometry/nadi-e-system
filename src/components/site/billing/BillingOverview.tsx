@@ -85,7 +85,7 @@ const BillingOverview = () => {
       setRefreshData((prev) => !prev); // Trigger refresh after closing the edit dialog
     }
   }, [isDialogOpen]);
-  
+
   const handleDelete = async () => {
     if (!deleteRecordId) return;
     await deleteBillingData(deleteRecordId, toast);
@@ -197,10 +197,12 @@ const BillingOverview = () => {
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Button onClick={handleCreate}>
-            <FilePlus className="mr-2 h-4 w-4" />
-            Add New Billing
-          </Button>
+          {Number(userGroup) === 9 && (
+            <Button onClick={handleCreate}>
+              <FilePlus className="mr-2 h-4 w-4" />
+              Add New Billing
+            </Button>
+          )}
         </div>
       </div>
 

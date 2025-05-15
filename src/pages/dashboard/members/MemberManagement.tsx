@@ -30,8 +30,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { TableRowNumber } from "@/components/ui/TableRowNumber";
 import Registration from "./Registration";
+import { useUserMetadata } from "@/hooks/use-user-metadata";
 
 const MemberManagement = () => {
+  const userMetadata = useUserMetadata();
+  const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
+  const userGroup = parsedMetadata?.user_group;
+
   const navigate = useNavigate();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -225,13 +230,16 @@ const MemberManagement = () => {
               </svg>
               Export
             </Button>
-            <Button
-            className="flex items-center gap-2"
-            onClick={handleAddNewMember}
-          >
-            <UserPlus className="h-4 w-4" />
-            Add New Member
-          </Button>
+            {userGroup === 9 && (
+              <Button
+                className="flex items-center gap-2"
+                onClick={handleAddNewMember}
+              >
+                <UserPlus className="h-4 w-4" />
+                Add New Member
+              </Button>
+            )}
+
           </div>
         </div>
 

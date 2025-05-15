@@ -15,22 +15,39 @@ export const useBookingQueries = () => {
         : null;
     const isStaffUser = parsedMetadata?.user_group_name === "Centre Staff";
 
-    let site_id: string | null = null;
-    if (isStaffUser) {
-        site_id = siteId;
-    }
-
     const useBookingQuery = (bookingAssetTypeId: number) =>
         useQuery({
-            queryKey: ["booking", organizationId, site_id],
+            queryKey: ["booking", organizationId, siteId],
             queryFn: () => bookingClient.getBooking(bookingAssetTypeId),
-            enabled:
-                (!!organizationId && !isStaffUser) ||
-                parsedMetadata?.user_type === "super_admin" ||
-                (isStaffUser && !!siteId),
+            // enabled:
+            //     (!!organizationId && !isStaffUser) ||
+            //     (isStaffUser && !!siteId),
         });
 
+    const useBookingAssetBrandQuery = () =>
+        useQuery({
+            queryKey: ["brand"],
+            queryFn: () => bookingClient.getBrands()
+        })
+
+    const useTpsSites = (dusp_tp_id: string) => 
+        useQuery({
+            queryKey: ["tpsSites"],
+            queryFn: () => bookingClient.getAllTpsSites(dusp_tp_id),
+            enabled: !!dusp_tp_id
+        })
+
+    const useBookingAssetInTpsSites = (tps_site_ids: number[], bookingAssetType: number) => 
+        useQuery({
+            queryKey: ["bookingInTpsSites", tps_site_ids, bookingAssetType],
+            queryFn: () => bookingClient.getAllPcBoookingInTpsSites(tps_site_ids, bookingAssetType),
+            enabled: !!tps_site_ids
+        })
+
     return {
-        useBookingQuery
+        useBookingQuery,
+        useBookingAssetBrandQuery,
+        useTpsSites,
+        useBookingAssetInTpsSites
     };
 };

@@ -1530,6 +1530,8 @@ export type Database = {
           name: string | null;
           updated_at: string | null;
           updated_by: string | null;
+          need_support_doc: boolean | null;
+          need_summary_report: boolean | null;
         };
         Insert: {
           category_id?: number | null;
@@ -1541,6 +1543,8 @@ export type Database = {
           name?: string | null;
           updated_at?: string | null;
           updated_by?: string | null;
+          need_support_doc?: boolean | null;
+          need_summary_report?: boolean | null;
         };
         Update: {
           category_id?: number | null;
@@ -1552,6 +1556,8 @@ export type Database = {
           name?: string | null;
           updated_at?: string | null;
           updated_by?: string | null;
+          need_support_doc?: boolean | null;
+          need_summary_report?: boolean | null;
         };
         Relationships: [];
       };
