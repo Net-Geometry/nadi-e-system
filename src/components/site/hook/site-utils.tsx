@@ -67,6 +67,8 @@ export const fetchSites = async (
           organizationId,
           ...childOrganizationIds,
         ]);
+      } else {
+        query = query.eq("dusp_tp_id", organizationId);
       }
     }
     // MCMC users don't have an organization filter - they can see all sites

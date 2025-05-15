@@ -65,22 +65,6 @@ export const AssetFormDialog = ({
 
   const { useOrganizationsByTypeQuery } = useOrganizations();
 
-  const { data: dusps = [], isLoading: duspsIsLoading } =
-    useOrganizationsByTypeQuery("dusp", isSuperAdmin);
-
-  const { data: tps = [], isLoading: tpsIsLoading } =
-    useOrganizationsByTypeQuery(
-      "tp",
-      isSuperAdmin || isDUSPUser,
-      organizationId
-    );
-
-  const { data: sites = [], isLoading: sitesIsLoading } = useQuery({
-    queryKey: ["sites", organizationId],
-    queryFn: () => fetchSites(organizationId, isTPUser, isDUSPUser),
-    enabled: !!organizationId || isSuperAdmin || isDUSPUser || isTPUser,
-  });
-
   // TODO: use real data
   const retail_types = [
     { id: 1, name: "Retail Type 1" },
@@ -100,11 +84,49 @@ export const AssetFormDialog = ({
 
   const [duspId, setDuspId] = useState("");
   const [tpId, setTpId] = useState("");
-  const [siteId, setSiteId] = useState<string>(
-    String(defaultSiteId) || String(asset?.site_id) || ""
-  );
+  const [siteId, setSiteId] = useState("");
   const [selectedSite, setSelectedSite] = useState<Site | null>(null);
   const [locations, setLocations] = useState<Space[]>([]);
+
+  const { data: dusps = [], isLoading: duspsIsLoading } =
+    useOrganizationsByTypeQuery("dusp", isSuperAdmin);
+
+  const {
+    data: tps = [],
+    isLoading: tpsIsLoading,
+    refetch: refetchTPs,
+  } = useOrganizationsByTypeQuery(
+    "tp",
+    isSuperAdmin || isDUSPUser,
+    duspId ?? organizationId
+  );
+
+  const {
+    data: sites = [],
+    isLoading: sitesIsLoading,
+    refetch: refetchSites,
+  } = useQuery({
+    queryKey: ["sites", organizationId],
+    queryFn: () => fetchSites(tpId ?? organizationId, isTPUser, isDUSPUser),
+    enabled: !!organizationId || isSuperAdmin || isDUSPUser || isTPUser,
+  });
+
+  useEffect(() => {
+    if (duspId) {
+      refetchTPs();
+      setTpId("");
+      setSiteId("");
+      setSelectedSite(null);
+    }
+  }, [duspId, refetchTPs]);
+
+  useEffect(() => {
+    if (tpId) {
+      refetchSites();
+      setSiteId("");
+      setSelectedSite(null);
+    }
+  }, [tpId, refetchSites]);
 
   const { useAssetTypesQuery } = useAssets();
 
@@ -139,6 +161,7 @@ export const AssetFormDialog = ({
         setDuspId(String(asset.site?.dusp_tp?.parent?.id));
         setTpId(String(asset.site?.dusp_tp_id));
         setSiteId(String(asset.site_id));
+        setSelectedSite(asset.site);
       }
     }
   }, [
@@ -149,16 +172,6 @@ export const AssetFormDialog = ({
     tpsIsLoading,
     sitesIsLoading,
   ]);
-
-  useEffect(() => {
-    if (duspId) {
-      tps?.filter((tp) => tp?.parent_id?.toString() === duspId);
-    }
-
-    if (tpId) {
-      sites?.filter((site) => site?.dusp_tp_id?.toString() === tpId);
-    }
-  }, [duspId, tps, tpId, sites]);
 
   useEffect(() => {
     if (!open) {
@@ -403,7 +416,7 @@ export const AssetFormDialog = ({
                           key={index}
                           value={site.nd_site[0].id.toString()}
                         >
-                          {site.sitename}
+                          {site.sitename} - {site.nd_site[0].id.toString()}
                         </SelectItem>
                       ))}
                     </SelectContent>
