@@ -201,11 +201,11 @@ interface ColumnConfig {
 }
 
 // Interface for approval actions
-interface ApprovalAction {
-  closureId: number;
-  statusId: number;
-  remark: string;
-}
+// interface ApprovalAction {
+//   closureId: number;
+//   statusId: number;
+//   remark: string;
+// }
 
 // Interface for the site closure data structure
 interface SiteListClosureRequest {
