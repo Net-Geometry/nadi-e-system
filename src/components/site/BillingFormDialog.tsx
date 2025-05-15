@@ -25,23 +25,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
+import { SiteProfileSelect } from "../member/components/SiteProfileSelect";
+import { useSiteProfiles } from "../member/hook/useSiteProfile";
 
 interface BillingFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  siteId: string;
   initialData?: any; // Optional for update
 }
 
 const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
   open,
   onOpenChange,
-  siteId,
   initialData,
 }) => {
   const { toast } = useToast();
   const [formState, setFormState] = useState({
+    site_id: "",
     type_id: "",
     year: "",
     month: "",
@@ -51,7 +52,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [existingFilePath, setExistingFilePath] = useState<string | null>(null);
-
+  const { profiles = [], loading: siteProfilesLoading, error: siteProfilesError } = useSiteProfiles();
   const { data: utilityTypes } = useFetchUtilityTypes();
   const {
     insertBillingData,
@@ -74,9 +75,9 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true); 
+    setIsSubmitting(true);
     const utilityData = {
-      site_id: Number(siteId),
+      site_id: Number(formState.site_id),
       type_id: Number(formState.type_id),
       year: Number(formState.year),
       month: Number(formState.month),
@@ -84,7 +85,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
       amount_bill: Number(formState.amount_bill),
       remark: formState.remark,
     };
-  
+
     let result;
     try {
       if (initialData) {
@@ -94,7 +95,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
           utilityData,
           selectedFile,
           utilityTypes,
-          siteId
+          formState.site_id
         );
       } else {
         // Insert a new record
@@ -102,24 +103,22 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
           utilityData,
           selectedFile,
           utilityTypes,
-          siteId
+          formState.site_id
         );
       }
-  
+
       if (result.success) {
         toast({
           title: "Success",
-          description: `Billing Form ${
-            initialData ? "updated" : "submitted"
-          } successfully.`,
+          description: `Billing Form ${initialData ? "updated" : "submitted"
+            } successfully.`,
         });
         onOpenChange(false); // Close dialog
       } else {
         toast({
           title: "Error",
-          description: `Error ${
-            initialData ? "updating" : "submitting"
-          } billing form. Please try again.`,
+          description: `Error ${initialData ? "updating" : "submitting"
+            } billing form. Please try again.`,
           variant: "destructive",
         });
         console.error("Error submitting form:", result.error);
@@ -143,6 +142,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
   useEffect(() => {
     if (open && initialData) {
       setFormState({
+        site_id: initialData.site_id?.toString() || "",
         type_id: initialData.type_id.toString(),
         year: initialData.year.toString(),
         month: initialData.month.toString(),
@@ -153,8 +153,21 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
         remark: initialData.remark || "",
       });
       setExistingFilePath(initialData.file_path || null);
+    } else if (open && profiles.length === 1) {
+      setFormState({
+        site_id: profiles[0].id.toString(),
+        type_id: "",
+        year: "",
+        month: "",
+        reference_no: "",
+        amount_bill: "",
+        remark: "",
+      });
+      setSelectedFile(null);
+      setExistingFilePath(null);
     } else if (!open) {
       setFormState({
+        site_id: "",
         type_id: "",
         year: "",
         month: "",
@@ -165,7 +178,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
       setSelectedFile(null);
       setExistingFilePath(null);
     }
-  }, [open, initialData]);
+  }, [open, initialData, profiles]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -185,6 +198,25 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
             </div>
           ) : (
             <>
+              {/* Site Select */}
+              <div className="space-y-2">
+                <Label className="flex items-center">
+                  NADI Site (Registered Location)
+                  <span className="text-red-500 ml-1">*</span>
+                </Label>
+                <SiteProfileSelect
+                  profiles={profiles}
+                  value={formState.site_id ? parseInt(formState.site_id) : null}
+                  onValueChange={(value) => setField("site_id", value.toString())}
+                  disabled={siteProfilesLoading}
+                />
+                {siteProfilesLoading && (
+                  <p className="text-sm text-muted-foreground">Loading NADI site...</p>
+                )}
+                {siteProfilesError && (
+                  <p className="text-sm text-destructive">{siteProfilesError}</p>
+                )}
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="type_id">Type</Label>
                 <Select
@@ -205,7 +237,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
                   </SelectContent>
                 </Select>
               </div>
-  
+
               <div className="flex space-x-4">
                 <div className="w-1/2">
                   <Label htmlFor="year">Year</Label>
@@ -218,7 +250,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
                     required
                   />
                 </div>
-  
+
                 <div className="w-1/2">
                   <Label htmlFor="month">Month</Label>
                   <Select
@@ -253,7 +285,7 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
                   </Select>
                 </div>
               </div>
-  
+
               <div className="space-y-2">
                 <Label htmlFor="reference_no">Reference No</Label>
                 <Input
@@ -293,9 +325,9 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
                 existingFile={
                   initialData
                     ? {
-                        url: existingFilePath,
-                        name: existingFilePath?.split("/").pop(), // Extract the file name from the path
-                      }
+                      url: existingFilePath,
+                      name: existingFilePath?.split("/").pop(), // Extract the file name from the path
+                    }
                     : null // No existing file for new billing data
                 }
               />
@@ -310,8 +342,15 @@ const BillingFormDialog: React.FC<BillingFormDialogProps> = ({
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting || insertLoading || updateLoading}>
-              {isSubmitting ? "Submitting..." : initialData ? "Update" : "Submit"}
+            <Button
+              type="submit"
+              disabled={isSubmitting || insertLoading || updateLoading}
+            >
+              {isSubmitting
+                ? "Submitting..."
+                : initialData
+                  ? "Update"
+                  : "Submit"}
             </Button>
           </DialogFooter>
         </form>

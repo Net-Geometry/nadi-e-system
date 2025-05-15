@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { User as UserIcon } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 import { User } from "@supabase/supabase-js";
 
@@ -16,7 +15,12 @@ interface ProfileSettingsProps {
   setFullName: (name: string) => void;
 }
 
-export const ProfileSettings = ({ user, fullName, email, setFullName }: ProfileSettingsProps) => {
+export const ProfileSettings = ({
+  user,
+  fullName,
+  email,
+  setFullName,
+}: ProfileSettingsProps) => {
   const [updating, setUpdating] = useState(false);
   const { toast } = useToast();
 
@@ -26,13 +30,11 @@ export const ProfileSettings = ({ user, fullName, email, setFullName }: ProfileS
 
     setUpdating(true);
     try {
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .upsert({
-          id: user.id,
-          full_name: fullName,
-          updated_at: new Date().toISOString(),
-        });
+      const { error: profileError } = await supabase.from("profiles").upsert({
+        id: user.id,
+        full_name: fullName,
+        updated_at: new Date().toISOString(),
+      });
 
       if (profileError) throw profileError;
 
@@ -41,7 +43,7 @@ export const ProfileSettings = ({ user, fullName, email, setFullName }: ProfileS
         description: "Profile updated successfully",
       });
     } catch (error) {
-      console.error('Error updating profile:', error);
+      console.error("Error updating profile:", error);
       toast({
         title: "Error",
         description: "Failed to update profile",
@@ -63,7 +65,9 @@ export const ProfileSettings = ({ user, fullName, email, setFullName }: ProfileS
       <CardContent className="p-6">
         <form onSubmit={handleUpdateProfile} className="space-y-6">
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-sm font-medium">Full Name</Label>
+            <Label htmlFor="name" className="text-sm font-medium">
+              Full Name
+            </Label>
             <Input
               id="name"
               value={fullName}
@@ -73,7 +77,9 @@ export const ProfileSettings = ({ user, fullName, email, setFullName }: ProfileS
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+            <Label htmlFor="email" className="text-sm font-medium">
+              Email
+            </Label>
             <Input
               id="email"
               type="email"
@@ -85,8 +91,8 @@ export const ProfileSettings = ({ user, fullName, email, setFullName }: ProfileS
               Email cannot be changed. Contact support if you need to update it.
             </p>
           </div>
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             disabled={updating}
             className="w-full sm:w-auto"
           >

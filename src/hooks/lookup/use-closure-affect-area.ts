@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export type ClosureAffectArea = {
@@ -42,7 +41,9 @@ export function useClosureAffectArea() {
 
   const addMutation = useMutation({
     mutationFn: async (area: Partial<ClosureAffectArea>) => {
-      const { error } = await supabase.from("nd_closure_affect_areas").insert([area]);
+      const { error } = await supabase
+        .from("nd_closure_affect_areas")
+        .insert([area]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -81,7 +82,10 @@ export function useClosureAffectArea() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from("nd_closure_affect_areas").delete().eq("id", id);
+      const { error } = await supabase
+        .from("nd_closure_affect_areas")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -101,7 +105,10 @@ export function useClosureAffectArea() {
     return addMutation.mutateAsync(area);
   };
 
-  const updateClosureAffectArea = async (id: number, data: Partial<ClosureAffectArea>) => {
+  const updateClosureAffectArea = async (
+    id: number,
+    data: Partial<ClosureAffectArea>
+  ) => {
     return updateMutation.mutateAsync({ id, ...data });
   };
 

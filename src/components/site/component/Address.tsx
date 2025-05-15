@@ -9,7 +9,7 @@ const Address = ({ address }: { address: any }) => {
         <p className="text-sm text-gray-500 flex items-center">
           <Home className="h-4 w-4 mr-1 text-gray-500" /> Address Line 1:
         </p>
-        <p className="text-base font-medium">{address.address1 || "Not specified"}</p>
+        <p className="text-base font-medium">{address?.address1 || "Not specified"}</p>
       </div>
 
       {/* Address Line 2 */}
@@ -17,7 +17,7 @@ const Address = ({ address }: { address: any }) => {
         <p className="text-sm text-gray-500 flex items-center">
           <Home className="h-4 w-4 mr-1 text-gray-500" /> Address Line 2:
         </p>
-        <p className="text-base font-medium">{address.address2 || "Not specified"}</p>
+        <p className="text-base font-medium">{address?.address2 || "Not specified"}</p>
       </div>
 
       {/* District */}
@@ -25,7 +25,7 @@ const Address = ({ address }: { address: any }) => {
         <p className="text-sm text-gray-500 flex items-center">
           <MapPin className="h-4 w-4 mr-1 text-gray-500" /> District:
         </p>
-        <p className="text-base font-medium">{address.district_id?.name || "Not specified"}</p>
+        <p className="text-base font-medium">{address?.district_id?.name || "Not specified"}</p>
       </div>
 
       {/* State */}
@@ -33,7 +33,7 @@ const Address = ({ address }: { address: any }) => {
         <p className="text-sm text-gray-500 flex items-center">
           <MapPin className="h-4 w-4 mr-1 text-gray-500" /> State:
         </p>
-        <p className="text-base font-medium">{address.state_id?.name || "Not specified"}</p>
+        <p className="text-base font-medium">{address?.state_id?.name || "Not specified"}</p>
       </div>
 
       {/* City */}
@@ -41,7 +41,7 @@ const Address = ({ address }: { address: any }) => {
         <p className="text-sm text-gray-500 flex items-center">
           <Building className="h-4 w-4 mr-1 text-gray-500" /> City:
         </p>
-        <p className="text-base font-medium">{address.city || "Not specified"}</p>
+        <p className="text-base font-medium">{address?.city || "Not specified"}</p>
       </div>
 
       {/* Postcode */}
@@ -49,7 +49,7 @@ const Address = ({ address }: { address: any }) => {
         <p className="text-sm text-gray-500 flex items-center">
           <Mail className="h-4 w-4 mr-1 text-gray-500" /> Postcode:
         </p>
-        <p className="text-base font-medium">{address.postcode || "Not specified"}</p>
+        <p className="text-base font-medium">{address?.postcode || "Not specified"}</p>
       </div>
     </div>
   );

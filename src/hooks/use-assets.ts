@@ -6,7 +6,14 @@ import { useAssetTypeQueries } from "./assets/use-asset-type-queries";
  */
 export const useAssets = () => {
   // Get all query hooks
-  const { useAssetsQuery, useAssetQuery } = useAssetQueries();
+  
+const {
+    useAssetsQuery,
+    useAssetQuery,
+    useAssetsByTypeQuery,
+    useAssetsByNameQuery,
+    useAssetsInTpsSites
+  } = useAssetQueries();
 
   const {
     useAssetTypesQuery,
@@ -18,9 +25,12 @@ export const useAssets = () => {
   return {
     // Query hooks
     useAssetsQuery,
+    useAssetsByNameQuery,
     useAssetQuery,
+    useAssetsByTypeQuery,
     useAssetTypesQuery,
     useAssetCategoriesQuery,
     useAssetTypeWithCategoryQuery,
+    useAssetsInTpsSites
   };
 };

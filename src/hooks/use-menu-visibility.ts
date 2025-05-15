@@ -1,12 +1,14 @@
-
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { MenuVisibility, SubmoduleVisibility } from "@/components/settings/types/menu-visibility.types";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  MenuVisibility,
+  SubmoduleVisibility,
+} from "@/components/settings/types/menu-visibility.types";
 import { UserType } from "@/types/auth";
 
 export const useMenuPathVisibility = (
-  mainPath: string, 
-  subPath: string | null, 
+  mainPath: string,
+  subPath: string | null,
   userType: UserType | null
 ) => {
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
@@ -14,7 +16,7 @@ export const useMenuPathVisibility = (
 
   useEffect(() => {
     const checkRouteAccess = async () => {
-      if (!userType || userType === 'super_admin') {
+      if (!userType || userType === "super_admin") {
         // Super admins always have access
         setHasAccess(true);
         setLoading(false);
@@ -22,18 +24,22 @@ export const useMenuPathVisibility = (
       }
 
       try {
-        console.log(`Checking route access for ${userType} to path: ${mainPath}/${subPath}`);
+        console.log(
+          `Checking route access for ${userType} to path: ${mainPath}/${subPath}`
+        );
 
         // Check main menu access
         const { data: menuData } = await supabase
-          .from('menu_visibility')
-          .select('*')
-          .eq('menu_key', mainPath)
+          .from("menu_visibility")
+          .select("*")
+          .eq("menu_key", mainPath)
           .maybeSingle();
 
         // If there's no menu visibility record, allow access by default
         if (!menuData) {
-          console.log(`No menu visibility record for ${mainPath}, allowing access`);
+          console.log(
+            `No menu visibility record for ${mainPath}, allowing access`
+          );
           setHasAccess(true);
           setLoading(false);
           return;
@@ -50,15 +56,17 @@ export const useMenuPathVisibility = (
         // Check submodule access if applicable
         if (subPath) {
           const { data: submoduleData } = await supabase
-            .from('submodule_visibility')
-            .select('*')
-            .eq('parent_module', mainPath)
-            .eq('submodule_key', subPath)
+            .from("submodule_visibility")
+            .select("*")
+            .eq("parent_module", mainPath)
+            .eq("submodule_key", subPath)
             .maybeSingle();
 
           // If there's a submodule record and user isn't allowed
           if (submoduleData && !submoduleData.visible_to.includes(userType)) {
-            console.log(`User ${userType} denied access to ${mainPath}/${subPath} submodule`);
+            console.log(
+              `User ${userType} denied access to ${mainPath}/${subPath} submodule`
+            );
             setHasAccess(false);
             setLoading(false);
             return;

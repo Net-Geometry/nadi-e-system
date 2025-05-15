@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const useSiteGeneralData = () => {
   const [siteStatus, setSiteStatus] = useState<any[]>([]);
@@ -17,7 +17,9 @@ const useSiteGeneralData = () => {
   useEffect(() => {
     const fetchSiteStatus = async () => {
       try {
-        const { data, error } = await supabase.from("nd_site_status").select("id, eng, bm");
+        const { data, error } = await supabase
+          .from("nd_site_status")
+          .select("id, eng, bm");
         if (error) throw error;
         setSiteStatus(data);
       } catch (error) {
@@ -28,7 +30,9 @@ const useSiteGeneralData = () => {
 
     const fetchTechnology = async () => {
       try {
-        const { data, error } = await supabase.from("nd_technology").select("id, name");
+        const { data, error } = await supabase
+          .from("nd_technology")
+          .select("id, name");
         if (error) throw error;
         setTechnology(data);
       } catch (error) {
@@ -39,7 +43,9 @@ const useSiteGeneralData = () => {
 
     const fetchBandwidth = async () => {
       try {
-        const { data, error } = await supabase.from("nd_bandwidth").select("id, name");
+        const { data, error } = await supabase
+          .from("nd_bandwidth")
+          .select("id, name");
         if (error) throw error;
         setBandwidth(data);
       } catch (error) {
@@ -50,7 +56,9 @@ const useSiteGeneralData = () => {
 
     const fetchBuildingType = async () => {
       try {
-        const { data, error } = await supabase.from("nd_building_type").select("id, bm, eng");
+        const { data, error } = await supabase
+          .from("nd_building_type")
+          .select("id, bm, eng");
         if (error) throw error;
         setBuildingType(data);
       } catch (error) {
@@ -61,7 +69,9 @@ const useSiteGeneralData = () => {
 
     const fetchSpace = async () => {
       try {
-        const { data, error } = await supabase.from("nd_space").select("id, bm, eng");
+        const { data, error } = await supabase
+          .from("nd_space")
+          .select("id, bm, eng");
         if (error) throw error;
         setSpace(data);
       } catch (error) {
@@ -72,7 +82,9 @@ const useSiteGeneralData = () => {
 
     const fetchZone = async () => {
       try {
-        const { data, error } = await supabase.from("nd_zone").select("id, area, zone");
+        const { data, error } = await supabase
+          .from("nd_zone")
+          .select("id, area, zone");
         if (error) throw error;
         setZone(data);
       } catch (error) {
@@ -83,7 +95,9 @@ const useSiteGeneralData = () => {
 
     const fetchCategoryArea = async () => {
       try {
-        const { data, error } = await supabase.from("nd_category_area").select("id, name");
+        const { data, error } = await supabase
+          .from("nd_category_area")
+          .select("id, name");
         if (error) throw error;
         setCategoryArea(data);
       } catch (error) {
@@ -94,7 +108,9 @@ const useSiteGeneralData = () => {
 
     const fetchBuildingLevel = async () => {
       try {
-        const { data, error } = await supabase.from("nd_building_level").select("id, bm, eng");
+        const { data, error } = await supabase
+          .from("nd_building_level")
+          .select("id, bm, eng");
         if (error) throw error;
         setBuildingLevel(data);
       } catch (error) {
@@ -105,7 +121,9 @@ const useSiteGeneralData = () => {
 
     const fetchSocioeconomic = async () => {
       try {
-        const { data, error } = await supabase.from("nd_socioeconomics").select("id, sector_id, eng, bm");
+        const { data, error } = await supabase
+          .from("nd_socioeconomics")
+          .select("id, sector_id, eng, bm");
         if (error) throw error;
         setSocioEconomic(data);
       } catch (error) {
@@ -116,7 +134,9 @@ const useSiteGeneralData = () => {
 
     const fetchSiteProfiles = async () => {
       try {
-        const { data, error } = await supabase.from("nd_site_profile").select("id, sitename, fullname");
+        const { data, error } = await supabase
+          .from("nd_site_profile")
+          .select("id, sitename, fullname");
         if (error) throw error;
         setSiteProfiles(data);
       } catch (error) {

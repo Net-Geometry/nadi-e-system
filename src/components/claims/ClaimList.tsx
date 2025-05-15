@@ -1,6 +1,5 @@
-
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Table,
   TableBody,
@@ -15,69 +14,44 @@ import { CheckSquare, XSquare } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { TableRowNumber } from "@/components/ui/TableRowNumber";
 
+import { useFetchClaimTP } from "./hook/fetch-claim-tp"; // Import the hook
+
+import { Eye } from "lucide-react"; // Import the Eye icon
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"; // Import Tooltip components
+
+import React, { useState } from "react";
+import ClaimViewDialog from "./component/ClaimViewDialog"; // Import the dialog
+
 export function ClaimList() {
   const { toast } = useToast();
+  const { data: claimTPData, isLoading: isClaimTPLoading } = useFetchClaimTP();
 
-  const { data: claims, isLoading, refetch } = useQuery({
-    queryKey: ["claims"],
-    queryFn: async () => {
-      console.log("Fetching claims...");
-      const { data, error } = await supabase
-        .from("claims")
-        .select("*")
-        .order("created_at", { ascending: false });
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedClaim, setSelectedClaim] = useState<any>(null);
 
-      if (error) {
-        console.error("Error fetching claims:", error);
-        throw error;
-      }
-
-      console.log("Claims fetched:", data);
-      return data;
-    },
-  });
-
-  const updateClaimStatus = async (id: string, status: "approved" | "rejected") => {
-    try {
-      const { error } = await supabase
-        .from("claims")
-        .update({ status })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: `Claim ${status} successfully`,
-      });
-
-      refetch();
-    } catch (error) {
-      console.error("Error updating claim:", error);
-      toast({
-        title: "Error",
-        description: "Failed to update claim status",
-        variant: "destructive",
-      });
-    }
+  const handleView = (claim: any) => {
+    setSelectedClaim(claim);
+    setIsViewDialogOpen(true);
   };
+
+  if (isClaimTPLoading) {
+    return <div>Loading claims...</div>;
+  }
 
   const getStatusBadgeVariant = (status: string) => {
     switch (status) {
-      case "pending":
+      case "DRAFTED":
         return "default";
-      case "approved":
+      case "SUBMITTED":
+        return "info";
+      case "PROCESSING":
+        return "warning";
+      case "COMPLETED":
         return "success";
-      case "rejected":
-        return "destructive";
       default:
         return "secondary";
     }
   };
-
-  if (isLoading) {
-    return <div>Loading claims...</div>;
-  }
 
   return (
     <div className="rounded-md border">
@@ -85,51 +59,52 @@ export function ClaimList() {
         <TableHeader>
           <TableRow>
             <TableHead className="w-[60px] text-center">No.</TableHead>
-            <TableHead>Claim Number</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Title</TableHead>
-            <TableHead>Amount</TableHead>
+            <TableHead>TP Name</TableHead>
+            <TableHead>Reference Number</TableHead>
+            <TableHead>Year</TableHead>
+            <TableHead>Month</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {claims?.map((claim, index) => (
+          {claimTPData?.map((claim, index) => (
             <TableRow key={claim.id}>
               <TableRowNumber index={index} />
-              <TableCell>{claim.claim_number}</TableCell>
-              <TableCell className="capitalize">{claim.claim_type}</TableCell>
-              <TableCell>{claim.title}</TableCell>
-              <TableCell>${claim.amount.toFixed(2)}</TableCell>
+              <TableCell>{claim.tp_dusp_id.name}</TableCell>
+              <TableCell>{claim.ref_no}</TableCell>
+              <TableCell>{claim.year}</TableCell>
+              <TableCell>{claim.month}</TableCell>
               <TableCell>
-                <Badge variant={getStatusBadgeVariant(claim.status)}>
-                  {claim.status}
+                <Badge variant={getStatusBadgeVariant(claim.logs[0]?.status_id.name)}>
+                  {claim.logs[0]?.status_id.name}
                 </Badge>
               </TableCell>
               <TableCell>
-                {claim.status === "pending" && (
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateClaimStatus(claim.id, "approved")}
-                    >
-                      <CheckSquare className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => updateClaimStatus(claim.id, "rejected")}
-                    >
-                      <XSquare className="h-4 w-4" />
-                    </Button>
-                  </div>
-                )}
+                <div className="flex gap-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" variant="outline" onClick={() => handleView(claim)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>View</TooltipContent>
+                  </Tooltip>
+                </div>
               </TableCell>
             </TableRow>
           ))}
         </TableBody>
       </Table>
+
+      {/* Claim View Dialog */}
+      {selectedClaim && (
+        <ClaimViewDialog
+          isOpen={isViewDialogOpen}
+          onClose={() => setIsViewDialogOpen(false)}
+          claim={selectedClaim}
+        />
+      )}
     </div>
   );
 }

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../use-toast";
 import { handleAuthError } from "./utils/auth-error-handler";
 import { createUserSession } from "./utils/session-handler";
@@ -64,6 +64,16 @@ export const useLogin = () => {
         userMetadata.user_group = profile.user_group;
         userMetadata.user_group_name =
           profile.nd_user_group?.group_name || null;
+      }
+
+      if (profile?.user_type == "tp_site") {
+        const siteId = await supabase
+          .from("nd_site_user")
+          .select("site_profile_id")
+          .eq("user_id", authData.user.id)
+          .single();
+        userMetadata.group_profile.site_profile_id =
+          siteId.data?.site_profile_id || null;
       }
 
       console.log("User metadata:", userMetadata);

@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { supabase } from "@/lib/supabase";
-import { v4 as uuidv4 } from "uuid";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useState } from "react";
+import { v4 as uuidv4 } from "uuid";
 
 export function useFileUpload() {
   const [isUploading, setIsUploading] = useState(false);
@@ -45,7 +45,7 @@ export function useFileUpload() {
       // Upload the file to Supabase storage with the blob that has the correct MIME type
       const { error, data } = await supabase.storage
         .from(bucket)
-        .upload(filePath, blob, options);
+        .upload(filePath, file, options);
 
       if (error) {
         console.error("Error uploading file:", error);

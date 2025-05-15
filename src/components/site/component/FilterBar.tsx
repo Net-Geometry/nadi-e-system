@@ -161,14 +161,15 @@ export function FilterBar({
             <Tabs value={pcAvailability} defaultValue='all' onValueChange={(value: string) => { setPcAvailability(value) }}>
               <TabsList className='bg-white' defaultValue={'all'}>
                 <TabsTrigger value='all'>All</TabsTrigger>
-                <TabsTrigger value='available'>Free</TabsTrigger>
+                <TabsTrigger value='Available'>Free</TabsTrigger>
                 <TabsTrigger value='in-use'>Used</TabsTrigger>
               </TabsList>
             </Tabs>
             <Tabs value={pcTypeTabs} defaultValue='all' onValueChange={(value: string) => { setPcTypeTabs(value) }}>
               <TabsList className='bg-white' defaultValue={'all'}>
                 <TabsTrigger value='all'>All</TabsTrigger>
-                <TabsTrigger value='gaming'>Gaming</TabsTrigger>
+                <TabsTrigger value='Gaming'>Gaming</TabsTrigger>
+                <TabsTrigger value='Printer'>Printer</TabsTrigger>
               </TabsList>
             </Tabs>            
         </section>

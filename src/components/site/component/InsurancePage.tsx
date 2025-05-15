@@ -12,12 +12,24 @@ import { TableRowNumber } from "@/components/ui/TableRowNumber";
 import { Edit, Eye, FilePlus, Settings, Trash2 } from "lucide-react";
 import InsuranceFormDialog from "../InsuranceFormDialog";
 import { useSiteInsurance } from "../hook/use-site-insurance";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { BUCKET_NAME_SITE_INSURANCE } from "@/integrations/supabase/client";
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Tooltip,
+  TooltipTrigger,
+  TooltipContent,
+} from "@/components/ui/tooltip";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast"; // Import the useToast hook
 import InsurancePageView from "./InsurancePageView";
+import { useDeleteInsuranceData } from "../hook/use-insurance-data"; // Import the new hook
 
 interface InsurancePageProps {
   siteId: string;
@@ -33,8 +45,9 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
   const { toast } = useToast(); // Initialize the toast hook
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false); // State for view dialog
   const [viewData, setViewData] = useState<any>(null); // State for selected data to view
-
-
+  const { deleteInsuranceData, loading: deleteLoading } =
+    useDeleteInsuranceData(); // Use the new hook
+    
   const handleView = (insurance: any) => {
     setViewData(insurance); // Set the selected insurance data
     setIsViewDialogOpen(true); // Open the view dialog
@@ -54,104 +67,12 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
   const handleDelete = async () => {
     if (!deleteRecordId) return;
 
-    try {
-      // Step 1: Delete from `nd_site_attachment` and get file path
-      const { data: attachmentData, error: attachmentError } = await supabase
-        .from("nd_site_attachment")
-        .select("file_path")
-        .eq("site_remark_id", deleteRecordId)
-        .single();
-
-      if (attachmentError) {
-        console.warn("No associated file found or error fetching file path:", attachmentError);
-      } else if (attachmentData?.file_path) {
-        const filePath = attachmentData.file_path;
-
-        // Extract the part of the file path after the bucket name
-        const relativeFilePath = filePath.split(`${BUCKET_NAME_SITE_INSURANCE}/`)[1];
-
-        // Step 2: Delete the file from storage
-        const { error: storageError } = await supabase.storage
-          .from(BUCKET_NAME_SITE_INSURANCE)
-          .remove([relativeFilePath]);
-
-        if (storageError) {
-          console.error("Error deleting file from storage:", storageError);
-          toast({
-            title: "Error",
-            description: "Failed to delete the associated file. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-
-        // Step 3: Delete the record from `nd_site_attachment`
-        const { error: attachmentDeleteError } = await supabase
-          .from("nd_site_attachment")
-          .delete()
-          .eq("site_remark_id", deleteRecordId);
-
-        if (attachmentDeleteError) {
-          console.error("Error deleting from nd_site_attachment:", attachmentDeleteError);
-          toast({
-            title: "Error",
-            description: "Failed to delete the attachment record. Please try again.",
-            variant: "destructive",
-          });
-          return;
-        }
-      }
-
-      // Step 4: Delete from `nd_insurance_report`
-      const { error: reportError } = await supabase
-        .from("nd_insurance_report")
-        .delete()
-        .eq("site_remark_id", deleteRecordId);
-
-      if (reportError) {
-        console.error("Error deleting from nd_insurance_report:", reportError);
-        toast({
-          title: "Error",
-          description: "Failed to delete the insurance report. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Step 5: Delete from `nd_site_remark`
-      const { error: remarkError } = await supabase
-        .from("nd_site_remark")
-        .delete()
-        .eq("id", deleteRecordId);
-
-      if (remarkError) {
-        console.error("Error deleting from nd_site_remark:", remarkError);
-        toast({
-          title: "Error",
-          description: "Failed to delete the remark. Please try again.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      toast({
-        title: "Success",
-        description: "Record and associated file deleted successfully.",
-        variant: "default",
-      });
-      setRefreshInsurance((prev) => !prev); // Trigger re-fetch
-    } catch (error) {
-      console.error("Error deleting record:", error);
-      toast({
-        title: "Error",
-        description: "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setIsDeleteDialogOpen(false); // Close the dialog
-      setDeleteRecordId(null); // Reset the record ID
-    }
+    await deleteInsuranceData(deleteRecordId, toast); // Call the hook function
+    setRefreshInsurance((prev) => !prev); // Trigger re-fetch
+    setIsDeleteDialogOpen(false); // Close the dialog
+    setDeleteRecordId(null); // Reset the record ID
   };
+
 
   if (loading) {
     return (
@@ -196,71 +117,91 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.map((item, index) => (
-              <TableRow key={item.id}>
-                <TableRowNumber index={index} />
-                <TableCell>{item.description ?? "N/A"}</TableCell>
-                <TableCell>{item.type_name ?? "N/A"}</TableCell>
-                <TableCell>{item.insurance_type_name ?? "N/A"}</TableCell>
-                <TableCell>
-                  {item.start_date
-                    ? new Intl.DateTimeFormat("en-GB").format(new Date(item.start_date))
-                    : "N/A"}
-                </TableCell>
-                <TableCell>
-                  {item.end_date
-                    ? new Intl.DateTimeFormat("en-GB").format(new Date(item.end_date))
-                    : "N/A"}
-                </TableCell>
-                <TableCell>
-                  {item.file_path ? (
-                    <a href={item.file_path} target="_blank" rel="noopener noreferrer">
-                      View File
-                    </a>
-                  ) : (
-                    "N/A"
-                  )}
-                </TableCell>
-                <TableCell>
-                  <div className="flex space-x-2">
-                  <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" onClick={() => handleView(item)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>View</TooltipContent>
-                    </Tooltip>
-                    
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button variant="outline" size="icon" onClick={() => handleEdit(item)}>
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Edit</TooltipContent>
-                    </Tooltip>
+            {data.length > 0 ? (
+              data.map((item, index) => (
+                <TableRow key={item.id}>
+                  <TableRowNumber index={index} />
+                  <TableCell>{item.description ?? "N/A"}</TableCell>
+                  <TableCell>{item.type_name ?? "N/A"}</TableCell>
+                  <TableCell>{item.insurance_type_name ?? "N/A"}</TableCell>
+                  <TableCell>
+                    {item.start_date
+                      ? new Intl.DateTimeFormat("en-GB").format(new Date(item.start_date))
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    {item.end_date
+                      ? new Intl.DateTimeFormat("en-GB").format(new Date(item.end_date))
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    {item.file_path ? (
+                      <a
+                        href={item.file_path}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        View File
+                      </a>
+                    ) : (
+                      "N/A"
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex space-x-2">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleView(item)}
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>View</TooltipContent>
+                      </Tooltip>
 
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          className="text-destructive"
-                          onClick={() => {
-                            setDeleteRecordId(item.id.toString()); // Set the record ID to delete
-                            setIsDeleteDialogOpen(true); // Open the dialog
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Delete</TooltipContent>
-                    </Tooltip>
-                  </div>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => handleEdit(item)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit</TooltipContent>
+                      </Tooltip>
+
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="text-destructive"
+                            onClick={() => {
+                              setDeleteRecordId(item.id.toString()); // Set the record ID to delete
+                              setIsDeleteDialogOpen(true); // Open the dialog
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete</TooltipContent>
+                      </Tooltip>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={7} className="text-center text-gray-500">
+                  No data available
                 </TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </div>
@@ -270,7 +211,7 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
         onOpenChange={setIsViewDialogOpen}
         data={viewData}
       />
-      
+
       <InsuranceFormDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
@@ -284,11 +225,15 @@ const InsurancePage: React.FC<InsurancePageProps> = ({ siteId }) => {
           <DialogHeader>
             <DialogTitle>Confirm Deletion</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this record? This action cannot be undone.
+              Are you sure you want to delete this record? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteDialogOpen(false)}
+            >
               Cancel
             </Button>
             <Button variant="destructive" onClick={handleDelete}>

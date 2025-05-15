@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { WorkflowConfigList } from "@/components/workflow/WorkflowConfigList";
@@ -6,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { WorkflowConfig } from "@/types/workflow";
 
 const WorkflowDashboard = () => {
@@ -14,7 +13,7 @@ const WorkflowDashboard = () => {
   const [configurations, setConfigurations] = useState<WorkflowConfig[]>([]);
   const { toast } = useToast();
   const navigate = useNavigate();
-  
+
   // Fetch workflow configurations
   const fetchConfigurations = async () => {
     setIsLoading(true);
@@ -23,26 +22,28 @@ const WorkflowDashboard = () => {
         .from("workflow_configurations")
         .select("*")
         .order("updated_at", { ascending: false });
-      
+
       if (error) {
         throw error;
       }
 
       // Map database fields (snake_case) to our model fields (camelCase)
-      const mappedConfigurations: WorkflowConfig[] = data.map((config: any) => ({
-        id: config.id,
-        title: config.title,
-        description: config.description || "",
-        moduleId: config.module_id || "",
-        moduleName: config.module_name || "",
-        isActive: config.is_active || false,
-        createdAt: config.created_at || new Date().toISOString(),
-        updatedAt: config.updated_at || new Date().toISOString(),
-        startStepId: config.start_step_id || "",
-        steps: [],
-        slaHours: config.sla_hours || 48,
-      }));
-      
+      const mappedConfigurations: WorkflowConfig[] = data.map(
+        (config: any) => ({
+          id: config.id,
+          title: config.title,
+          description: config.description || "",
+          moduleId: config.module_id || "",
+          moduleName: config.module_name || "",
+          isActive: config.is_active || false,
+          createdAt: config.created_at || new Date().toISOString(),
+          updatedAt: config.updated_at || new Date().toISOString(),
+          startStepId: config.start_step_id || "",
+          steps: [],
+          slaHours: config.sla_hours || 48,
+        })
+      );
+
       setConfigurations(mappedConfigurations);
     } catch (error) {
       console.error("Error fetching configurations:", error);
@@ -55,7 +56,7 @@ const WorkflowDashboard = () => {
       setIsLoading(false);
     }
   };
-  
+
   // Initial data fetch
   useEffect(() => {
     fetchConfigurations();
@@ -71,14 +72,16 @@ const WorkflowDashboard = () => {
         .from("workflow_configurations")
         .delete()
         .eq("id", id);
-      
+
       if (error) {
         throw error;
       }
-      
+
       // Remove from local state
-      setConfigurations(prevConfigs => prevConfigs.filter(config => config.id !== id));
-      
+      setConfigurations((prevConfigs) =>
+        prevConfigs.filter((config) => config.id !== id)
+      );
+
       toast({
         title: "Configuration Deleted",
         description: "The workflow configuration has been deleted",
@@ -92,7 +95,7 @@ const WorkflowDashboard = () => {
       });
     }
   };
-  
+
   const handleEditConfig = (id: string) => {
     navigate(`/workflow/configuration/${id}`);
   };
@@ -107,9 +110,9 @@ const WorkflowDashboard = () => {
             New Configuration
           </Button>
         </div>
-        
-        <WorkflowConfigList 
-          configurations={configurations} 
+
+        <WorkflowConfigList
+          configurations={configurations}
           isLoading={isLoading}
           onEdit={handleEditConfig}
           onDelete={handleDeleteConfig}

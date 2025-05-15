@@ -1,4 +1,3 @@
-
 import {
   FormControl,
   FormField,
@@ -16,7 +15,7 @@ import {
 import { UseFormReturn } from "react-hook-form";
 import { UserFormData } from "../types";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserPositionFieldProps {
@@ -32,7 +31,7 @@ export function UserPositionField({ form, isLoading }: UserPositionFieldProps) {
         .from("nd_position")
         .select("id, name")
         .order("name", { ascending: true });
-        
+
       if (error) throw error;
       return data;
     },

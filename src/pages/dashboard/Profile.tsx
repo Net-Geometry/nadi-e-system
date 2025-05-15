@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
@@ -12,7 +11,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserCog } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import type { Profile } from "@/types/auth";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 
@@ -24,7 +23,9 @@ const Profile = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const {
+          data: { user },
+        } = await supabase.auth.getUser();
         if (!user) return;
 
         const { data, error } = await supabase
@@ -54,7 +55,9 @@ const Profile = () => {
     setLoading(true);
 
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) throw new Error("No user found");
 
       const updates = {
@@ -63,9 +66,7 @@ const Profile = () => {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
-        .from("profiles")
-        .upsert(updates);
+      const { error } = await supabase.from("profiles").upsert(updates);
 
       if (error) throw error;
 
@@ -86,11 +87,12 @@ const Profile = () => {
     }
   };
 
-  if (!profile) return (
-    <DashboardLayout>
-      <div>Loading...</div>
-    </DashboardLayout>
-  );
+  if (!profile)
+    return (
+      <DashboardLayout>
+        <div>Loading...</div>
+      </DashboardLayout>
+    );
 
   return (
     <DashboardLayout>

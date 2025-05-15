@@ -9,6 +9,8 @@ import SsoProfileSettings from "@/components/profile/SsoProfileSettings";
 import TpProfileSettings from "@/components/profile/TpProfileSettings";
 import VendorProfileSettings from "@/components/profile/VendorProfileSettings";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
+import NoAccess from "@/pages/NoAccess";
+import SiteProfileSettings from "@/components/profile/SiteProfileSettings";
 
 const UserProfile = () => {
   const userMetadata = useUserMetadata();
@@ -29,9 +31,9 @@ const UserProfile = () => {
 
   if (!userGroup) {
     return (
-    <div className="flex items-center justify-center p-8">
-      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-    </div>);
+      <div className="flex items-center justify-center p-8">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>);
   }
 
   if (userGroup === 7) {
@@ -111,13 +113,20 @@ const UserProfile = () => {
     );
   }
 
+    if (userGroup === 9) {
+    return (
+      <DashboardLayout>
+        <ProfileHeader />
+        <div className="space-y-8">
+          <SiteProfileSettings />
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+
   return (
-    <DashboardLayout>
-      <ProfileHeader />
-      <div className="space-y-8">
-        <p>User type not recognized.</p>
-      </div>
-    </DashboardLayout>
+    <NoAccess />
   );
 };
 

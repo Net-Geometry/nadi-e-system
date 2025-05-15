@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { BUCKET_NAME_PROFILEIMAGE, SUPABASE_URL } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  BUCKET_NAME_PROFILEIMAGE,
+  SUPABASE_URL,
+} from "@/integrations/supabase/client";
 
 export const useMemberProfile = () => {
   const fetchMemberProfile = async () => {
@@ -15,7 +18,8 @@ export const useMemberProfile = () => {
     // Fetch the member profile data
     const { data: profile, error: profileError } = await supabase
       .from("nd_member_profile")
-      .select(`
+      .select(
+        `
       *, ref_id (id, sitename, fullname),
       gender (id, bm, eng),
       race_id (id, bm, eng),
@@ -28,7 +32,8 @@ export const useMemberProfile = () => {
       education_level (id, bm, eng),
       income_range (id, bm, eng),
       status_membership (id, name)
-    `)
+    `
+      )
       .eq("user_id", userId)
       .single();
 
@@ -88,7 +93,8 @@ export const useMemberProfileByUserId = (userId: string) => {
     // Fetch the member profile data
     const { data: profile, error: profileError } = await supabase
       .from("nd_member_profile")
-      .select(`
+      .select(
+        `
       *, ref_id (id, sitename, fullname),
       gender (id, bm, eng),
       race_id (id, bm, eng),
@@ -101,7 +107,8 @@ export const useMemberProfileByUserId = (userId: string) => {
       education_level (id, bm, eng),
       income_range (id, bm, eng),
       status_membership (id, name)
-    `)
+    `
+      )
       .eq("user_id", userId)
       .single();
 
@@ -146,13 +153,15 @@ export const useMemberAddress = (memberId: string) => {
     // Fetch the member address data using the provided memberId
     const { data: address, error: addressError } = await supabase
       .from("nd_member_address")
-      .select(`
+      .select(
+        `
         id, address1, address2, 
         city, 
         postcode,
         state_id (id, abbr, name ),
         district_id (id, code, name)
-      `)
+      `
+      )
       .eq("member_id", memberId)
       .single();
 
@@ -173,7 +182,10 @@ export const useMemberAddress = (memberId: string) => {
   return { data, isLoading, isError, error, refetch };
 };
 
-export const updateMemberAddress = async (memberId: string, updatedData: any) => {
+export const updateMemberAddress = async (
+  memberId: string,
+  updatedData: any
+) => {
   if (!memberId) {
     throw new Error("MemberId is required.");
   }

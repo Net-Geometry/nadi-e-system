@@ -31,6 +31,7 @@ export const hrMenuItems = [
 export const posMenuItems = [
   { title: "POS Dashboard", path: "/pos" },
   { title: "Products", path: "/pos/products" },
+  { title: "Sales", path: "/pos/sales" },
   { title: "Transactions", path: "/pos/transactions" },
   { title: "PUDO", path: "/pos/pudo" },
 ];
@@ -38,9 +39,9 @@ export const posMenuItems = [
 export const claimItems = [
   { title: "Claims Dashboard", path: "/claim" },
   { title: "Claims Settings", path: "/claim/settings" },
-  { title: "Registration", path: "/claim/registration" },
-  { title: "List Record", path: "/claim/list-record" },
-  { title: "Reports", path: "/claim/report" },
+  // { title: "Registration", path: "/claim/registration" },
+  // { title: "List Record", path: "/claim/list-record" },
+  // { title: "Reports", path: "/claim/report" },
 ];
 
 export const assetItems = [
@@ -73,11 +74,19 @@ export const programmesItems = [
 ];
 
 export const reportItems = [
-  { title: "Reports Dashboard", path: "/report/dashboard" },
-  { title: "Usage Sessions", path: "/report/usage-sessions" },
-  { title: "Internet Access", path: "/report/internet-access" },
-  { title: "Preset Reports", path: "/report/preset-reports" },
-  { title: "Custom Reports", path: "/report/custom-reports" },
+  // { title: "Reports Dashboard", path: "/report/dashboard" },
+  // { title: "Usage Sessions", path: "/report/usage-sessions" },
+  // { title: "Internet Access", path: "/report/internet-access" },
+  // { title: "Preset Reports", path: "/report/preset-reports" },
+  // { title: "Custom Reports", path: "/report/custom-reports" },
+  { title: "Overview", path: "/reports" },
+  { title: "NADI E-System", path: "/reports/nadi-e-system" },
+  { title: "Internet Access", path: "/reports/internet-access" },
+  { title: "Site Management", path: "/reports/site-management" },
+  { title: "HR & Salary", path: "/reports/hr-salary" },
+  { title: "Training", path: "/reports/training" },
+  { title: "Comprehensive Maintenance", path: "/reports/cm" },
+  { title: "Smart Services", path: "/reports/smart-services" },
 ];
 
 export const workflowItems = [
@@ -86,7 +95,6 @@ export const workflowItems = [
 
 export const memberManagementItems = [
   { title: "Member Management", path: "/member-management" },
-  { title: "Registration", path: "/member-management/registration" },
   { title: "Activity Logs", path: "/member-management/activity" },
 ];
 
@@ -117,7 +125,10 @@ export const siteManagementItems = [
   { title: "Booking Management", path: "/site-management/booking-management" },
   { title: "NADI Closure", path: "/site-management/closure" },
   { title: "Insurance", path: "/site-management/insurance" },
-  { title: "Inventory Management", path: "/site-management/inventory-management" },
+  {
+    title: "Inventory Management",
+    path: "/site-management/inventory-management",
+  },
   { title: "Utilities Billing", path: "/site-management/utilities-billing" },
   { title: "Vendor Management", path: "/site-management/vendor-management" },
   { title: "KPI Performance", path: "/site-management/kpi-performance" },
@@ -158,22 +169,24 @@ export const dashboardItems = [
 ];
 
 export const nadiDashboardItems = [
-  { title: "NADI Information", path: "/nadi-dashboard-nadi-information" },
-  { title: "Membership", path: "/nadi-dashboard-membership" },
-  { title: "Events", path: "/nadi-dashboard-events" },
-  { title: "Maps", path: "/nadi-dashboard-aps" },
-  { title: "NADI Location", path: "/nadi-dashboard-nadi-location" },
-  { title: "Operation Hour", path: "/nadi-dashboard-operation-hour" },
-  { title: "Service Provider", path: "/nadi-dashboard-service-provider" },
-  { title: "Contact Information", path: "/nadi-dashboard-contact-information" },
-  { title: "Others", path: "/nadi-dashboard-others" },
+  { title: "NADI Dashboard", path: "/nadi-dashboard" },
+  // { title: "NADI Information", path: "/nadi-dashboard-nadi-information" },
+  // { title: "Membership", path: "/nadi-dashboard-membership" },
+  // { title: "Events", path: "/nadi-dashboard-events" },
+  // { title: "Maps", path: "/nadi-dashboard-aps" },
+  // { title: "NADI Location", path: "/nadi-dashboard-nadi-location" },
+  // { title: "Operation Hour", path: "/nadi-dashboard-operation-hour" },
+  // { title: "Service Provider", path: "/nadi-dashboard-service-provider" },
+  // { title: "Contact Information", path: "/nadi-dashboard-contact-information" },
+  // { title: "Others", path: "/nadi-dashboard-others" },
 ];
 
 export const iotDashboardItems = [
-  { title: "Rain Gauge", path: "/iot-dashboard-rain-gauge" },
-  { title: "Temperature", path: "/iot-dashboard-temperature" },
-  { title: "Humidity", path: "/iot-dashboard-humidity" },
-  { title: "Pressure", path: "/iot-dashboard-pressure" },
+  { title: "IOT Dashboard", path: "/iot-dashboard" },
+  // { title: "Rain Gauge", path: "/iot-dashboard-rain-gauge" },
+  // { title: "Temperature", path: "/iot-dashboard-temperature" },
+  // { title: "Humidity", path: "/iot-dashboard-humidity" },
+  // { title: "Pressure", path: "/iot-dashboard-pressure" },
 ];
 
 export const announcementsItems = [

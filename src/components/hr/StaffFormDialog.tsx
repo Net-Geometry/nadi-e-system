@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/components/ui/use-toast";
 import { Loader2, UserPlus } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { createStaffMember } from "@/lib/staff";
 import { useAuth } from "@/hooks/useAuth";
 import { useUserAccess } from "@/hooks/use-user-access";
@@ -1255,7 +1255,7 @@ export function StaffFormDialog({
                     name="userType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>User Type*</FormLabel>
+                        <FormLabel>Role*</FormLabel>
                         <Select
                           onValueChange={field.onChange}
                           defaultValue={field.value}

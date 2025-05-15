@@ -27,6 +27,7 @@ type ValidationErrors = {
   remark?: string;
   affectArea?: string;
   selectedSiteId?: string; // Add validation error for site selection
+  attachment?: string; // Add validation error for attachment
 };
 
 type SubmissionType = "draft" | "submit" | null;
@@ -52,8 +53,7 @@ export const useSiteClosureForm = (
   
   // Combined loading state
   const isSubmitting = isInserting || isUpdating;
-  
-  // Form state
+    // Form state
   const [formState, setFormState] = useState<FormData>({
     remark: "",
     close_start: "",
@@ -65,7 +65,7 @@ export const useSiteClosureForm = (
     affectArea: [],
     session: "",
     status: "2", // Default status is 2 for submit
-    selectedSiteId: undefined, // Initialize selectedSiteId
+    selectedSiteId: siteId || undefined, // Initialize selectedSiteId with siteId for Staff/Site users
   });
   
   // Validation errors
@@ -115,8 +115,7 @@ export const useSiteClosureForm = (
         console.log("No existing attachments found in edit data");
         setExistingAttachments([]);
         setOriginalAttachments([]);
-      }
-    } else {
+      }    } else {
       // Initialize empty form for new request
       console.log("Initializing empty form for new request");
       setFormState({
@@ -130,7 +129,7 @@ export const useSiteClosureForm = (
         affectArea: [],
         session: "",
         status: "2", // Default status is 2 for submit
-        selectedSiteId: undefined, // Initialize selectedSiteId
+        selectedSiteId: siteId || undefined, // Initialize selectedSiteId with siteId for Staff/Site users
       });
       
       // Clear attachment states
@@ -184,6 +183,7 @@ export const useSiteClosureForm = (
   const validateForm = useCallback((context: ValidationContext = {}) => {
     const errors: ValidationErrors = {};
     
+    console.log("Validating form state:", formState);
     // Basic validations that always apply
     if (!formState.close_start) {
       errors.close_start = "Start date is required";
@@ -191,10 +191,12 @@ export const useSiteClosureForm = (
       errors.close_start = "Start date cannot be more than 1 week in advance";
     }
     
+    console.log("Validating close_end:", formState.close_end);
     if (!formState.close_end) {
       errors.close_end = "End date is required";
     }
     
+    console.log("Validating close_start:", formState.close_start);
     // Check if date range is valid before validating session
     // Use the provided context or determine it here
     const isDateRangeValid = context.isDateRangeValid !== undefined 
@@ -206,11 +208,13 @@ export const useSiteClosureForm = (
       errors.session = "Session is required";
     }
     
+    console.log("Validating session:", formState.session);
     // Use the provided context for time inputs or determine it here
     const showTimeInputs = context.showTimeInputs !== undefined
       ? context.showTimeInputs
       : formState.session && !["1", "4"].includes(formState.session);
     
+      console.log("Show time inputs:", showTimeInputs);
     // Only validate time fields if time inputs should be shown
     if (showTimeInputs) {
       if (!formState.start_time) {
@@ -222,6 +226,7 @@ export const useSiteClosureForm = (
       }
     }
     
+    console.log("Validating category_id:", formState.category_id);
     // Category is always required
     if (!formState.category_id) {
       errors.category_id = "Category is required";
@@ -232,28 +237,38 @@ export const useSiteClosureForm = (
       ? context.showSubcategory
       : formState.category_id === "6"; // Default logic if context not provided
       
+    console.log("Needs subcategory:", needsSubcategory);
     if (needsSubcategory && !formState.subcategory_id) {
       errors.subcategory_id = "Sub-category is required";
     }
     
+    console.log("Validating remark:", formState.remark);
     // Always required fields
     if (!formState.remark) {
       errors.remark = "Reason is required";
     }
     
+    console.log("Validating affected areas:", formState.affectArea);
     if (!formState.affectArea.length) {
       errors.affectArea = "At least one affected area must be selected";
     }
     
+    console.log("Validating selectedSiteId:", formState.selectedSiteId);
+    // Check for site selection
     if (!formState.selectedSiteId) {
       errors.selectedSiteId = "Site selection is required";
+    }
+    
+    console.log("Validating attachments:", selectedFiles.length, existingAttachments.length);
+    // Check if attachments are provided - make attachment required
+    if (selectedFiles.length === 0 && existingAttachments.length === 0) {
+      errors.attachment = "At least one attachment is required";
     }
     
     setValidationErrors(errors);
     
     return Object.keys(errors).length === 0;
-  }, [formState, isSuperAdmin, isDateWithinAllowedRange]);
-
+  }, [formState, isSuperAdmin, isDateWithinAllowedRange, selectedFiles, existingAttachments]);
   const resetForm = useCallback(() => {
     setFormState({
       remark: "",
@@ -266,7 +281,7 @@ export const useSiteClosureForm = (
       affectArea: [],
       session: "",
       status: "2",
-      selectedSiteId: undefined, // Reset selectedSiteId
+      selectedSiteId: siteId || undefined, // Retain siteId for Staff/Site users
     });
     setValidationErrors({});
     setSelectedFiles([]);
@@ -277,8 +292,7 @@ export const useSiteClosureForm = (
     }
     
     setExistingAttachments([]);
-  }, [editData?.id, existingAttachments.length]);
-
+  }, [editData?.id, existingAttachments.length, siteId]);
   const cleanupFormState = useCallback(() => {
     console.log("Cleaning up form state after successful submission");
     setFormState({
@@ -292,7 +306,7 @@ export const useSiteClosureForm = (
       affectArea: [],
       session: "",
       status: "2", // Reset to default status
-      selectedSiteId: undefined, // Reset selectedSiteId
+      selectedSiteId: siteId || undefined, // Retain siteId for Staff/Site users
     });
     setValidationErrors({});
     setSelectedFiles([]);
@@ -301,7 +315,7 @@ export const useSiteClosureForm = (
     setWasFormCleared(false);
     setActiveSubmission(null);
     setShowConfirmDialog(false);
-  }, []);
+  }, [siteId]);
 
   const handleSubmitAsDraft = useCallback(async () => {
     setActiveSubmission("draft");
@@ -438,7 +452,6 @@ export const useSiteClosureForm = (
   const resetCleanupFlags = useCallback(() => {
     setWasFormCleared(false);
   }, []);
-
   const cleanupState = useCallback(() => {
     console.log("Cleaning up form state completely");
     setFormState({
@@ -452,7 +465,7 @@ export const useSiteClosureForm = (
       affectArea: [],
       session: "",
       status: "2",
-      selectedSiteId: undefined, // Reset selectedSiteId
+      selectedSiteId: siteId || undefined, // Retain siteId for Staff/Site users
     });
     setValidationErrors({});
     setSelectedFiles([]);
@@ -461,7 +474,7 @@ export const useSiteClosureForm = (
     setWasFormCleared(false);
     setActiveSubmission(null);
     setShowConfirmDialog(false);
-  }, []);
+  }, [siteId]);
 
   return {
     formState,

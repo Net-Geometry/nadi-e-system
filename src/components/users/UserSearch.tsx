@@ -1,10 +1,15 @@
-
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Download, Filter } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 interface UserSearchProps {
   searchQuery: string;
@@ -73,18 +78,18 @@ export const UserSearch = ({
     const fetchUserTypes = async () => {
       try {
         const { data, error } = await supabase
-          .from('roles')
-          .select('name, description')
-          .order('name');
+          .from("roles")
+          .select("name, description")
+          .order("name");
 
         if (error) {
-          console.error('Error fetching roles:', error);
+          console.error("Error fetching roles:", error);
           throw error;
         }
 
         setUserTypes(data as userType[]);
       } catch (error) {
-        console.error('Error fetching roles:', error);
+        console.error("Error fetching roles:", error);
       } finally {
         setLoading(false);
       }
@@ -105,58 +110,55 @@ export const UserSearch = ({
       </div>
 
       <div className="flex flex-wrap gap-2 items-center mb-2">
-        <Select
-          value={siteFilter}
-          onValueChange={onSiteFilterChange}
-        >
+        <Select value={siteFilter} onValueChange={onSiteFilterChange}>
           <SelectTrigger className="w-32 bg-white border-gray-200">
             <SelectValue placeholder="Site" />
           </SelectTrigger>
           <SelectContent>
             {sites.map((site) => (
-              <SelectItem key={site} value={site === "All Sites" ? "all_sites" : site}>
+              <SelectItem
+                key={site}
+                value={site === "All Sites" ? "all_sites" : site}
+              >
                 {site}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Select
-          value={phaseFilter}
-          onValueChange={onPhaseFilterChange}
-        >
+        <Select value={phaseFilter} onValueChange={onPhaseFilterChange}>
           <SelectTrigger className="w-32 bg-white border-gray-200">
             <SelectValue placeholder="Phase" />
           </SelectTrigger>
           <SelectContent>
             {phases.map((phase) => (
-              <SelectItem key={phase} value={phase === "All Phases" ? "all_phases" : phase}>
+              <SelectItem
+                key={phase}
+                value={phase === "All Phases" ? "all_phases" : phase}
+              >
                 {phase}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Select
-          value={stateFilter}
-          onValueChange={onStateFilterChange}
-        >
+        <Select value={stateFilter} onValueChange={onStateFilterChange}>
           <SelectTrigger className="w-32 bg-white border-gray-200">
             <SelectValue placeholder="State" />
           </SelectTrigger>
           <SelectContent>
             {states.map((state) => (
-              <SelectItem key={state} value={state === "All States" ? "all_states" : state}>
+              <SelectItem
+                key={state}
+                value={state === "All States" ? "all_states" : state}
+              >
                 {state}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Select
-          value={dateFilter}
-          onValueChange={onDateFilterChange}
-        >
+        <Select value={dateFilter} onValueChange={onDateFilterChange}>
           <SelectTrigger className="w-44 bg-white border-gray-200">
             <SelectValue placeholder="Date Registered" />
           </SelectTrigger>
@@ -167,8 +169,8 @@ export const UserSearch = ({
           </SelectContent>
         </Select>
 
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={onReset}
           className="border-gray-200 hover:bg-gray-50"
         >
@@ -176,16 +178,16 @@ export const UserSearch = ({
         </Button>
 
         <div className="ml-auto flex items-center gap-2">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={onExport}
             className="border-gray-200 hover:bg-gray-50"
           >
             <Download className="h-4 w-4 mr-2" />
             Download
           </Button>
-          
-          <Button 
+
+          <Button
             onClick={onApplyFilters}
             className="bg-[#6E41E2] hover:bg-[#5a33c9]"
           >

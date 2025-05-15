@@ -1,7 +1,21 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const insertMemberData = async (formData: {
+  identity_no_type: string;
   identity_no: string;
+  isIcNumberValid: boolean; // check if valid
+  isUnder12: boolean;
+  parent_fullname: string;
+  parent_ic_no: string;
+  parent_relationship_id: string;
+  parent_mobile_no: string;
+  parent_address1: string;
+  parent_address2: string;
+  parent_district_id: string;
+  parent_state_id: string;
+  parent_city: string;
+  parent_postcode: string;
+
   fullname: string;
   ref_id: number | string; // bigint
   community_status: boolean | string;
@@ -9,10 +23,9 @@ export const insertMemberData = async (formData: {
   mobile_no: string;
   email: string;
   gender: number | string;
-  supervision: string;
   status_membership: number | string;
   status_entrepreneur: boolean | string;
-  register_method: string;
+  register_method: number | string;
   join_date: string; // ISO timestamp string
   registration_status: boolean | string;
 
@@ -37,191 +50,137 @@ export const insertMemberData = async (formData: {
 
   pdpa_declare: boolean | string;
   agree_declare: boolean | string;
+
+  password: string; // Password for the user
 }) => {
   let userId, memberId;
 
   try {
-    // Fetch the user_id using the identity_no from the "profiles" table
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("ic_number", formData.identity_no)
-      .single();
+    // Create the user account
+    const { data: userData, error: createUserError } = await supabase.functions.invoke("create-user", {
+      body: {
+        email: formData.email,
+        fullName: formData.fullname,
+        userType: "member",
+        userGroup: 7,
+        phoneNumber: formData.mobile_no,
+        icNumber: formData.identity_no,
+        password: formData.password,
+      },
+    });
 
-    if (profileError || !profileData) {
-      throw new Error(
-        `This user does not have an account with the same IC number: ${
-          profileError?.message || "User not found in profiles table."
-        }`
-      );
+    if (createUserError || !userData) {
+      throw new Error(createUserError?.message || "Failed to create user");
     }
 
-    userId = profileData.id;
+    userId = userData.id;
 
-    // Check if the identity_no already exists in the nd_member_profile table
-    const { data: existingmember, error: existingmemberError } = await supabase
+    // Insert into nd_member_profile
+    const { data: memberProfileData, error: memberProfileError } = await supabase
       .from("nd_member_profile")
+      .insert({
+        identity_no: formData.identity_no,
+        fullname: formData.fullname,
+        ref_id: formData.ref_id,
+        community_status: formData.community_status,
+        dob: formData.dob,
+        mobile_no: formData.mobile_no,
+        email: formData.email,
+        gender: formData.gender,
+        race_id: formData.race_id,
+        ethnic_id: formData.ethnic_id,
+        occupation_id: formData.occupation_id,
+        type_sector: formData.type_sector,
+        socio_id: formData.socio_id,
+        ict_knowledge: formData.ict_knowledge,
+        education_level: formData.education_level,
+        oku_status: formData.oku_status,
+        income_range: formData.income_range,
+        distance: formData.distance,
+        join_date: formData.join_date,
+        register_method: formData.register_method,
+        pdpa_declare: formData.pdpa_declare,
+        agree_declare: formData.agree_declare,
+        status_membership: formData.status_membership,
+        status_entrepreneur: formData.status_entrepreneur,
+        supervision: formData.parent_ic_no,
+        nationality_id: formData.nationality_id,
+        registration_status: formData.registration_status,
+        user_id: userId,
+      })
       .select("id")
-      .eq("identity_no", formData.identity_no)
       .single();
 
-    if (existingmemberError && existingmemberError.code !== "PGRST116") {
-      // PGRST116 indicates no rows found; ignore this error
-      throw new Error(
-        existingmemberError?.message || "Error checking existing member profile."
-      );
+    if (memberProfileError || !memberProfileData) {
+      throw new Error(memberProfileError?.message || "Failed to insert into nd_member_profile.");
     }
 
-    if (existingmember) {
-      // If the member already exists, update the record
-      memberId = existingmember.id;
+    memberId = memberProfileData.id;
 
-      const { error: updatememberError } = await supabase
-        .from("nd_member_profile")
-        .update({
-          fullname: formData.fullname,
-          ref_id: formData.ref_id,
-          community_status: formData.community_status,
-          dob: formData.dob,
-          mobile_no: formData.mobile_no,
-          email: formData.email,
-          gender: formData.gender,
-          race_id: formData.race_id,
-          ethnic_id: formData.ethnic_id,
-          occupation_id: formData.occupation_id,
-          type_sector: formData.type_sector,
-          socio_id: formData.socio_id,
-          ict_knowledge: formData.ict_knowledge,
-          education_level: formData.education_level,
-          oku_status: formData.oku_status,
-          income_range: formData.income_range,
-          distance: formData.distance,
-          join_date: formData.join_date,
-          register_method: formData.register_method,
-          pdpa_declare: formData.pdpa_declare,
-          agree_declare: formData.agree_declare,
-          status_membership: formData.status_membership,
-          status_entrepreneur: formData.status_entrepreneur,
-          supervision: formData.supervision,
-          nationality_id: formData.nationality_id,
-          registration_status: formData.registration_status
-        })
-        .eq("id", memberId);
-
-      if (updatememberError) {
-        throw new Error(
-          updatememberError?.message || "Failed to update nd_member_profile."
-        );
-      }
-    } else {
-      // If the member does not exist, insert a new record
-      const { data: memberProfileData, error: memberProfileError } = await supabase
-        .from("nd_member_profile")
-        .insert({
-          identity_no: formData.identity_no,
-          fullname: formData.fullname,
-          ref_id: formData.ref_id,
-          community_status: formData.community_status,
-          dob: formData.dob,
-          mobile_no: formData.mobile_no,
-          email: formData.email,
-          gender: formData.gender,
-          race_id: formData.race_id,
-          ethnic_id: formData.ethnic_id,
-          occupation_id: formData.occupation_id,
-          type_sector: formData.type_sector,
-          socio_id: formData.socio_id,
-          ict_knowledge: formData.ict_knowledge,
-          education_level: formData.education_level,
-          oku_status: formData.oku_status,
-          income_range: formData.income_range,
-          distance: formData.distance,
-          join_date: formData.join_date,
-          register_method: formData.register_method,
-          pdpa_declare: formData.pdpa_declare,
-          agree_declare: formData.agree_declare,
-          status_membership: formData.status_membership,
-          status_entrepreneur: formData.status_entrepreneur,
-          supervision: formData.supervision,
-          nationality_id: formData.nationality_id,
-          registration_status: formData.registration_status,
-
-          user_id: userId,
-        })
-        .select("id")
-        .single();
-
-      if (memberProfileError || !memberProfileData) {
-        throw new Error(
-          memberProfileError?.message || "Failed to insert into nd_member_profile."
-        );
-      }
-
-      memberId = memberProfileData.id;
-    }
-
-    // Update or insert into nd_member_address
+    // Upsert into nd_member_address (unique: member_id)
     const { error: memberAddressError } = await supabase
       .from("nd_member_address")
-      .upsert({
-        member_id: memberId,
-        address1: formData.address1,
-        address2: formData.address2,
-        district_id: formData.district_id,
-        state_id: formData.state_id,
-        city: formData.city,
-        postcode: formData.postcode,
-      }, { onConflict: "member_id" }); // Use upsert to handle insert or update
+      .upsert(
+        {
+          member_id: memberId,
+          address1: formData.address1,
+          address2: formData.address2,
+          district_id: formData.district_id,
+          state_id: formData.state_id,
+          city: formData.city,
+          postcode: formData.postcode,
+        },
+        { onConflict: "member_id" }
+      );
 
     if (memberAddressError) {
-      throw new Error(
-        memberAddressError.message || "Failed to update/insert nd_member_address."
-      );
+      throw new Error(memberAddressError.message || "Failed to upsert into nd_member_address.");
     }
 
-    // Update or insert into nd_member_photo
+    // Upsert into nd_member_photo (unique: member_id)
     const { error: memberPhotoError } = await supabase
       .from("nd_member_photo")
-      .upsert({
-        user_id: userId,
-        member_id: memberId,
-      }, { onConflict: "member_id" }); // Use upsert to handle insert or update
+      .upsert(
+        {
+          user_id: userId,
+          member_id: memberId,
+        },
+        { onConflict: "member_id" }
+      );
 
     if (memberPhotoError) {
-      throw new Error(
-        memberPhotoError.message || "Failed to update/insert nd_member_photo."
-      );
+      throw new Error(memberPhotoError.message || "Failed to upsert into nd_member_photo.");
+    }
+
+    // If under 12, upsert into nd_member_parents (unique: ic_no)
+    if (formData.isUnder12) {
+      const { error: memberParentError } = await supabase
+        .from("nd_member_parents")
+        .upsert(
+          {
+            member_id: memberId,
+            fullname: formData.parent_fullname,
+            ic_no: formData.parent_ic_no,
+            relationship_id: formData.parent_relationship_id,
+            mobile_no: formData.parent_mobile_no,
+            address1: formData.parent_address1,
+            address2: formData.parent_address2,
+            city: formData.parent_city,
+            postcode: formData.parent_postcode,
+            district_id: formData.parent_district_id,
+            state_id: formData.parent_state_id,
+          },
+          { onConflict: "ic_no" }
+        );
+
+      if (memberParentError) {
+        throw new Error(memberParentError.message || "Failed to upsert into nd_member_parents.");
+      }
     }
 
     return { success: true };
   } catch (error) {
-    console.error("Error inserting/updating member data:", error);
-    throw error; // Re-throw the error to be handled by the caller
-  }
-};
-
-/**
- * Function to check if the identity_no exists in the profiles table.
- * @param identity_no - The IC number to validate.
- * @returns The user ID if the IC number exists.
- * @throws Error if the IC number does not exist in the profiles table.
- */
-export const validateIdentityNo = async (identity_no: string) => {
-  try {
-    // Fetch the user_id using the identity_no from the "profiles" table
-    const { data: profileData, error: profileError } = await supabase
-      .from("profiles")
-      .select("id")
-      .eq("ic_number", identity_no) // Use the raw identity_no directly
-      .single();
-
-    if (profileError || !profileData) {
-      throw new Error("This IC number does not register to this system.");
-    }
-
-    return profileData.id; // Return the user ID if found
-  } catch (error) {
-    console.error("Error validating identity_no:", error);
+    console.error("Error inserting member data:", error);
     throw error; // Re-throw the error to be handled by the caller
   }
 };

@@ -153,3 +153,65 @@ export const useUpdateBillingData = () => {
 
   return { updateBillingData, loading, error };
 };
+
+
+export const useDeleteBillingData = () => {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const deleteBillingData = async (billingId: string, toast: any) => {
+    setLoading(true);
+    try {
+      // Fetch the associated file path
+      const { data: attachmentData, error: attachmentError } = await supabase
+        .from("nd_utilities_attachment")
+        .select("file_path")
+        .eq("utilities_id", billingId)
+        .single();
+
+      if (attachmentError) {
+        console.warn("No associated file found or error fetching file path:", attachmentError);
+      } else if (attachmentData?.file_path) {
+        const filePath = attachmentData.file_path;
+        const relativeFilePath = filePath.split(`${BUCKET_NAME_UTILITIES}/`)[1];
+
+        // Delete the file from storage
+        const { error: storageError } = await supabase.storage
+          .from(BUCKET_NAME_UTILITIES)
+          .remove([relativeFilePath]);
+
+        if (storageError) {
+          throw new Error("Failed to delete the associated file.");
+        }
+      }
+
+      // Delete the billing record
+      const { error } = await supabase
+        .from("nd_utilities")
+        .delete()
+        .eq("id", billingId);
+
+      if (error) {
+        throw new Error("Failed to delete the billing record.");
+      }
+
+      toast({
+        title: "Success",
+        description: "Record and associated file deleted successfully.",
+        variant: "default",
+      });
+    } catch (err: any) {
+      console.error("Error deleting billing data:", err);
+      toast({
+        title: "Error",
+        description: err.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return { deleteBillingData, loading, error };
+};

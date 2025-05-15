@@ -7,7 +7,6 @@ import { useUserMetadata } from "@/hooks/use-user-metadata";
 
 export const useAssetQueries = () => {
   const userMetadata = useUserMetadata();
-  const siteId = useSiteId();
   const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
   const organizationId =
     parsedMetadata?.user_type !== "super_admin" &&
@@ -17,10 +16,7 @@ export const useAssetQueries = () => {
       : null;
   const isStaffUser = parsedMetadata?.user_group_name === "Centre Staff";
 
-  let site_id: string | null = null;
-  if (isStaffUser) {
-    site_id = siteId;
-  }
+  const site_id = useSiteId(isStaffUser);
 
   const useAssetsQuery = () =>
     useQuery({
@@ -29,18 +25,49 @@ export const useAssetQueries = () => {
       enabled:
         (!!organizationId && !isStaffUser) ||
         parsedMetadata?.user_type === "super_admin" ||
-        (isStaffUser && !!siteId),
+        (isStaffUser && !!site_id),
     });
 
-  const useAssetQuery = (id: string) =>
+  const useAssetsByNameQuery = (name: string, isActive?: boolean) =>
+    useQuery({
+      queryKey: ["assets", organizationId, site_id, name],
+      queryFn: () =>
+        assetClient.fetchAssetsByName(organizationId, site_id, name, isActive),
+      enabled:
+        !!name &&
+        (!!organizationId || parsedMetadata?.user_type === "super_admin") &&
+        (!isStaffUser || !!site_id),
+    });
+
+  const useAssetsByTypeQuery = (typeId: number) => 
+    useQuery({
+      queryKey: ["assets", typeId],
+      queryFn: () => assetClient.fetchAssetsByType(typeId, Number(site_id)),
+      enabled: 
+        !!typeId || (!!organizationId && !isStaffUser) ||
+        parsedMetadata?.user_type === "super_admin" ||
+        (isStaffUser && !!site_id),
+    });
+
+  const useAssetQuery = (id: number) =>
     useQuery({
       queryKey: ["assets", id],
       queryFn: () => assetClient.fetchAssetById(id),
       enabled: !!id,
     });
 
+  const useAssetsInTpsSites = (tps_sites_ids: number[], assetType: number) => 
+    useQuery({
+      queryKey: ["tpsAssets"],
+      queryFn: () => assetClient.getAllPcInTpsSite(tps_sites_ids, assetType),
+      enabled: tps_sites_ids.length > 0
+    });
+
   return {
     useAssetsQuery,
+    useAssetsByNameQuery,
     useAssetQuery,
+    useAssetsByTypeQuery,
+    useAssetsInTpsSites
   };
 };

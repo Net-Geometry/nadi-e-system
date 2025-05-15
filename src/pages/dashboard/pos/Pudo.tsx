@@ -1,13 +1,27 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { UsageHeader } from "@/components/site/usage/UsageHeader";
-import UsageDynamic from "@/components/site/usage/UsageDynamic";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
-const Pudo = () => {
-    return (
-        <DashboardLayout>
-            <p>Pudo page</p>
-        </DashboardLayout>
-    );
+const PUDO = () => {
+  
+
+  return (
+    <DashboardLayout>
+      <div className="mb-8">
+        <h1 className="text-xl font-bold">PUDO</h1>
+      </div>
+
+    </DashboardLayout>
+  );
 };
 
-export default Pudo;
+export default PUDO;

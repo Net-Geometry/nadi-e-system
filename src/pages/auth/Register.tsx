@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Link, useNavigate } from "react-router-dom";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 const Register = () => {
@@ -20,28 +19,31 @@ const Register = () => {
     setLoading(true);
 
     try {
-      const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: fullName,
+      const { data: authData, error: signUpError } = await supabase.auth.signUp(
+        {
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+            },
           },
-        },
-      });
+        }
+      );
 
       if (signUpError) throw signUpError;
 
       if (authData.user) {
         toast({
           title: "Success",
-          description: "Registration successful! Please check your email to verify your account.",
+          description:
+            "Registration successful! Please check your email to verify your account.",
         });
-        
+
         navigate("/login");
       }
     } catch (error: any) {
-      console.error('Registration error:', error);
+      console.error("Registration error:", error);
       toast({
         title: "Error",
         description: error.message,
@@ -98,11 +100,7 @@ const Register = () => {
             />
           </div>
 
-          <Button 
-            type="submit" 
-            className="w-full" 
-            disabled={loading}
-          >
+          <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating account..." : "Create account"}
           </Button>
 

@@ -33,6 +33,10 @@ export interface Site {
   nd_site_status: {
     eng: string;
   };
+  nd_site_profile: {
+    sitename: string
+    state_id: number
+  };
   nd_site: {
     id: string;
     standard_code: string;

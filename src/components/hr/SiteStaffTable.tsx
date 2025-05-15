@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -51,8 +50,9 @@ export const SiteStaffTable = ({
   onSelectStaff,
   onSelectAll,
 }: SiteStaffTableProps) => {
-  const allSelected = filteredStaff.length > 0 && selectedStaff.length === filteredStaff.length;
-  
+  const allSelected =
+    filteredStaff.length > 0 && selectedStaff.length === filteredStaff.length;
+
   return (
     <div className="rounded-md border">
       <Table>
@@ -67,7 +67,7 @@ export const SiteStaffTable = ({
             </TableHead>
             <TableHead>Staff Name</TableHead>
             <TableHead>Email</TableHead>
-            <TableHead>User Type</TableHead>
+            <TableHead>Role</TableHead>
             <TableHead>Employ Date</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Phone Number</TableHead>
@@ -91,16 +91,19 @@ export const SiteStaffTable = ({
             filteredStaff.map((staff) => (
               <TableRow key={staff.id}>
                 <TableCell>
-                  <Checkbox 
+                  <Checkbox
                     checked={selectedStaff.includes(staff.id)}
-                    onCheckedChange={(checked) => onSelectStaff(staff.id, !!checked)}
+                    onCheckedChange={(checked) =>
+                      onSelectStaff(staff.id, !!checked)
+                    }
                     aria-label={`Select ${staff.name}`}
                   />
                 </TableCell>
                 <TableCell className="font-medium">{staff.name}</TableCell>
                 <TableCell>{staff.email || "-"}</TableCell>
                 <TableCell>
-                  {staff.userType?.replace(/_/g, " ") || "Unknown"}
+                  {staff.userType?.replace(/staff/gi, "").replace(/_/g, " ") ||
+                    "Unknown"}
                 </TableCell>
                 <TableCell>
                   {staff.employDate ? formatDate(staff.employDate) : "-"}

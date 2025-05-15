@@ -1,5 +1,8 @@
-import { supabase } from "@/lib/supabase";
-import { OrganizationUser, OrganizationUserFormData } from "@/types/organization";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  OrganizationUser,
+  OrganizationUserFormData,
+} from "@/types/organization";
 import { UserType } from "@/types/auth";
 
 /**
@@ -9,10 +12,13 @@ export const organizationUsersClient = {
   /**
    * Fetch users for a specific organization
    */
-  fetchOrganizationUsers: async (organizationId: string): Promise<OrganizationUser[]> => {
+  fetchOrganizationUsers: async (
+    organizationId: string
+  ): Promise<OrganizationUser[]> => {
     const { data, error } = await supabase
       .from("organization_users")
-      .select(`
+      .select(
+        `
         *,
         profiles:user_id (
           id, 
@@ -20,7 +26,8 @@ export const organizationUsersClient = {
           email, 
           user_type
         )
-      `)
+      `
+      )
       .eq("organization_id", organizationId);
 
     if (error) throw error;
@@ -30,9 +37,11 @@ export const organizationUsersClient = {
   /**
    * Add a user to an organization
    */
-  addUserToOrganization: async (formData: OrganizationUserFormData): Promise<OrganizationUser> => {
+  addUserToOrganization: async (
+    formData: OrganizationUserFormData
+  ): Promise<OrganizationUser> => {
     console.log("Adding user to organization:", formData);
-    
+
     // First, check if the relationship already exists
     const { data: existingData } = await supabase
       .from("organization_users")
@@ -40,7 +49,7 @@ export const organizationUsersClient = {
       .eq("organization_id", formData.organization_id)
       .eq("user_id", formData.user_id)
       .single();
-    
+
     if (existingData) {
       console.log("User already exists in organization, updating role instead");
       // If exists, update the role
@@ -50,11 +59,11 @@ export const organizationUsersClient = {
         .eq("id", existingData.id)
         .select()
         .single();
-        
+
       if (error) throw error;
       return data as OrganizationUser;
     }
-    
+
     // Otherwise, create a new relationship
     const { data, error } = await supabase
       .from("organization_users")
@@ -66,16 +75,19 @@ export const organizationUsersClient = {
       console.error("Error adding user to organization:", error);
       throw error;
     }
-    
+
     return data as OrganizationUser;
   },
 
   /**
    * Remove a user from an organization
    */
-  removeUserFromOrganization: async (organizationId: string, userId: string): Promise<void> => {
+  removeUserFromOrganization: async (
+    organizationId: string,
+    userId: string
+  ): Promise<void> => {
     console.log("Removing user from organization:", { organizationId, userId });
-    
+
     const { error } = await supabase
       .from("organization_users")
       .delete()
@@ -103,7 +115,7 @@ export const organizationUsersClient = {
       .eq("user_id", userId);
 
     if (error) throw error;
-    
+
     if (!data || data.length === 0) return false;
     return roles.includes(data[0].role);
   },
@@ -119,5 +131,5 @@ export const organizationUsersClient = {
 
     if (error) throw error;
     return data;
-  }
+  },
 };

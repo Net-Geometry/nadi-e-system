@@ -2,7 +2,7 @@ import {
   fetchSiteBySiteId,
   fetchSites,
 } from "@/components/site/hook/site-utils";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { AssetType } from "@/types/asset";
 import { Inventory } from "@/types/inventory";
 import { Site } from "@/types/site";

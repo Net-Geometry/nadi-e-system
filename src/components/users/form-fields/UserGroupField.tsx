@@ -1,4 +1,3 @@
-
 import {
   FormControl,
   FormField,
@@ -16,7 +15,7 @@ import {
 import { UseFormReturn } from "react-hook-form";
 import { UserFormData } from "../types";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserGroupFieldProps {
@@ -25,16 +24,22 @@ interface UserGroupFieldProps {
   required?: boolean;
 }
 
-export function UserGroupField({ form, isLoading, required = true }: UserGroupFieldProps) {
+export function UserGroupField({
+  form,
+  isLoading,
+  required = true,
+}: UserGroupFieldProps) {
   const { data: userGroups, isLoading: isLoadingGroups } = useQuery({
     queryKey: ["user-groups"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("nd_user_group")
         .select("id, group_name, description")
-        .or('group_name.ilike.%mcmc%,group_name.ilike.%tp%,group_name.ilike.%dusp%,group_name.ilike.%sso%,group_name.ilike.%vendor%')
+        .or(
+          "group_name.ilike.%mcmc%,group_name.ilike.%tp%,group_name.ilike.%dusp%,group_name.ilike.%sso%,group_name.ilike.%vendor%"
+        )
         .order("group_name", { ascending: true });
-        
+
       if (error) throw error;
       return data;
     },

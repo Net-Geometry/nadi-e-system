@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 const useGeoData = () => {
   const [districts, setDistricts] = useState<any[]>([]); // State for districts
@@ -10,7 +10,9 @@ const useGeoData = () => {
   useEffect(() => {
     const fetchStates = async () => {
       try {
-        const { data, error } = await supabase.from("nd_state").select("id, region_id, code, abbr, name");
+        const { data, error } = await supabase
+          .from("nd_state")
+          .select("id, region_id, code, abbr, name");
         if (error) throw error;
         setStates(data);
       } catch (error) {

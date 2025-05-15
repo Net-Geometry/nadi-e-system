@@ -1,4 +1,4 @@
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const fetchUserProfile = async (userId: string) => {
   const { data: profile, error: profileError } = await supabase
@@ -52,7 +52,7 @@ export const fetchUserProfile = async (userId: string) => {
     switch (groupName) {
       case "Centre Staff":
         ({ data: groupProfile, error: groupError } = await supabase
-          .from("nd_staff_profiles")
+          .from("nd_staff_profile")
           .select("*")
           .eq("user_id", profile.id)
           .single());

@@ -16,7 +16,12 @@ import { FileUpload } from "@/components/ui/file-upload";
 import { useSiteCode } from "../hook/use-site-code";
 import { SelectMany } from "@/components/ui/SelectMany";
 import { SelectOne } from "@/components/ui/SelectOne";
-import { fetchClosureCategories, fetchClosureSubCategories, fetchClosureAffectAreas, fetchClosureSession } from "../hook/use-siteclosure";
+import {
+  fetchClosureCategories,
+  fetchClosureSubCategories,
+  fetchClosureAffectAreas,
+  fetchClosureSession,
+} from "../hook/use-siteclosure";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { DateInput } from "../../ui/date-input";
 import { useDateRangeValidation } from "@/hooks/useDateRangeValidation";
@@ -27,7 +32,7 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import { SUPABASE_URL } from "@/integrations/supabase/client";
 import { useSiteClosureForm } from "../hook/use-site-closure-form";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
 
 interface SiteClosureFormProps {
@@ -47,23 +52,27 @@ interface SiteOption {
 // Function to fetch sites for a specific TP organization
 const fetchTPSites = async (organizationId: string): Promise<SiteOption[]> => {
   if (!organizationId) return [];
-  
+
   try {
     const { data, error } = await supabase
       .from("nd_site_profile")
-      .select(`
+      .select(
+        `
         id,
         sitename,
         nd_site:nd_site(standard_code)
-      `)
+      `
+      )
       .eq("dusp_tp_id", organizationId)
       .order("sitename", { ascending: true });
-    
+
     if (error) throw error;
-    
-    return (data || []).map(site => ({
+
+    return (data || []).map((site) => ({
       id: site.id,
-      label: `${site.sitename} (${site.nd_site?.[0]?.standard_code || 'No Code'})`,
+      label: `${site.sitename} (${
+        site.nd_site?.[0]?.standard_code || "No Code"
+      })`,
     }));
   } catch (error) {
     console.error("Error fetching TP sites:", error);
@@ -76,7 +85,8 @@ const fetchAllSites = async (): Promise<SiteOption[]> => {
   try {
     const { data, error } = await supabase
       .from("nd_site_profile")
-      .select(`
+      .select(
+        `
         id,
         sitename,
         nd_site:nd_site(standard_code),
@@ -84,14 +94,17 @@ const fetchAllSites = async (): Promise<SiteOption[]> => {
           id, name, type,
           parent:parent_id(name)
         )
-      `)
+      `
+      )
       .order("sitename", { ascending: true });
-    
+
     if (error) throw error;
-    
-    return (data || []).map(site => ({
+
+    return (data || []).map((site) => ({
       id: site.id,
-      label: `${site.sitename} (${site.nd_site?.[0]?.standard_code || 'No Code'}) - ${site.organizations?.name || 'N/A'}`,
+      label: `${site.sitename} (${
+        site.nd_site?.[0]?.standard_code || "No Code"
+      }) - ${site.organizations?.name || "N/A"}`,
     }));
   } catch (error) {
     console.error("Error fetching all sites:", error);
@@ -110,12 +123,14 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
   // Get user metadata to check if user is TP
   const userMetadata = useUserMetadata();
   const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
-  const isTPUser = parsedMetadata?.user_group_name === "TP" && !!parsedMetadata?.organization_id;
+  const isTPUser =
+    parsedMetadata?.user_group_name === "TP" &&
+    !!parsedMetadata?.organization_id;
   const organizationId = isTPUser ? parsedMetadata?.organization_id : null;
-  
+
   // Get user group information FIRST before using it
   const { isTP, isSuperAdmin } = useUserGroup();
-  
+
   // Initialize the fileUploadRef
   const fileUploadRef = useRef<any>(null);
 
@@ -158,38 +173,51 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
     setShowConfirmDialog,
     validateForm,
     cleanupFormState,
-  } = useSiteClosureForm(siteId, "", editData, isSuperAdmin, onSuccess, onOpenChange);
-  
+  } = useSiteClosureForm(
+    siteId,
+    "",
+    editData,
+    isSuperAdmin,
+    onSuccess,
+    onOpenChange
+  );
+
   // Now use the selected site ID from form state for the effective site ID
   // This is what we'll use for siteCode lookup and form submission
-  const effectiveSiteId = (isTPUser || isSuperAdmin) ? formState?.selectedSiteId || "" : siteId;
-  
+  const effectiveSiteId =
+    isTPUser || isSuperAdmin ? formState?.selectedSiteId || "" : siteId;
+
   // Get site code for the effective site ID
   const { siteCode } = useSiteCode(effectiveSiteId);
-  
+
   // Track whether to show subcategory field based on category selection
   const [showSubcategory, setShowSubcategory] = useState(false);
-  
+
   // Data queries for form fields
-  const { data: closureCategories = [], isLoading: isLoadingCategories } = useQuery({
-    queryKey: ['closureCategories'],
-    queryFn: fetchClosureCategories,
-  });
+  const { data: closureCategories = [], isLoading: isLoadingCategories } =
+    useQuery({
+      queryKey: ["closureCategories"],
+      queryFn: fetchClosureCategories,
+    });
 
-  const { data: closureSubCategories = [], isLoading: isLoadingSubCategories } = useQuery({
-    queryKey: ['closureSubCategories'],
-    queryFn: fetchClosureSubCategories,
-  });
+  const { data: closureSubCategories = [], isLoading: isLoadingSubCategories } =
+    useQuery({
+      queryKey: ["closureSubCategories"],
+      queryFn: fetchClosureSubCategories,
+    });
 
-  const { data: closureAffectAreas = [], isLoading: isLoadingAffectAreas } = useQuery({
-    queryKey: ['closureAffectAreas'],
-    queryFn: fetchClosureAffectAreas,
-  });
+  const { data: closureAffectAreas = [], isLoading: isLoadingAffectAreas } =
+    useQuery({
+      queryKey: ["closureAffectAreas"],
+      queryFn: fetchClosureAffectAreas,
+    });
 
-  const { data: closureSessions = [], isLoading: isLoadingSessions } = useQuery({
-    queryKey: ['closureSessions'],
-    queryFn: fetchClosureSession,
-  });
+  const { data: closureSessions = [], isLoading: isLoadingSessions } = useQuery(
+    {
+      queryKey: ["closureSessions"],
+      queryFn: fetchClosureSession,
+    }
+  );
 
   // Update selected site when dialog opens - DISABLED auto-selection behavior
   useEffect(() => {
@@ -204,12 +232,12 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
   const formattedExistingFiles = useMemo(() => {
     if (!existingAttachments || existingAttachments.length === 0) return null;
 
-    return existingAttachments.map(path => {
-      const fileName = path.split('/').pop() || 'File';
-      const fullUrl = path.startsWith('http') ? path : `${SUPABASE_URL}${path}`;
+    return existingAttachments.map((path) => {
+      const fileName = path.split("/").pop() || "File";
+      const fullUrl = path.startsWith("http") ? path : `${SUPABASE_URL}${path}`;
       return {
         url: fullUrl,
-        name: fileName
+        name: fileName,
       };
     });
   }, [existingAttachments]);
@@ -295,13 +323,21 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
 
   // Validate time logic
   useEffect(() => {
-    if (formState.start_time && formState.end_time && formState.start_time > formState.end_time) {
+    if (
+      formState.start_time &&
+      formState.end_time &&
+      formState.start_time > formState.end_time
+    ) {
       setField("end_time", "");
     }
   }, [formState.start_time, formState.end_time, setField]);
 
   useEffect(() => {
-    if (formState.start_time && formState.end_time && formState.end_time < formState.start_time) {
+    if (
+      formState.start_time &&
+      formState.end_time &&
+      formState.end_time < formState.start_time
+    ) {
       setField("start_time", "");
     }
   }, [formState.end_time, formState.start_time, setField]);
@@ -312,7 +348,7 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
 
     if (isSuperAdmin || isTP) return closureCategories;
 
-    return closureCategories.filter(category => String(category.id) !== "1");
+    return closureCategories.filter((category) => String(category.id) !== "1");
   }, [closureCategories, isTP, isSuperAdmin]);
 
   // Restrict category 1 to TP/SuperAdmin
@@ -338,12 +374,12 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
   // Update handleFormSubmit to include context information in validation
   const handleFormValidationSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Modify validation context based on current state
     const isValid = validateForm({
       showSubcategory,
       isDateRangeValid,
-      showTimeInputs
+      showTimeInputs,
     });
 
     if (!isValid) {
@@ -394,7 +430,11 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleFormValidationSubmit} className="space-y-4" noValidate>
+          <form
+            onSubmit={handleFormValidationSubmit}
+            className="space-y-4"
+            noValidate
+          >
             {/* Site Selection Dropdown for TP and SuperAdmin Users */}
             {(isTPUser || isSuperAdmin) && (
               <div className="space-y-2">
@@ -404,13 +444,22 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 <SelectOne
                   options={isTPUser ? tpSites : allSites}
                   value={formState.selectedSiteId}
-                  onChange={(value) => setField("selectedSiteId", value as string)}
+                  onChange={(value) =>
+                    setField("selectedSiteId", value as string)
+                  }
                   placeholder="Select a site"
-                  disabled={(isTPUser ? isLoadingSites : isLoadingAllSites) || isSubmitting}
-                  className={validationErrors.selectedSiteId ? "border-red-500" : ""}
+                  disabled={
+                    (isTPUser ? isLoadingSites : isLoadingAllSites) ||
+                    isSubmitting
+                  }
+                  className={
+                    validationErrors.selectedSiteId ? "border-red-500" : ""
+                  }
                 />
                 {validationErrors.selectedSiteId && (
-                  <p className="text-sm text-red-500">{validationErrors.selectedSiteId}</p>
+                  <p className="text-sm text-red-500">
+                    {validationErrors.selectedSiteId}
+                  </p>
                 )}
               </div>
             )}
@@ -429,19 +478,31 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 <Label htmlFor="startDate">
                   Start Date <span className="text-red-500">*</span>
                   {!isSuperAdmin && (
-                    <span className="text-gray-500 text-xs ml-2">(Max 1 week in advance)</span>
+                    <span className="text-gray-500 text-xs ml-2">
+                      (Max 1 week in advance)
+                    </span>
                   )}
                 </Label>
                 <DateInput
                   id="startDate"
                   value={formState.close_start}
-                  onChange={(e) => handleDateChange("close_start", e.target.value)}
+                  onChange={(e) =>
+                    handleDateChange("close_start", e.target.value)
+                  }
                   min={today}
-                  max={isSuperAdmin ? (formState.close_end || undefined) : maxStartDate}
-                  className={validationErrors.close_start ? "border-red-500" : ""}
+                  max={
+                    isSuperAdmin
+                      ? formState.close_end || undefined
+                      : maxStartDate
+                  }
+                  className={
+                    validationErrors.close_start ? "border-red-500" : ""
+                  }
                 />
                 {validationErrors.close_start && (
-                  <p className="text-sm text-red-500">{validationErrors.close_start}</p>
+                  <p className="text-sm text-red-500">
+                    {validationErrors.close_start}
+                  </p>
                 )}
               </div>
               <div className="w-1/2 space-y-2">
@@ -451,13 +512,17 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 <DateInput
                   id="endDate"
                   value={formState.close_end}
-                  onChange={(e) => handleDateChange("close_end", e.target.value)}
+                  onChange={(e) =>
+                    handleDateChange("close_end", e.target.value)
+                  }
                   min={formState.close_start || today}
                   max={undefined}
                   className={validationErrors.close_end ? "border-red-500" : ""}
                 />
                 {validationErrors.close_end && (
-                  <p className="text-sm text-red-500">{validationErrors.close_end}</p>
+                  <p className="text-sm text-red-500">
+                    {validationErrors.close_end}
+                  </p>
                 )}
               </div>
             </div>
@@ -465,23 +530,36 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
             {/* Session Selection */}
             {isDateRangeValid && (
               <div className="space-y-2">
-                <Label htmlFor="session">Session <span className="text-red-500">*</span></Label>
+                <Label htmlFor="session">
+                  Session <span className="text-red-500">*</span>
+                </Label>
                 <RadioGroup
                   value={formState.session}
                   onValueChange={(value) => setField("session", value)}
                   className="flex flex-wrap gap-6"
                 >
                   {closureSessions.map((session) => (
-                    <div key={session.id} className="flex items-center space-x-2">
-                      <RadioGroupItem value={String(session.id)} id={`session-${session.id}`} />
-                      <Label htmlFor={`session-${session.id}`} className="cursor-pointer">
+                    <div
+                      key={session.id}
+                      className="flex items-center space-x-2"
+                    >
+                      <RadioGroupItem
+                        value={String(session.id)}
+                        id={`session-${session.id}`}
+                      />
+                      <Label
+                        htmlFor={`session-${session.id}`}
+                        className="cursor-pointer"
+                      >
                         {session.eng}
                       </Label>
                     </div>
                   ))}
                 </RadioGroup>
                 {validationErrors.session && (
-                  <p className="text-sm text-red-500">{validationErrors.session}</p>
+                  <p className="text-sm text-red-500">
+                    {validationErrors.session}
+                  </p>
                 )}
               </div>
             )}
@@ -497,7 +575,11 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                       <span className="text-blue-500 ml-2">(Fixed)</span>
                     )}
                   </Label>
-                  <div className={timeRange?.isFixed ? "opacity-70 pointer-events-none" : ""}>
+                  <div
+                    className={
+                      timeRange?.isFixed ? "opacity-70 pointer-events-none" : ""
+                    }
+                  >
                     <TimeInput
                       id="startTime"
                       value={formState.start_time}
@@ -505,11 +587,15 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                       min={timeRange?.min}
                       max={formState.end_time || timeRange?.max}
                       disallowSameAsValue={formState.end_time}
-                      className={validationErrors.start_time ? "border-red-500" : ""}
+                      className={
+                        validationErrors.start_time ? "border-red-500" : ""
+                      }
                     />
                   </div>
                   {validationErrors.start_time && (
-                    <p className="text-sm text-red-500">{validationErrors.start_time}</p>
+                    <p className="text-sm text-red-500">
+                      {validationErrors.start_time}
+                    </p>
                   )}
                 </div>
                 <div className="w-1/2 space-y-2">
@@ -520,7 +606,11 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                       <span className="text-blue-500 ml-2">(Fixed)</span>
                     )}
                   </Label>
-                  <div className={timeRange?.isFixed ? "opacity-70 pointer-events-none" : ""}>
+                  <div
+                    className={
+                      timeRange?.isFixed ? "opacity-70 pointer-events-none" : ""
+                    }
+                  >
                     <TimeInput
                       id="endTime"
                       value={formState.end_time}
@@ -528,11 +618,15 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                       min={formState.start_time || timeRange?.min}
                       max={timeRange?.max}
                       disallowSameAsValue={formState.start_time}
-                      className={validationErrors.end_time ? "border-red-500" : ""}
+                      className={
+                        validationErrors.end_time ? "border-red-500" : ""
+                      }
                     />
                   </div>
                   {validationErrors.end_time && (
-                    <p className="text-sm text-red-500">{validationErrors.end_time}</p>
+                    <p className="text-sm text-red-500">
+                      {validationErrors.end_time}
+                    </p>
                   )}
                 </div>
               </div>
@@ -540,7 +634,9 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
 
             {/* Category Selection - replaced with SelectOne */}
             <div className="space-y-2">
-              <Label htmlFor="category">Closure Category <span className="text-red-500">*</span></Label>
+              <Label htmlFor="category">
+                Closure Category <span className="text-red-500">*</span>
+              </Label>
               <SelectOne
                 options={filteredCategories.map((category) => ({
                   id: String(category.id),
@@ -553,34 +649,46 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 className={validationErrors.category_id ? "border-red-500" : ""}
               />
               {validationErrors.category_id && (
-                <p className="text-sm text-red-500">{validationErrors.category_id}</p>
+                <p className="text-sm text-red-500">
+                  {validationErrors.category_id}
+                </p>
               )}
             </div>
 
             {/* Subcategory Selection (conditional) - replaced with SelectOne */}
             {showSubcategory && (
               <div className="space-y-2">
-                <Label htmlFor="subCategory">Closure Sub-Category <span className="text-red-500">*</span></Label>
+                <Label htmlFor="subCategory">
+                  Closure Sub-Category <span className="text-red-500">*</span>
+                </Label>
                 <SelectOne
                   options={closureSubCategories.map((subCategory) => ({
                     id: String(subCategory.id),
                     label: subCategory.eng,
                   }))}
-                value={formState.subcategory_id}
-                onChange={(value) => setField("subcategory_id", value as string)}
-                placeholder="Select a sub-category"
-                disabled={isLoadingSubCategories}
-                className={validationErrors.subcategory_id ? "border-red-500" : ""}
-              />
+                  value={formState.subcategory_id}
+                  onChange={(value) =>
+                    setField("subcategory_id", value as string)
+                  }
+                  placeholder="Select a sub-category"
+                  disabled={isLoadingSubCategories}
+                  className={
+                    validationErrors.subcategory_id ? "border-red-500" : ""
+                  }
+                />
                 {validationErrors.subcategory_id && (
-                  <p className="text-sm text-red-500">{validationErrors.subcategory_id}</p>
+                  <p className="text-sm text-red-500">
+                    {validationErrors.subcategory_id}
+                  </p>
                 )}
               </div>
             )}
 
             {/* Affected Areas - keeping SelectMany since this needs multiple selection */}
             <div className="space-y-2">
-              <Label htmlFor="affectArea">Closure Affect Area <span className="text-red-500">*</span></Label>
+              <Label htmlFor="affectArea">
+                Closure Affect Area <span className="text-red-500">*</span>
+              </Label>
               <SelectMany
                 options={closureAffectAreas.map((area) => ({
                   id: String(area.id),
@@ -593,13 +701,17 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 className={validationErrors.affectArea ? "border-red-500" : ""}
               />
               {validationErrors.affectArea && (
-                <p className="text-sm text-red-500">{validationErrors.affectArea}</p>
+                <p className="text-sm text-red-500">
+                  {validationErrors.affectArea}
+                </p>
               )}
             </div>
 
             {/* Reason */}
             <div className="space-y-2">
-              <Label htmlFor="reason">Reason <span className="text-red-500">*</span></Label>
+              <Label htmlFor="reason">
+                Reason <span className="text-red-500">*</span>
+              </Label>
               <Textarea
                 id="reason"
                 value={formState.remark}
@@ -607,24 +719,36 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 className={validationErrors.remark ? "border-red-500" : ""}
               />
               {validationErrors.remark && (
-                <p className="text-sm text-red-500">{validationErrors.remark}</p>
+                <p className="text-sm text-red-500">
+                  {validationErrors.remark}
+                </p>
               )}
             </div>
 
             {/* File Upload */}
             <div className="space-y-2">
-              <Label htmlFor="attachment">Attachment</Label>
+              <Label htmlFor="attachment">
+                Attachment <span className="text-red-500">*</span>
+              </Label>
               <FileUpload
                 ref={fileUploadRef}
                 maxFiles={6}
-                acceptedFileTypes=".pdf"
+                acceptedFileTypes=".pdf,.jpg,.jpeg,.png"
                 maxSizeInMB={2}
                 buttonText="Choose File"
                 onFilesSelected={handleAttachmentsChange}
                 multiple={true}
                 existingFiles={formattedExistingFiles}
-                onExistingFilesChange={(files) => handleExistingAttachmentsChange(files, SUPABASE_URL)}
+                onExistingFilesChange={(files) =>
+                  handleExistingAttachmentsChange(files, SUPABASE_URL)
+                }
+                className={validationErrors.attachment ? "border-red-500" : ""}
               />
+              {validationErrors.attachment && (
+                <p className="text-sm text-red-500">
+                  {validationErrors.attachment}
+                </p>
+              )}
             </div>
 
             {/* Form Buttons */}
@@ -652,16 +776,22 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 // disabled={isSubmitting || ((isTPUser || isSuperAdmin) && !formState.selectedSiteId)}
                 disabled={isSubmitting}
               >
-                {isSubmitting && activeSubmission === "draft" ?
-                  (editData?.id ? "Updating..." : "Saving...") :
-                  (editData?.id ? "Update Draft" : "Save as Draft")}
+                {isSubmitting && activeSubmission === "draft"
+                  ? editData?.id
+                    ? "Updating..."
+                    : "Saving..."
+                  : editData?.id
+                  ? "Update Draft"
+                  : "Save as Draft"}
               </Button>
               <Button
                 type="submit"
                 // disabled={isSubmitting || ((isTPUser || isSuperAdmin) && !formState.selectedSiteId)}
                 disabled={isSubmitting}
               >
-                {isSubmitting && activeSubmission === "submit" ? "Submitting..." : "Submit"}
+                {isSubmitting && activeSubmission === "submit"
+                  ? "Submitting..."
+                  : "Submit"}
               </Button>
             </DialogFooter>
           </form>

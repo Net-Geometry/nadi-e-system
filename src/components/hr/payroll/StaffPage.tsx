@@ -1,151 +1,290 @@
+import { useState, useMemo } from "react";
 import { StatCard } from "@/components/hr/payroll/StatCard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PayrollTable } from "@/components/hr/payroll/PayrollTable";
+import { StaffPayrollFilters } from "@/components/hr/payroll/StaffPayrollFilters";
 import { Button } from "@/components/ui/button";
-import { Calendar, Download, HelpCircle } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { toast } from "@/hooks/use-toast";
+import { Badge } from "@/components/ui/badge";
+import { useToast } from "@/hooks/use-toast";
+import { filterStaffPayrollByDate } from "@/utils/export-payroll-utils";
+import { Download, Banknote, CircleDollarSign, HandCoins } from "lucide-react";
 
-// Helper function to safely format currency values
-const formatCurrency = (value?: number) => {
-  return typeof value === "number" ? value.toLocaleString() : "0";
-};
+// Mock staff payroll data
+const payrollHistory = [
+  {
+    id: 1,
+    date: "2025-04-15",
+    month: "April",
+    year: 2025,
+    details: "Monthly Salary",
+    amount: 5500,
+    incentive: 800,
+    status: (
+      <Badge
+        variant="outline"
+        className="bg-green-100 text-green-800 border-green-200"
+      >
+        Paid
+      </Badge>
+    ),
+    reference: "PAY/2025/04/001",
+  },
+  {
+    id: 2,
+    date: "2025-03-15",
+    month: "March",
+    year: 2025,
+    details: "Monthly Salary",
+    amount: 5500,
+    incentive: 800,
+    status: (
+      <Badge
+        variant="outline"
+        className="bg-green-100 text-green-800 border-green-200"
+      >
+        Paid
+      </Badge>
+    ),
+    reference: "PAY/2025/03/001",
+  },
+  {
+    id: 3,
+    date: "2025-02-15",
+    month: "February",
+    year: 2025,
+    details: "Monthly Salary",
+    amount: 5500,
+    incentive: 800,
+    status: (
+      <Badge
+        variant="outline"
+        className="bg-green-100 text-green-800 border-green-200"
+      >
+        Paid
+      </Badge>
+    ),
+    reference: "PAY/2025/02/001",
+  },
+  {
+    id: 4,
+    date: "2025-01-15",
+    month: "January",
+    year: 2025,
+    details: "Monthly Salary",
+    amount: 5500,
+    incentive: 800,
+    status: (
+      <Badge
+        variant="outline"
+        className="bg-green-100 text-green-800 border-green-200"
+      >
+        Paid
+      </Badge>
+    ),
+    reference: "PAY/2025/01/001",
+  },
+  {
+    id: 5,
+    date: "2024-12-15",
+    month: "December",
+    year: 2024,
+    details: "Monthly Salary",
+    amount: 5300,
+    incentive: 750,
+    status: (
+      <Badge
+        variant="outline"
+        className="bg-green-100 text-green-800 border-green-200"
+      >
+        Paid
+      </Badge>
+    ),
+    reference: "PAY/2024/12/001",
+  },
+  {
+    id: 6,
+    date: "2024-11-15",
+    month: "November",
+    year: 2024,
+    details: "Monthly Salary",
+    amount: 5300,
+    incentive: 750,
+    status: (
+      <Badge
+        variant="outline"
+        className="bg-green-100 text-green-800 border-green-200"
+      >
+        Paid
+      </Badge>
+    ),
+    reference: "PAY/2024/11/001",
+  },
+];
 
-// Helper function to safely format dates
-const formatDate = (dateString?: string) => {
-  if (!dateString) return "N/A";
-  try {
-    return new Date(dateString).toLocaleDateString("en-MY", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  } catch (e) {
-    return "Invalid Date";
-  }
-};
-
-// Mock payslip data
-const payslips = [
-  { id: 1, month: "April 2025", date: "2025-04-28", amount: 5400 },
-  { id: 2, month: "March 2025", date: "2025-03-28", amount: 5400 },
-  { id: 3, month: "February 2025", date: "2025-02-28", amount: 5100 },
+const columns = [
+  {
+    key: "date",
+    title: "Date",
+    render: (value: string) => new Date(value).toLocaleDateString("en-MY"),
+  },
+  {
+    key: "month",
+    title: "Month",
+  },
+  {
+    key: "details",
+    title: "Description",
+  },
+  {
+    key: "amount",
+    title: "Amount",
+    render: (value: number) =>
+      typeof value === "number" ? `RM ${value.toLocaleString()}` : "RM 0",
+  },
+  {
+    key: "status",
+    title: "Status",
+    render: (value: string) => (
+      <span className="text-nadi-success">{value || "N/A"}</span>
+    ),
+  },
+  {
+    key: "reference",
+    title: "Reference",
+  },
 ];
 
 export function StaffPage() {
-  const handleDownloadPayslip = (month: string) => {
-    toast.success(`Downloading ${month} payslip PDF`);
+  const { toast } = useToast();
+
+  // Filter states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [monthFilter, setMonthFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState("all");
+
+  // Filter data based on filters
+  const filteredData = useMemo(() => {
+    return filterStaffPayrollByDate(
+      payrollHistory,
+      searchQuery,
+      monthFilter !== "all" ? parseInt(monthFilter) : undefined,
+      yearFilter !== "all" ? parseInt(yearFilter) : undefined
+    );
+  }, [searchQuery, monthFilter, yearFilter]);
+
+  const handleDownloadPayslip = (record: any) => {
+    toast({
+      title: "Downloading payslip",
+      description: `Payslip for ${record.month} ${record.year} is being prepared.`,
+    });
 
     // Simulate download delay
     setTimeout(() => {
-      toast.info(`${month} payslip downloaded successfully`);
-    }, 1500);
+      toast({
+        title: "Payslip downloaded successfully",
+      });
+    }, 1000);
   };
 
-  const handleContactSupport = () => {
-    toast.info("Opening support message form", {
-      description: "You will be contacted by Finance Support shortly.",
-    });
+  const resetFilters = () => {
+    setSearchQuery("");
+    setMonthFilter("all");
+    setYearFilter("all");
+  };
+
+  // Calculate totals for current year
+  const currentYear = new Date().getFullYear();
+  const currentYearData = payrollHistory.filter(
+    (item) => new Date(item.date).getFullYear() === currentYear
+  );
+  const totalAmount = currentYearData.reduce(
+    (sum, item) => sum + (item.amount || 0),
+    0
+  );
+  const totalIncentives = currentYearData.reduce(
+    (sum, item) => sum + (item.incentive || 0),
+    0
+  );
+  const statusColors: Record<string, string> = {
+    Pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    Paid: "bg-green-100 text-green-800 border-green-200",
+    Rejected: "bg-red-100 text-red-800 border-red-200",
   };
 
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-3">
         <StatCard
-          title="Current Month Salary"
-          value="RM 5,400"
-          icon={<Calendar size={18} />}
+          title="Monthly Salary"
+          value={`RM ${payrollHistory[0]?.amount.toLocaleString() || "0"}`}
+          icon={<CircleDollarSign size={24} className="text-blue-500" />}
+          colorVariant="primary"
+          backgroundColor="bg-blue-50"
+          textColor="text-blue-700"
         />
-        <StatCard title="Allowance" value="RM 800" />
         <StatCard
-          title="Last Payment Date"
-          value="April 28, 2025"
-          colorVariant={
-            new Date() < new Date("2025-04-28") ? "warning" : "success"
-          }
+          title="Monthly Incentives"
+          value={`RM ${payrollHistory[0]?.incentive.toLocaleString() || "0"}`}
+          icon={<HandCoins size={24} className="text-green-500" />}
+          colorVariant="success"
+          backgroundColor="bg-green-50"
+          textColor="text-green-700"
+        />
+        <StatCard
+          title="Year-to-Date Income"
+          value={`RM ${(totalAmount + totalIncentives).toLocaleString()}`}
+          icon={<Banknote size={24} className="text-gray-500" />}
+          colorVariant="default"
+          backgroundColor="bg-gray-50"
+          textColor="text-gray-700"
         />
       </div>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <div className="flex items-center gap-2">
-            <CardTitle>My Payslips</CardTitle>
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-5 w-5">
-                    <HelpCircle size={14} />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className="text-xs">
-                    Download your monthly payslips as PDF
-                  </p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
-          <div className="text-sm px-3 py-1 rounded-full bg-nadi-gray-dark">
-            <span className="text-nadi-purple font-medium">
-              Salary Processed
-            </span>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {payslips.map((payslip) => (
-              <div
-                key={payslip.id}
-                className="flex items-center justify-between p-3 border rounded-md"
-              >
-                <div>
-                  <h3 className="font-medium">{payslip.month}</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Paid: {formatDate(payslip.date)}
-                  </p>
-                </div>
-                <div className="flex items-center gap-4">
-                  <span className="font-medium">
-                    RM {formatCurrency(payslip.amount)}
-                  </span>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="gap-2"
-                    onClick={() => handleDownloadPayslip(payslip.month)}
-                  >
-                    <Download size={14} />
-                    PDF
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="flex justify-between items-center">
+        <h2 className="text-lg font-medium">My Payroll History</h2>
+        <Button
+          variant="outline"
+          className="gap-2"
+          onClick={() => {
+            toast({
+              title: "Downloading annual income statement",
+              description: `Your annual income statement for ${currentYear} is being prepared.`,
+            });
 
-      <div className="bg-blue-50 p-4 rounded-md border border-blue-200 text-sm">
-        <div className="flex items-start gap-2">
-          <HelpCircle size={18} className="text-blue-700 mt-0.5" />
-          <div>
-            <p className="text-blue-700 font-medium">Need help?</p>
-            <p className="text-blue-600">
-              If you have questions about your salary or benefits,
-              <Button
-                variant="link"
-                className="h-auto p-0 text-blue-700 underline"
-                onClick={handleContactSupport}
-              >
-                contact Finance Support
-              </Button>{" "}
-              at finance@nadi-esystem.gov.my or call ext. 2143.
-            </p>
-          </div>
-        </div>
+            setTimeout(() => {
+              toast({
+                title: "Annual income statement downloaded",
+              });
+            }, 1500);
+          }}
+        >
+          <Download size={16} />
+          Download Annual Statement
+        </Button>
+      </div>
+
+      <StaffPayrollFilters
+        searchQuery={searchQuery}
+        setSearchQuery={setSearchQuery}
+        monthFilter={monthFilter}
+        setMonthFilter={setMonthFilter}
+        yearFilter={yearFilter}
+        setYearFilter={setYearFilter}
+        onResetFilters={resetFilters}
+      />
+
+      <PayrollTable
+        data={filteredData}
+        columns={columns}
+        staffView={true}
+        pageSize={5}
+      />
+
+      <div className="bg-blue-50 p-4 rounded-md border border-blue-200 text-sm text-blue-700">
+        <p>
+          <strong>Note:</strong> Payslips are typically processed by the 15th of
+          each month. If you have any questions about your payroll, please
+          contact HR.
+        </p>
       </div>
     </div>
   );

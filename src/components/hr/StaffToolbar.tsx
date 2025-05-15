@@ -95,6 +95,11 @@ export function StaffToolbar({
           </DropdownMenuContent>
         </DropdownMenu>
         <Button onClick={onAddStaff}>Add Staff</Button>
+        {window.location.pathname !== "/hr/site-staff" && (
+          <Button onClick={() => (window.location.href = "/hr/site-staff")}>
+            Manage Site Staff
+          </Button>
+        )}
       </div>
     </div>
   );

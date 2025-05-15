@@ -1,4 +1,3 @@
-
 import { ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -13,17 +12,58 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
+import { useUserMetadata } from "@/hooks/use-user-metadata";
 
 export const HeaderProfile = () => {
   const { logout, user } = useAuth();
+  const userMetadata = useUserMetadata();
+  const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
+  const userGroup = parsedMetadata?.user_group;
+  const siteId = parsedMetadata?.group_profile?.site_profile_id;
+  const positionId = parsedMetadata?.group_profile?.position_id;
 
-  // Fetch user profile including name and role
-  const { data: profile } = useQuery({
-    queryKey: ["user-profile", user?.id],
-    queryFn: async () => {
-      if (!user?.id) return null;
+  // Fetch user profile based on userGroup
+const { data: profile } = useQuery({
+  queryKey: ["user-profile", user?.id, userGroup, siteId, positionId],
+  queryFn: async () => {
+    if (userGroup === 9 && siteId) {
+      // Fetch from nd_site_profile_name if userGroup is 9
+      const { data: siteData, error: siteError } = await supabase
+        .from("nd_site_profile_name")
+        .select("id, sitename, fullname")
+        .eq("id", siteId)
+        .maybeSingle();
 
+      if (siteError) {
+        console.error("Error fetching site profile:", siteError);
+        throw siteError;
+      }
+
+      let userType = "tp_site";
+
+      // Map positionId to nd_position table
+      if (positionId) {
+        const { data: positionData, error: positionError } = await supabase
+          .from("nd_position")
+          .select("name")
+          .eq("id", positionId)
+          .maybeSingle();
+
+        if (positionError) {
+          console.error("Error fetching position:", positionError);
+          throw positionError;
+        }
+
+        userType = positionData?.name || userType;
+      }
+
+      return {
+        full_name: siteData?.fullname || "N/A",
+        user_type: userType,
+      };
+    } else if (user?.id) {
+      // Fetch from profiles table for other user groups
       const { data, error } = await supabase
         .from("profiles")
         .select("full_name, user_type")
@@ -36,9 +76,12 @@ export const HeaderProfile = () => {
       }
 
       return data;
-    },
-    enabled: !!user?.id,
-  });
+    }
+
+    return null;
+  },
+  enabled: !!user?.id || (userGroup === 9 && !!siteId),
+});
 
   // Get first character of name for avatar fallback
   const getNameInitial = () => {
@@ -51,7 +94,7 @@ export const HeaderProfile = () => {
   // Format user type for display
   const formatUserType = (userType: string) => {
     if (!userType) return "";
-    return userType.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
+    return userType.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   return (
@@ -62,11 +105,7 @@ export const HeaderProfile = () => {
           className="pl-2 pr-3 py-2 h-auto hover:bg-gray-100 flex items-center gap-2 rounded-full"
         >
           <Avatar className="h-8 w-8 border border-gray-200">
-            <AvatarImage
-              src=""
-              alt="Profile"
-              className="object-cover"
-            />
+            <AvatarImage src="" alt="Profile" className="object-cover" />
             <AvatarFallback className="bg-primary text-white">
               {getNameInitial()}
             </AvatarFallback>
@@ -76,7 +115,9 @@ export const HeaderProfile = () => {
               {profile?.full_name || "User"}
             </span>
             <span className="text-xs text-gray-500">
-              {profile?.user_type ? formatUserType(profile.user_type) : "Loading..."}
+              {profile?.user_type
+                ? formatUserType(profile.user_type)
+                : "Loading..."}
             </span>
           </div>
           <ChevronDown className="h-4 w-4 text-gray-500" />

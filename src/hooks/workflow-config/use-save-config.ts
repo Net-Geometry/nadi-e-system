@@ -1,6 +1,5 @@
-
 import { useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { WorkflowConfig, WorkflowConfigStep } from "@/types/workflow";
 import { useNavigate } from "react-router-dom";
@@ -10,12 +9,15 @@ export function useSaveConfig(isNew: boolean) {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const saveWorkflowConfig = async (updatedConfig: WorkflowConfig, updatedSteps: WorkflowConfigStep[]) => {
+  const saveWorkflowConfig = async (
+    updatedConfig: WorkflowConfig,
+    updatedSteps: WorkflowConfigStep[]
+  ) => {
     setIsSaving(true);
-    
+
     try {
       let configId = updatedConfig.id;
-      
+
       // If it's a new config, create it first
       if (isNew) {
         const newConfig = {
@@ -29,17 +31,17 @@ export function useSaveConfig(isNew: boolean) {
           start_step_id: updatedConfig.startStepId,
           sla_hours: updatedConfig.slaHours,
         };
-        
+
         const { data: insertedConfig, error: configError } = await supabase
           .from("workflow_configurations")
           .insert(newConfig)
           .select()
           .single();
-        
+
         if (configError) {
           throw configError;
         }
-        
+
         configId = insertedConfig.id;
       } else {
         // Update existing config
@@ -56,22 +58,22 @@ export function useSaveConfig(isNew: boolean) {
             sla_hours: updatedConfig.slaHours,
           })
           .eq("id", configId);
-        
+
         if (configError) {
           throw configError;
         }
-        
+
         // Delete existing steps to replace with new ones
         const { error: deleteError } = await supabase
           .from("workflow_config_steps")
           .delete()
           .eq("workflow_config_id", configId);
-        
+
         if (deleteError) {
           throw deleteError;
         }
       }
-      
+
       // Insert updated steps
       if (updatedSteps.length > 0) {
         const stepsToInsert = updatedSteps.map((step, index) => ({
@@ -86,24 +88,23 @@ export function useSaveConfig(isNew: boolean) {
           is_end_step: step.isEndStep,
           sla_hours: step.slaHours,
         }));
-        
+
         const { error: stepsError } = await supabase
           .from("workflow_config_steps")
           .insert(stepsToInsert);
-        
+
         if (stepsError) {
           throw stepsError;
         }
       }
-      
+
       toast({
         title: "Success",
         description: "Workflow configuration saved successfully",
       });
-      
+
       // Redirect back to the list view
       navigate("/workflow");
-      
     } catch (error) {
       console.error("Error saving workflow configuration:", error);
       toast({
@@ -118,6 +119,6 @@ export function useSaveConfig(isNew: boolean) {
 
   return {
     isSaving,
-    saveWorkflowConfig
+    saveWorkflowConfig,
   };
 }

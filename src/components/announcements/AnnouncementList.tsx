@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Plus, Eye, EyeOff, Edit, Trash2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import {

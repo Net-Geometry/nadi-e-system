@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export interface AppSetting {
@@ -15,46 +14,44 @@ export const useAppSettings = () => {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { 
-    data: settings = [], 
-    isLoading, 
+  const {
+    data: settings = [],
+    isLoading,
     isError,
     error,
     refetch,
-    isFetching
+    isFetching,
   } = useQuery({
-    queryKey: ['app-settings'],
+    queryKey: ["app-settings"],
     queryFn: async () => {
       try {
-        const { data, error } = await supabase
-          .from('app_settings')
-          .select('*');
+        const { data, error } = await supabase.from("app_settings").select("*");
 
         if (error) {
-          console.error('Error fetching settings:', error);
+          console.error("Error fetching settings:", error);
           throw new Error(`Failed to fetch app settings: ${error.message}`);
         }
 
         return data as AppSetting[];
       } catch (err) {
-        console.error('Error in settings query:', err);
+        console.error("Error in settings query:", err);
         throw err;
       }
     },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 2
+    retry: 2,
   });
 
   const updateSetting = useMutation({
     mutationFn: async ({ key, value }: { key: string; value: string }) => {
       const { data, error } = await supabase
-        .from('app_settings')
+        .from("app_settings")
         .update({ value })
-        .eq('key', key)
+        .eq("key", key)
         .select();
 
       if (error) {
-        console.error('Error updating setting:', error);
+        console.error("Error updating setting:", error);
         toast({
           title: "Failed to update setting",
           description: error.message,
@@ -62,25 +59,25 @@ export const useAppSettings = () => {
         });
         throw error;
       }
-      
+
       return data;
     },
     onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['app-settings'] });
+      queryClient.invalidateQueries({ queryKey: ["app-settings"] });
       toast({
         title: "Setting updated",
         description: `Successfully updated ${variables.key}`,
       });
     },
     onError: (error) => {
-      console.error('Mutation error:', error);
+      console.error("Mutation error:", error);
       // Toast is already handled in mutationFn
-    }
+    },
   });
 
-  const getSetting = (key: string, defaultValue: string = ''): string => {
+  const getSetting = (key: string, defaultValue: string = ""): string => {
     if (isLoading || isError) return defaultValue;
-    const setting = settings.find(s => s.key === key);
+    const setting = settings.find((s) => s.key === key);
     return setting?.value ?? defaultValue;
   };
 
@@ -92,6 +89,6 @@ export const useAppSettings = () => {
     error,
     updateSetting,
     getSetting,
-    refetch
+    refetch,
   };
 };

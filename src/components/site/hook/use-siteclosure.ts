@@ -1,57 +1,66 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
-import { ClosureAffectArea, ClosureCategory, ClosureSession, ClosureSubCategory, SiteListClosureRequest } from "../types/site-closure";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  ClosureAffectArea,
+  ClosureCategory,
+  ClosureSession,
+  ClosureSubCategory,
+  SiteListClosureRequest,
+} from "../types/site-closure";
 
 export const fetchlListClosureData = async (
   organizationId: string | null = null,
   isDUSPUser: boolean = false,
   siteId: string | null = null,
-  isMCMCUser: boolean = false  // Add parameter for MCMC users
+  isMCMCUser: boolean = false // Add parameter for MCMC users
 ): Promise<SiteListClosureRequest[]> => {
   // First, we need to handle site profiles filtering based on organization
   let siteProfileIds: string[] = [];
-  
+
   // If we have an organization filter and it's not an MCMC user, we need to fetch the relevant site profiles
   // MCMC users don't need organization filtering - they can see all sites
   if (organizationId && !isMCMCUser) {
-    let siteProfileQuery = supabase
-      .from("nd_site_profile")
-      .select("id");
-      
+    let siteProfileQuery = supabase.from("nd_site_profile").select("id");
+
     if (isDUSPUser) {
       // For DUSP users, fetch all TP organizations under the DUSP
       const { data: childOrganizations, error: childError } = await supabase
-        .from('organizations')
-        .select('id')
-        .eq('parent_id', organizationId);
+        .from("organizations")
+        .select("id")
+        .eq("parent_id", organizationId);
 
       if (childError) throw childError;
-      
+
       // Get all child organization IDs
-      const childOrganizationIds = childOrganizations.map(org => org.id);
-      
+      const childOrganizationIds = childOrganizations.map((org) => org.id);
+
       if (childOrganizationIds.length > 0) {
         // Filter site profiles where organization ID is in the child organizations
-        siteProfileQuery = siteProfileQuery.in('dusp_tp_id', childOrganizationIds);
+        siteProfileQuery = siteProfileQuery.in(
+          "dusp_tp_id",
+          childOrganizationIds
+        );
       }
     } else {
       // For TP users, filter site profiles directly by their organization ID
       siteProfileQuery = siteProfileQuery.eq("dusp_tp_id", organizationId);
     }
-    
+
     // Execute the site profile query
-    const { data: siteProfiles, error: siteProfilesError } = await siteProfileQuery;
-    
+    const { data: siteProfiles, error: siteProfilesError } =
+      await siteProfileQuery;
+
     if (siteProfilesError) throw siteProfilesError;
-    
+
     // Extract the site profile IDs
-    siteProfileIds = siteProfiles.map(profile => profile.id);
+    siteProfileIds = siteProfiles.map((profile) => profile.id);
   }
 
   // Now build the main query for closures
   let query = supabase
     .from("nd_site_closure")
-    .select(`
+    .select(
+      `
       id,
       site_id,
       nd_closure_categories:nd_closure_categories(
@@ -86,9 +95,10 @@ export const fetchlListClosureData = async (
       requester_id,
       request_datetime,
       created_by
-    `)
+    `
+    )
     .order("created_at", { ascending: false });
-  
+
   // Filter by site ID if provided (highest priority)
   if (siteId) {
     query = query.eq("site_id", siteId);
@@ -97,28 +107,28 @@ export const fetchlListClosureData = async (
   else if (organizationId && siteProfileIds.length > 0 && !isMCMCUser) {
     query = query.in("site_id", siteProfileIds);
   }
-  
+
   const { data: closureData, error } = await query;
-  
+
   if (error) throw error;
-  
+
   // Get all unique creator IDs to fetch their profile information
   const creatorIds = Array.from(
     new Set(
       closureData
-        .filter(item => item.created_by)
-        .map(item => item.created_by)
+        .filter((item) => item.created_by)
+        .map((item) => item.created_by)
     )
   );
-  
+
   // Fetch profile information for creators if there are any creator IDs
   let creatorProfiles: Record<string, any> = {};
   if (creatorIds.length > 0) {
     const { data: profilesData, error: profilesError } = await supabase
-      .from('profiles')
-      .select('id, full_name, user_type')
-      .in('id', creatorIds);
-      
+      .from("profiles")
+      .select("id, full_name, user_type")
+      .in("id", creatorIds);
+
     if (profilesError) {
       console.error("Error fetching creator profiles:", profilesError);
     } else if (profilesData) {
@@ -129,45 +139,60 @@ export const fetchlListClosureData = async (
       }, {} as Record<string, any>);
     }
   }
-  
+
   // Combine closure data with creator profile information
-  const enhancedData = closureData.map(item => ({
+  const enhancedData = closureData.map((item) => ({
     ...item,
-    profiles: item.created_by ? creatorProfiles[item.created_by] || null : null
+    profiles: item.created_by ? creatorProfiles[item.created_by] || null : null,
   }));
-  
+
   return enhancedData as unknown as SiteListClosureRequest[];
 };
 
 export const fetchClosureCategories = async (): Promise<ClosureCategory[]> => {
-  const { data, error } = await supabase.from("nd_closure_categories").select("id,bm,eng");
+  const { data, error } = await supabase
+    .from("nd_closure_categories")
+    .select("id,bm,eng");
   if (error) throw error;
   return data || [];
 };
 
-export const fetchClosureSubCategories = async (): Promise<ClosureSubCategory[]> => {
-  const { data, error } = await supabase.from("nd_closure_subcategories").select(`id, bm, eng, nd_closure_categories(id)`);
+export const fetchClosureSubCategories = async (): Promise<
+  ClosureSubCategory[]
+> => {
+  const { data, error } = await supabase
+    .from("nd_closure_subcategories")
+    .select(`id, bm, eng, nd_closure_categories(id)`);
   if (error) throw error;
   return data || [];
 };
 
-export const fetchClosureAffectAreas = async (): Promise<ClosureAffectArea[]> => {
-  const { data, error } = await supabase.from("nd_closure_affect_areas").select("id, bm, eng");
+export const fetchClosureAffectAreas = async (): Promise<
+  ClosureAffectArea[]
+> => {
+  const { data, error } = await supabase
+    .from("nd_closure_affect_areas")
+    .select("id, bm, eng");
   if (error) throw error;
   return data || [];
 };
 
 export const fetchClosureSession = async (): Promise<ClosureSession[]> => {
-  const { data, error } = await supabase.from("nd_closure_session").select("id, bm, eng");
+  const { data, error } = await supabase
+    .from("nd_closure_session")
+    .select("id, bm, eng");
   if (error) throw error;
   return data || [];
 };
 
-export const fetchClosureDetail = async (closureId: number | string): Promise<any> => {
+export const fetchClosureDetail = async (
+  closureId: number | string
+): Promise<any> => {
   // First, fetch the closure data
   const { data: closureData, error } = await supabase
     .from("nd_site_closure")
-    .select(`
+    .select(
+      `
       id,
       remark,
       nd_closure_categories:nd_closure_categories(
@@ -221,20 +246,21 @@ export const fetchClosureDetail = async (closureId: number | string): Promise<an
           id,
           file_path
       )
-    `)
+    `
+    )
     .eq("id", closureId)
     .single();
-  
+
   if (error) throw error;
-  
+
   // If we have a requester_id, fetch the requestor profile information
   if (closureData && closureData.requester_id) {
     const { data: profileData, error: profileError } = await supabase
-      .from('profiles')
-      .select('id, full_name, email, user_type')
-      .eq('id', closureData.requester_id)
+      .from("profiles")
+      .select("id, full_name, email, user_type")
+      .eq("id", closureData.requester_id)
       .single();
-      
+
     if (profileError) {
       console.error("Error fetching requestor profile:", profileError);
     } else {
@@ -242,6 +268,6 @@ export const fetchClosureDetail = async (closureId: number | string): Promise<an
       closureData.profiles = profileData;
     }
   }
-  
+
   return closureData;
 };

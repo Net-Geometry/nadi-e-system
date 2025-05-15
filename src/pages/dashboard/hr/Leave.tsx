@@ -30,9 +30,7 @@ export default function LeaveManagement() {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto py-4">
-        {isStaffView ? <StaffLeaveManagement /> : <AdminLeaveManagement />}
-      </div>
+      {isStaffView ? <StaffLeaveManagement /> : <AdminLeaveManagement />}
     </DashboardLayout>
   );
 }

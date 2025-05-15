@@ -1,7 +1,6 @@
-
 import { useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect } from "react";
 import { UserType } from "@/types/auth";
 
@@ -52,7 +51,7 @@ export const useUserDashboard = () => {
               if (roleData.roles.length > 0 && roleData.roles[0].name) {
                 setUserType(roleData.roles[0].name as UserType);
               }
-            } else if (typeof roleData.roles === 'object') {
+            } else if (typeof roleData.roles === "object") {
               // If it's an object with a name property
               const role = (roleData.roles as { name: string }).name;
               if (role) {
@@ -63,7 +62,9 @@ export const useUserDashboard = () => {
         }
       } catch (err) {
         console.error("Error fetching user type:", err);
-        setError(err instanceof Error ? err : new Error("Failed to fetch user type"));
+        setError(
+          err instanceof Error ? err : new Error("Failed to fetch user type")
+        );
       } finally {
         setIsLoading(false);
       }
@@ -76,6 +77,6 @@ export const useUserDashboard = () => {
     userType,
     isLoading,
     error,
-    isAuthenticated: !!user
+    isAuthenticated: !!user,
   };
 };

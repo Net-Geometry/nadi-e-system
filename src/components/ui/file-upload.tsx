@@ -345,7 +345,8 @@ export const FileUpload = React.forwardRef<HTMLInputElement, FileUploadProps>(
               isDraggingInvalidFile ? "border-destructive bg-destructive/10" : "hover:bg-muted/50",
             error && !isDragging ? "border-destructive" : 
               !isDragging ? "border-muted-foreground/20" : "",
-            totalFileCount >= effectiveMaxFiles ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
+            totalFileCount >= effectiveMaxFiles ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
+            className // Apply the className directly to the dropzone div
           )}
           onClick={totalFileCount < effectiveMaxFiles ? triggerFileInput : undefined}
           onDragEnter={handleDragEnter}

@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export type MaritalStatus = {
@@ -42,7 +41,9 @@ export function useMaritalStatus() {
 
   const addMutation = useMutation({
     mutationFn: async (maritalStatus: Partial<MaritalStatus>) => {
-      const { error } = await supabase.from("nd_marital_status").insert([maritalStatus]);
+      const { error } = await supabase
+        .from("nd_marital_status")
+        .insert([maritalStatus]);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -81,7 +82,10 @@ export function useMaritalStatus() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from("nd_marital_status").delete().eq("id", id);
+      const { error } = await supabase
+        .from("nd_marital_status")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -101,7 +105,10 @@ export function useMaritalStatus() {
     return addMutation.mutateAsync(maritalStatus);
   };
 
-  const updateMaritalStatus = async (id: number, data: Partial<MaritalStatus>) => {
+  const updateMaritalStatus = async (
+    id: number,
+    data: Partial<MaritalStatus>
+  ) => {
     return updateMutation.mutateAsync({ id, ...data });
   };
 

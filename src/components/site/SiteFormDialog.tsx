@@ -1,40 +1,52 @@
 //FORM STILL NOT COMPLETE
 // TODO DUSP_TP UST CLUSTER
-// 
+//
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useState, useEffect, useMemo, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryClient } from "@tanstack/react-query";
-import { 
-  fetchSiteStatus, 
-  fetchPhase, 
-  fetchRegion, 
-  fetchDistrict, 
-  fetchParliament, 
-  fetchMukim, 
-  fetchState, 
-  fetchDun, 
-  fetchTechnology, 
-  fetchBandwidth, 
-  fetchBuildingType, 
-  fetchZone, 
-  fetchCategoryArea, 
-  fetchBuildingLevel, 
-  fetchSocioecomic, 
-  fetchSiteSpace, 
+import {
+  fetchSiteStatus,
+  fetchPhase,
+  fetchRegion,
+  fetchDistrict,
+  fetchParliament,
+  fetchMukim,
+  fetchState,
+  fetchDun,
+  fetchTechnology,
+  fetchBandwidth,
+  fetchBuildingType,
+  fetchZone,
+  fetchCategoryArea,
+  fetchBuildingLevel,
+  fetchSocioecomic,
+  fetchSiteSpace,
   fetchOrganization,
   fetchAllStates,
   fetchAllDistricts,
   fetchAllMukims,
   fetchAllParliaments,
-  fetchAllDuns
+  fetchAllDuns,
 } from "@/components/site/hook/site-utils";
 import { Textarea } from "../ui/textarea";
 import { DateInput } from "@/components/ui/date-input";
@@ -92,7 +104,11 @@ interface SiteImage {
   file_urls?: string[];
 }
 
-export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps) => {
+export const SiteFormDialog = ({
+  open,
+  onOpenChange,
+  site,
+}: SiteFormDialogProps) => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -101,8 +117,10 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
   const [errors, setErrors] = useState<ValidationErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   // Add state to store operation hours between tab changes
-  const [savedOperationTimes, setSavedOperationTimes] = useState<OperationTime[]>([]);
-  
+  const [savedOperationTimes, setSavedOperationTimes] = useState<
+    OperationTime[]
+  >([]);
+
   // Add state for site images
   const [siteImages, setSiteImages] = useState<SiteImage[]>([]);
   const [selectedImageFiles, setSelectedImageFiles] = useState<File[]>([]);
@@ -111,9 +129,14 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
   const [imagesToDelete, setImagesToDelete] = useState<string[]>([]);
   const [hasInitializedImages, setHasInitializedImages] = useState(false);
   const fileUploadRef = useRef<any>(null);
-  
+
   // Use the site image hook
-  const { fetchSiteImages, uploadSiteImages, deleteSiteImage, loading: imageLoading } = useSiteImage();
+  const {
+    fetchSiteImages,
+    uploadSiteImages,
+    deleteSiteImage,
+    loading: imageLoading,
+  } = useSiteImage();
 
   // Retrieve user metadata
   const userMetadata = useUserMetadata();
@@ -133,9 +156,11 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
         const images = await fetchSiteImages(site.id);
         console.log("Fetched site images:", images);
         setSiteImages(images);
-        
+
         // For each image, extract all available URLs
-        const allImagePaths = images.flatMap(img => img.file_urls || [img.file_url]);
+        const allImagePaths = images.flatMap(
+          (img) => img.file_urls || [img.file_url]
+        );
         console.log("Setting image paths:", allImagePaths);
         setExistingImagePaths(allImagePaths);
         setHasInitializedImages(true); // Mark as initialized to prevent re-fetching
@@ -145,7 +170,7 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
     if (open && site) {
       loadSiteImages();
     }
-    
+
     // Reset the initialization flag when the dialog is closed
     if (!open) {
       setHasInitializedImages(false);
@@ -158,18 +183,25 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
   };
 
   // Handle existing images change (when user removes an image)
-  const handleExistingImagesChange = (updatedImages: Array<{url: string, name: string}>, supabaseUrl: string) => {
-    const updatedPaths = updatedImages.map(img => 
-      img.url.startsWith(supabaseUrl) ? img.url.substring(supabaseUrl.length) : img.url
+  const handleExistingImagesChange = (
+    updatedImages: Array<{ url: string; name: string }>,
+    supabaseUrl: string
+  ) => {
+    const updatedPaths = updatedImages.map((img) =>
+      img.url.startsWith(supabaseUrl)
+        ? img.url.substring(supabaseUrl.length)
+        : img.url
     );
-    
+
     // Find removed images
-    const removedPaths = existingImagePaths.filter(path => !updatedPaths.includes(path));
-    
+    const removedPaths = existingImagePaths.filter(
+      (path) => !updatedPaths.includes(path)
+    );
+
     // Instead of deleting immediately, mark them for deletion when form is submitted
     if (removedPaths.length > 0) {
       console.log("Images marked for deletion:", removedPaths);
-      setImagesToDelete(prev => [...prev, ...removedPaths]);
+      setImagesToDelete((prev) => [...prev, ...removedPaths]);
       // Update the visible image paths (but don't actually delete from database yet)
       setExistingImagePaths(updatedPaths);
     }
@@ -181,13 +213,13 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
       resetForm();
       setActiveTab("basic-info");
       setSelectedImageFiles([]);
-      
+
       // Only reset site images if we're not editing an existing site
       if (!site) {
         setSiteImages([]);
         setExistingImagePaths([]);
       }
-      
+
       // Reset file upload component
       if (fileUploadRef.current && fileUploadRef.current.reset) {
         fileUploadRef.current.reset();
@@ -198,77 +230,85 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
   // Format existing images for FileUpload component
   const formattedExistingImages = useMemo(() => {
     console.log("Formatting site images:", siteImages);
-    
+
     if (!siteImages || siteImages.length === 0) {
       console.log("No site images to format");
       return null;
     }
-    
+
     // Handle case where an image might have multiple URLs in file_urls array
-    const allImages = siteImages.flatMap(image => {
+    const allImages = siteImages.flatMap((image) => {
       console.log("Processing image:", image);
-      
+
       if (image.file_urls && image.file_urls.length > 0) {
         // Return each URL in file_urls as a separate image entry
-        return image.file_urls.map(url => {
-          const fileName = url.split('/').pop() || 'Image';
-          const fullUrl = url.startsWith('http') ? url : `${SUPABASE_URL}${url}`;
+        return image.file_urls.map((url) => {
+          const fileName = url.split("/").pop() || "Image";
+          const fullUrl = url.startsWith("http")
+            ? url
+            : `${SUPABASE_URL}${url}`;
           console.log(`Creating image entry: ${fileName}, URL: ${fullUrl}`);
           return {
             url: fullUrl,
-            name: fileName
+            name: fileName,
           };
         });
       } else if (image.file_url) {
         // Handle single file_url case
-        const fileName = image.file_url.split('/').pop() || 'Image';
-        const fullUrl = image.file_url.startsWith('http') ? image.file_url : `${SUPABASE_URL}${image.file_url}`;
-        console.log(`Creating single image entry: ${fileName}, URL: ${fullUrl}`);
-        return [{
-          url: fullUrl,
-          name: fileName
-        }];
+        const fileName = image.file_url.split("/").pop() || "Image";
+        const fullUrl = image.file_url.startsWith("http")
+          ? image.file_url
+          : `${SUPABASE_URL}${image.file_url}`;
+        console.log(
+          `Creating single image entry: ${fileName}, URL: ${fullUrl}`
+        );
+        return [
+          {
+            url: fullUrl,
+            name: fileName,
+          },
+        ];
       } else {
         console.log("Image has no URLs");
         return [];
       }
     });
-    
+
     console.log("Formatted images:", allImages);
     return allImages.length > 0 ? allImages : null;
   }, [siteImages]);
 
   // Hooks must be called unconditionally
   const [formState, setFormState] = useState({
-    code: '',
-    name: '',
+    code: "",
+    name: "",
     phase: undefined,
     region: undefined,
     parliament: undefined,
     dun: undefined,
     mukim: undefined,
-    email: '',
-    website: '',
-    longitude: '',
-    latitude: '',
+    email: "",
+    website: "",
+    longitude: "",
+    latitude: "",
     status: undefined,
-    address: '',
-    address2: '',
+    address: "",
+    address2: "",
     district: undefined,
-    city: '',
-    postCode: '',
+    city: "",
+    postCode: "",
     state: undefined,
     technology: undefined,
     bandwidth: undefined,
     building_type: undefined,
-    building_area: '',
+    building_area: "",
     building_rental: undefined,
     zone: undefined,
     category_area: undefined,
     building_level: undefined,
     oku: undefined,
-    coordinates: '',
-    operate_date: '', // Add operate_date field
+    coordinates: "",
+    operate_date: "", // Add operate_date field
     socio_economic: [], // Add socio_economic field
     space: [], // Add space field
     dusp_tp_id: undefined, // Add dusp_tp_id field
@@ -276,24 +316,30 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
 
   // Improved setField function to properly handle clearing dependent fields
   const setField = (field: string, value: any) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
-    
-    if (field === 'coordinates') {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+
+    if (field === "coordinates") {
       setFormState((prevState) => ({ ...prevState, coordinates: value }));
-      if (value.trim() === '') {
-        setFormState((prevState) => ({ ...prevState, longitude: '', latitude: '' }));
-      } else if (value.includes(',')) {
-        const [longitude, latitude] = value.split(',').map(coord => coord.trim());
+      if (value.trim() === "") {
+        setFormState((prevState) => ({
+          ...prevState,
+          longitude: "",
+          latitude: "",
+        }));
+      } else if (value.includes(",")) {
+        const [longitude, latitude] = value
+          .split(",")
+          .map((coord) => coord.trim());
         setFormState((prevState) => ({ ...prevState, longitude, latitude }));
       }
     } else {
       // Simple field update without cascading clearing
       setFormState((prevState) => ({ ...prevState, [field]: value }));
     }
-    
+
     // Clear validation error when field is updated
     if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: undefined }));
+      setErrors((prev) => ({ ...prev, [field]: undefined }));
     }
   };
 
@@ -307,103 +353,109 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
   const validateForm = () => {
     const newErrors: ValidationErrors = {};
     let firstInvalidField: string | null = null;
-    
+
     // Required fields validation - Basic Information
     if (!formState.code.trim()) {
-      newErrors.code = 'Site code is required';
-      firstInvalidField = firstInvalidField || 'code';
+      newErrors.code = "Site code is required";
+      firstInvalidField = firstInvalidField || "code";
     }
-    
+
     if (!formState.name.trim()) {
-      newErrors.name = 'Site name is required';
-      firstInvalidField = firstInvalidField || 'name';
+      newErrors.name = "Site name is required";
+      firstInvalidField = firstInvalidField || "name";
     }
-    
+
     if (!formState.status) {
-      newErrors.status = 'Site status is required';
-      firstInvalidField = firstInvalidField || 'status';
+      newErrors.status = "Site status is required";
+      firstInvalidField = firstInvalidField || "status";
     }
 
     if (!formState.phase) {
-      newErrors.phase = 'Site phase is required';
-      firstInvalidField = firstInvalidField || 'phase';
+      newErrors.phase = "Site phase is required";
+      firstInvalidField = firstInvalidField || "phase";
     }
-    
+
     // DUSP TP ID validation for super admin users
     if (parsedMetadata?.user_type === "super_admin" && !formState.dusp_tp_id) {
-      newErrors.dusp_tp_id = 'Organization is required';
-      firstInvalidField = firstInvalidField || 'dusp_tp_id';
+      newErrors.dusp_tp_id = "Organization is required";
+      firstInvalidField = firstInvalidField || "dusp_tp_id";
     }
-    
+
     // Required fields validation - Location Information
     if (!formState.address?.trim()) {
-      newErrors.address = 'Address is required';
-      firstInvalidField = firstInvalidField || 'address';
+      newErrors.address = "Address is required";
+      firstInvalidField = firstInvalidField || "address";
     }
 
     if (!formState.city?.trim()) {
-      newErrors.city = 'City is required';
-      firstInvalidField = firstInvalidField || 'city';
+      newErrors.city = "City is required";
+      firstInvalidField = firstInvalidField || "city";
     }
 
     if (!formState.postCode?.trim()) {
-      newErrors.postCode = 'Postcode is required';
-      firstInvalidField = firstInvalidField || 'postCode';
+      newErrors.postCode = "Postcode is required";
+      firstInvalidField = firstInvalidField || "postCode";
     }
 
     if (!formState.state) {
-      newErrors.state = 'State is required';
-      firstInvalidField = firstInvalidField || 'state';
+      newErrors.state = "State is required";
+      firstInvalidField = firstInvalidField || "state";
     }
-    
+
     // Format validation for coordinates
     if (formState.coordinates) {
-      const coordinates = formState.coordinates.split(',').map(coord => coord.trim());
+      const coordinates = formState.coordinates
+        .split(",")
+        .map((coord) => coord.trim());
       if (
-        coordinates.length !== 2 || 
-        !coordinates[0] || 
-        !coordinates[1] || 
-        isNaN(Number(coordinates[0])) || 
+        coordinates.length !== 2 ||
+        !coordinates[0] ||
+        !coordinates[1] ||
+        isNaN(Number(coordinates[0])) ||
         isNaN(Number(coordinates[1]))
       ) {
-        newErrors.coordinates = 'Invalid coordinates format. Use "longitude, latitude"';
-        firstInvalidField = firstInvalidField || 'coordinates';
+        newErrors.coordinates =
+          'Invalid coordinates format. Use "longitude, latitude"';
+        firstInvalidField = firstInvalidField || "coordinates";
       }
     }
-    
+
     // Email format validation (if provided)
-    if (formState.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)) {
-      newErrors.email = 'Invalid email format';
-      firstInvalidField = firstInvalidField || 'email';
+    if (
+      formState.email &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formState.email)
+    ) {
+      newErrors.email = "Invalid email format";
+      firstInvalidField = firstInvalidField || "email";
     }
-    
+
     // Building info validation
     if (!formState.building_type) {
-      newErrors.building_type = 'Building type is required';
-      firstInvalidField = firstInvalidField || 'building_type';
+      newErrors.building_type = "Building type is required";
+      firstInvalidField = firstInvalidField || "building_type";
     }
 
     // Building area should be numeric if provided
     if (formState.building_area && isNaN(Number(formState.building_area))) {
-      newErrors.building_area = 'Building area must be a number';
-      firstInvalidField = firstInvalidField || 'building_area';
+      newErrors.building_area = "Building area must be a number";
+      firstInvalidField = firstInvalidField || "building_area";
     }
 
     // Connectivity validation
     if (!formState.technology) {
-      newErrors.technology = 'Internet technology is required';
-      firstInvalidField = firstInvalidField || 'technology';
+      newErrors.technology = "Internet technology is required";
+      firstInvalidField = firstInvalidField || "technology";
     }
 
     setErrors(newErrors);
-    
+
     // Return the first invalid field for focusing
     return { isValid: Object.keys(newErrors).length === 0, firstInvalidField };
   };
 
   // Handler for input blur to mark field as touched
   const handleBlur = (field: string) => {
-    setTouched(prev => ({ ...prev, [field]: true }));
+    setTouched((prev) => ({ ...prev, [field]: true }));
   };
 
   // Function to determine if an input should show error state
@@ -412,90 +464,98 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
   };
 
   // Fetch socio-economic options
-  const { data: socioEconomicOptions = [], isLoading: isSocioEconomicLoading } = useQuery({
-    queryKey: ['socio-economic'],
-    queryFn: fetchSocioecomic,
-  });
+  const { data: socioEconomicOptions = [], isLoading: isSocioEconomicLoading } =
+    useQuery({
+      queryKey: ["socio-economic"],
+      queryFn: fetchSocioecomic,
+    });
 
   // Fetch site space options
-  const { data: siteSpaceOptions = [], isLoading: isSiteSpaceLoading } = useQuery({
-    queryKey: ['site-space'],
-    queryFn: fetchSiteSpace,
-  });
+  const { data: siteSpaceOptions = [], isLoading: isSiteSpaceLoading } =
+    useQuery({
+      queryKey: ["site-space"],
+      queryFn: fetchSiteSpace,
+    });
 
   // Fetch organization options for super admin
-  const { data: organizations = [], isLoading: isOrganizationsLoading } = useQuery({
-    queryKey: ['organizations'],
-    queryFn: fetchOrganization,
-    enabled: parsedMetadata?.user_type === "super_admin", // Only fetch for super admin
-  });
+  const { data: organizations = [], isLoading: isOrganizationsLoading } =
+    useQuery({
+      queryKey: ["organizations"],
+      queryFn: fetchOrganization,
+      enabled: parsedMetadata?.user_type === "super_admin", // Only fetch for super admin
+    });
 
   // Fetching START lookup data
   const { data: siteStatus = [], isLoading: isStatusLoading } = useQuery({
-    queryKey: ['site-status'],
+    queryKey: ["site-status"],
     queryFn: () => fetchSiteStatus(),
   });
   const { data: sitePhase = [], isLoading: isPhaseLoading } = useQuery({
-    queryKey: ['site-phase'],
+    queryKey: ["site-phase"],
     queryFn: () => fetchPhase(),
   });
 
   // Replace existing dependent location queries with independent queries
   const { data: siteState = [], isLoading: isStateLoading } = useQuery({
-    queryKey: ['all-states'],
+    queryKey: ["all-states"],
     queryFn: fetchAllStates,
   });
 
   const { data: siteDistrict = [], isLoading: isDistrictLoading } = useQuery({
-    queryKey: ['all-districts'],
+    queryKey: ["all-districts"],
     queryFn: fetchAllDistricts,
   });
 
-  const { data: siteParliament = [], isLoading: isParliamentLoading } = useQuery({
-    queryKey: ['all-parliaments'],
-    queryFn: fetchAllParliaments,
-  });
+  const { data: siteParliament = [], isLoading: isParliamentLoading } =
+    useQuery({
+      queryKey: ["all-parliaments"],
+      queryFn: fetchAllParliaments,
+    });
 
   const { data: siteDun = [], isLoading: isDunLoading } = useQuery({
-    queryKey: ['all-duns'],
+    queryKey: ["all-duns"],
     queryFn: fetchAllDuns,
   });
 
   const { data: siteMukim = [], isLoading: isMukimLoading } = useQuery({
-    queryKey: ['all-mukims'],
+    queryKey: ["all-mukims"],
     queryFn: fetchAllMukims,
   });
 
   const { data: siteRegion = [], isLoading: isRegionLoading } = useQuery({
-    queryKey: ['site-region'],
+    queryKey: ["site-region"],
     queryFn: fetchRegion,
   });
 
   // Keep the remaining lookup queries unchanged
-  const { data: siteTechnology = [], isLoading: isTechnologyLoading } = useQuery({
-    queryKey: ['site-technology'],
-    queryFn: fetchTechnology,
-  });
+  const { data: siteTechnology = [], isLoading: isTechnologyLoading } =
+    useQuery({
+      queryKey: ["site-technology"],
+      queryFn: fetchTechnology,
+    });
   const { data: siteBandwidth = [], isLoading: isBandwidthLoading } = useQuery({
-    queryKey: ['site-bandwidth'],
+    queryKey: ["site-bandwidth"],
     queryFn: fetchBandwidth,
   });
-  const { data: siteBuildingType = [], isLoading: isBuildingTypeLoading } = useQuery({
-    queryKey: ['site-BuidlingType'],
-    queryFn: fetchBuildingType,
-  });
+  const { data: siteBuildingType = [], isLoading: isBuildingTypeLoading } =
+    useQuery({
+      queryKey: ["site-BuidlingType"],
+      queryFn: fetchBuildingType,
+    });
   const { data: siteZone = [], isLoading: isZoneLoading } = useQuery({
-    queryKey: ['site-Zone'],
+    queryKey: ["site-Zone"],
     queryFn: fetchZone,
   });
-  const { data: siteCategoryArea = [], isLoading: isCategoryAreaLoading } = useQuery({
-    queryKey: ['site-CategoryArea'],
-    queryFn: fetchCategoryArea,
-  });
-  const { data: siteBuildingLevel = [], isLoading: isBuildingLevelLoading } = useQuery({
-    queryKey: ['site-BuildingLevel'],
-    queryFn: fetchBuildingLevel,
-  });
+  const { data: siteCategoryArea = [], isLoading: isCategoryAreaLoading } =
+    useQuery({
+      queryKey: ["site-CategoryArea"],
+      queryFn: fetchCategoryArea,
+    });
+  const { data: siteBuildingLevel = [], isLoading: isBuildingLevelLoading } =
+    useQuery({
+      queryKey: ["site-BuildingLevel"],
+      queryFn: fetchBuildingLevel,
+    });
   // Fetching END lookup data
 
   // This effect initializes the form with site data when editing
@@ -503,36 +563,53 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
     if (site && !isRegionLoading) {
       // Populate all form fields directly without cascading dependencies
       const siteData = {
-        code: site.nd_site[0]?.standard_code || '',
-        name: site.sitename || '',
+        code: site.nd_site[0]?.standard_code || "",
+        name: site.sitename || "",
         phase: site.phase_id ? String(site.phase_id) : undefined,
         region: site.region_id ? String(site.region_id) : undefined,
-        parliament: site.nd_parliament?.id ? String(site.nd_parliament.id) : undefined,
+        parliament: site.nd_parliament?.id
+          ? String(site.nd_parliament.id)
+          : undefined,
         dun: site.nd_dun?.id ? String(site.nd_dun.id) : undefined,
         mukim: site.nd_mukim?.id ? String(site.nd_mukim.id) : undefined,
-        email: site.email || '',
-        website: site.website || '',
-        longitude: site.longtitude || '',
-        latitude: site.latitude || '',
+        email: site.email || "",
+        website: site.website || "",
+        longitude: site.longtitude || "",
+        latitude: site.latitude || "",
         status: site.active_status ? String(site.active_status) : undefined,
-        address: site.nd_site_address[0]?.address1 || '',
-        address2: site.nd_site_address[0]?.address2 || '',
-        city: site.nd_site_address[0]?.city || '',
-        postCode: site.nd_site_address[0]?.postcode || '',
-        district: site.nd_site_address[0]?.district_id ? String(site.nd_site_address[0].district_id) : undefined,
-        state: site.nd_site_address[0]?.state_id ? String(site.nd_site_address[0]?.state_id) : undefined,
+        address: site.nd_site_address[0]?.address1 || "",
+        address2: site.nd_site_address[0]?.address2 || "",
+        city: site.nd_site_address[0]?.city || "",
+        postCode: site.nd_site_address[0]?.postcode || "",
+        district: site.nd_site_address[0]?.district_id
+          ? String(site.nd_site_address[0].district_id)
+          : undefined,
+        state: site.nd_site_address[0]?.state_id
+          ? String(site.nd_site_address[0]?.state_id)
+          : undefined,
         technology: site.technology ? String(site.technology) : undefined,
         bandwidth: site.bandwidth ? String(site.bandwidth) : undefined,
-        building_type: site.building_type_id ? String(site.building_type_id) : undefined,
-        building_area: site.building_area_id ? String(site.building_area_id) : '',
-        building_rental: site.building_rental_id !== undefined ? site.building_rental_id : undefined,
+        building_type: site.building_type_id
+          ? String(site.building_type_id)
+          : undefined,
+        building_area: site.building_area_id
+          ? String(site.building_area_id)
+          : "",
+        building_rental:
+          site.building_rental_id !== undefined
+            ? site.building_rental_id
+            : undefined,
         zone: site.zone_id ? String(site.zone_id) : undefined,
         category_area: site.area_id ? String(site.area_id) : undefined,
         building_level: site.level_id ? String(site.level_id) : undefined,
         oku: site.oku_friendly !== undefined ? site.oku_friendly : undefined,
-        coordinates: site.longtitude && site.latitude ? `${site.longtitude},${site.latitude}` : '',
-        operate_date: site.operate_date ? site.operate_date.split('T')[0] : '',
-        socio_economic: site.nd_site_socioeconomic?.map((s) => s.nd_socioeconomics.id) || [],
+        coordinates:
+          site.longtitude && site.latitude
+            ? `${site.longtitude},${site.latitude}`
+            : "",
+        operate_date: site.operate_date ? site.operate_date.split("T")[0] : "",
+        socio_economic:
+          site.nd_site_socioeconomic?.map((s) => s.nd_socioeconomics.id) || [],
         space: site.nd_site_space?.map((s) => s.nd_space.id) || [],
         dusp_tp_id: site.dusp_tp_id ? String(site.dusp_tp_id) : undefined,
       };
@@ -543,8 +620,14 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
 
   //preset on 2nd value of status
   useEffect(() => {
-    if (open && !site && !formState.status && siteStatus.length > 1 && !isStatusLoading) {
-      setField('status', String(siteStatus[1].id)); // Set predefined status when the form is opened
+    if (
+      open &&
+      !site &&
+      !formState.status &&
+      siteStatus.length > 1 &&
+      !isStatusLoading
+    ) {
+      setField("status", String(siteStatus[1].id)); // Set predefined status when the form is opened
     }
   }, [open, site, formState.status, siteStatus, isStatusLoading]);
 
@@ -561,8 +644,8 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
       if (site.nd_site_operation && site.nd_site_operation.length > 0) {
         const operationTimes = site.nd_site_operation.map((op) => ({
           day: op.days_of_week,
-          openTime: op.open_time || '',
-          closeTime: op.close_time || '',
+          openTime: op.open_time || "",
+          closeTime: op.close_time || "",
           isClosed: op.is_closed,
           id: op.id,
         }));
@@ -576,35 +659,35 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
 
   const resetForm = () => {
     setFormState({
-      code: '',
-      name: '',
+      code: "",
+      name: "",
       phase: undefined,
       region: undefined,
       parliament: undefined,
       dun: undefined,
       mukim: undefined,
-      email: '',
-      website: '',
-      longitude: '',
-      latitude: '',
+      email: "",
+      website: "",
+      longitude: "",
+      latitude: "",
       status: undefined,
-      address: '',
-      address2: '',
+      address: "",
+      address2: "",
       district: undefined,
-      city: '',
-      postCode: '',
+      city: "",
+      postCode: "",
       state: undefined,
       technology: undefined,
       bandwidth: undefined,
       building_type: undefined,
-      building_area: '',
+      building_area: "",
       building_rental: undefined,
       zone: undefined,
       category_area: undefined,
       building_level: undefined,
       oku: undefined,
-      coordinates: '',
-      operate_date: '', // Add operate_date field
+      coordinates: "",
+      operate_date: "", // Add operate_date field
       socio_economic: [], // Add socio_economic field
       space: [], // Add space field
       dusp_tp_id: undefined, // Add dusp_tp_id field
@@ -628,14 +711,14 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
+
     // Mark all fields as touched
     const allFields = Object.keys(formState).reduce((acc, key) => {
       acc[key] = true;
       return acc;
     }, {} as Record<string, boolean>);
     setTouched(allFields);
-    
+
     // Validate form before submission
     const { isValid, firstInvalidField } = validateForm();
     if (!isValid) {
@@ -650,9 +733,21 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
       }
 
       // Identify which tab has errors and switch to it
-      if (errors.code || errors.name || errors.phase || errors.status || errors.email) {
+      if (
+        errors.code ||
+        errors.name ||
+        errors.phase ||
+        errors.status ||
+        errors.email
+      ) {
         setActiveTab("basic-info");
-      } else if (errors.address || errors.city || errors.postCode || errors.state || errors.coordinates) {
+      } else if (
+        errors.address ||
+        errors.city ||
+        errors.postCode ||
+        errors.state ||
+        errors.coordinates
+      ) {
         setActiveTab("location");
       } else if (errors.building_type || errors.building_area) {
         setActiveTab("building");
@@ -667,74 +762,99 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
       });
       return;
     }
-    
+
     setIsSubmitting(true);
 
     try {
       // Check if the site code already exists (case-insensitive)
       const { data: existingSite, error: codeCheckError } = await supabase
-        .from('nd_site')
-        .select('id, site_profile_id')
-        .ilike('standard_code', formState.code);
+        .from("nd_site")
+        .select("id, site_profile_id")
+        .ilike("standard_code", formState.code);
 
       if (codeCheckError) throw codeCheckError; // Ignore "No rows found" error
 
-      if (existingSite && existingSite.length > 0 && (!site || existingSite[0].site_profile_id !== site.id)) {
-        const codeInput = document.getElementById('code');
+      if (
+        existingSite &&
+        existingSite.length > 0 &&
+        (!site || existingSite[0].site_profile_id !== site.id)
+      ) {
+        const codeInput = document.getElementById("code");
         if (codeInput) {
           codeInput.focus();
         }
-        throw new Error('Site code already exists');
+        throw new Error("Site code already exists");
       }
-      
+
       // Check if coordinates are valid
       if (formState.coordinates) {
-        const coordinates = formState.coordinates.split(',').map(coord => coord.trim());
-        if (coordinates.length !== 2 || !coordinates[0] || !coordinates[1] || isNaN(Number(coordinates[0])) || isNaN(Number(coordinates[1]))) {
-          const coorInput = document.getElementById('coordinates');
+        const coordinates = formState.coordinates
+          .split(",")
+          .map((coord) => coord.trim());
+        if (
+          coordinates.length !== 2 ||
+          !coordinates[0] ||
+          !coordinates[1] ||
+          isNaN(Number(coordinates[0])) ||
+          isNaN(Number(coordinates[1]))
+        ) {
+          const coorInput = document.getElementById("coordinates");
           if (coorInput) {
             coorInput.focus();
           }
-          throw new Error('Invalid coordinate format. Please use "longitude, latitude" with valid numbers.');
+          throw new Error(
+            'Invalid coordinate format. Please use "longitude, latitude" with valid numbers.'
+          );
         }
       }
 
       const site_profile = {
-        sitename: formState.name || '',
-        fullname: 'NADI' + (formState.name || ''),
-        phase_id: formState.phase === '' ? null : formState.phase,
-        region_id: formState.region === '' ? null : formState.region,
-        parliament_rfid: formState.parliament === '' ? null : formState.parliament,
-        dun_rfid: formState.dun === '' ? null : formState.dun,
-        mukim_id: formState.mukim === '' ? null : formState.mukim,
-        email: formState.email || '',
-        website: formState.website || '',
-        longtitude: formState.longitude ? parseFloat(formState.longitude) : null,
+        sitename: formState.name || "",
+        fullname: "NADI" + (formState.name || ""),
+        phase_id: formState.phase === "" ? null : formState.phase,
+        region_id: formState.region === "" ? null : formState.region,
+        parliament_rfid:
+          formState.parliament === "" ? null : formState.parliament,
+        dun_rfid: formState.dun === "" ? null : formState.dun,
+        mukim_id: formState.mukim === "" ? null : formState.mukim,
+        email: formState.email || "",
+        website: formState.website || "",
+        longtitude: formState.longitude
+          ? parseFloat(formState.longitude)
+          : null,
         latitude: formState.latitude ? parseFloat(formState.latitude) : null,
-        state_id: formState.state === '' ? null : formState.state,
-        active_status: formState.status === '' ? null : formState.status,
-        technology: formState.technology === '' ? null : formState.technology,
-        building_area_id: formState.building_area ? parseFloat(formState.building_area) : null,
-        bandwidth: formState.bandwidth === '' ? null : formState.bandwidth,
-        building_type_id: formState.building_type === '' ? null : formState.building_type,
-        building_rental_id: formState.building_rental === undefined ? null : formState.building_rental,
-        zone_id: formState.zone === '' ? null : formState.zone,
-        area_id: formState.category_area === '' ? null : formState.category_area,
-        level_id: formState.building_level === '' ? null : formState.building_level,
+        state_id: formState.state === "" ? null : formState.state,
+        active_status: formState.status === "" ? null : formState.status,
+        technology: formState.technology === "" ? null : formState.technology,
+        building_area_id: formState.building_area
+          ? parseFloat(formState.building_area)
+          : null,
+        bandwidth: formState.bandwidth === "" ? null : formState.bandwidth,
+        building_type_id:
+          formState.building_type === "" ? null : formState.building_type,
+        building_rental_id:
+          formState.building_rental === undefined
+            ? null
+            : formState.building_rental,
+        zone_id: formState.zone === "" ? null : formState.zone,
+        area_id:
+          formState.category_area === "" ? null : formState.category_area,
+        level_id:
+          formState.building_level === "" ? null : formState.building_level,
         oku_friendly: formState.oku ?? null,
         operate_date: formState.operate_date || null,
-        dusp_tp_id: formState.dusp_tp_id === '' ? null : formState.dusp_tp_id, // Add dusp_tp_id to site_profile
+        dusp_tp_id: formState.dusp_tp_id === "" ? null : formState.dusp_tp_id, // Add dusp_tp_id to site_profile
         ...(site ? {} : organizationId ? { dusp_tp_id: organizationId } : {}), // Add dusp_tp_id only for creation and non-super_admin and TP group only
       };
 
       const site_address = {
-        address1: formState.address || '',
-        address2: formState.address2 || '',
-        city: formState.city || '',
-        postcode: formState.postCode || '',
-        district_id: formState.district === '' ? null : formState.district,
-        state_id: formState.state === '' ? null : formState.state,
-        active_status: formState.status === '' ? null : formState.status,
+        address1: formState.address || "",
+        address2: formState.address2 || "",
+        city: formState.city || "",
+        postcode: formState.postCode || "",
+        district_id: formState.district === "" ? null : formState.district,
+        state_id: formState.state === "" ? null : formState.state,
+        active_status: formState.status === "" ? null : formState.status,
       };
 
       const standard_code = formState.code;
@@ -746,31 +866,31 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
       if (site) {
         // Update existing site (exclude dusp_tp_id from updates)
         const { error: profError } = await supabase
-          .from('nd_site_profile')
+          .from("nd_site_profile")
           .update(site_profile)
-          .eq('id', site.id);
+          .eq("id", site.id);
 
         if (profError) throw profError;
 
         const { error: addressError } = await supabase
-          .from('nd_site_address')
+          .from("nd_site_address")
           .update(site_address)
-          .eq('site_id', site.id);
+          .eq("site_id", site.id);
 
         if (addressError) throw addressError;
 
         const { error: codeError } = await supabase
-          .from('nd_site')
+          .from("nd_site")
           .update({ standard_code })
-          .eq('site_profile_id', site.id);
+          .eq("site_profile_id", site.id);
 
         if (codeError) throw codeError;
 
         // Update socio-economic data
         const { error: deleteSocioError } = await supabase
-          .from('nd_site_socioeconomic')
+          .from("nd_site_socioeconomic")
           .delete()
-          .eq('site_id', site.id);
+          .eq("site_id", site.id);
 
         if (deleteSocioError) throw deleteSocioError;
 
@@ -780,16 +900,16 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
         }));
 
         const { error: insertSocioError } = await supabase
-          .from('nd_site_socioeconomic')
+          .from("nd_site_socioeconomic")
           .insert(socioEconomicData);
 
         if (insertSocioError) throw insertSocioError;
 
         // Update space data
         const { error: deleteSpaceError } = await supabase
-          .from('nd_site_space')
+          .from("nd_site_space")
           .delete()
-          .eq('site_id', site.id);
+          .eq("site_id", site.id);
 
         if (deleteSpaceError) throw deleteSpaceError;
 
@@ -799,16 +919,16 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
         }));
 
         const { error: insertSpaceError } = await supabase
-          .from('nd_site_space')
+          .from("nd_site_space")
           .insert(spaceData);
 
         if (insertSpaceError) throw insertSpaceError;
 
         // Always delete existing operation hours regardless of whether the tab was visited
         const { error: deleteOpError } = await supabase
-          .from('nd_site_operation')
+          .from("nd_site_operation")
           .delete()
-          .eq('site_id', site.id);
+          .eq("site_id", site.id);
 
         if (deleteOpError) throw deleteOpError;
 
@@ -824,7 +944,7 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
           }));
 
           const { error: operationError } = await supabase
-            .from('nd_site_operation')
+            .from("nd_site_operation")
             .insert(operationRecords);
 
           if (operationError) throw operationError;
@@ -835,14 +955,16 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
         // Process any images marked for deletion
         if (imagesToDelete.length > 0) {
           console.log("Processing images marked for deletion:", imagesToDelete);
-          
+
           for (const path of imagesToDelete) {
             try {
               // Find which image record contains this path
-              const imageRecord = siteImages.find(img => 
-                img.file_url === path || (img.file_urls && img.file_urls.includes(path))
+              const imageRecord = siteImages.find(
+                (img) =>
+                  img.file_url === path ||
+                  (img.file_urls && img.file_urls.includes(path))
               );
-              
+
               if (imageRecord) {
                 console.log("Deleting image:", path);
                 await deleteSiteImage(imageRecord.id, path);
@@ -852,14 +974,18 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
               // Don't throw error here, continue with the rest of the submission
             }
           }
-          
+
           // Clear the images to delete array
           setImagesToDelete([]);
         }
 
         // Upload new site images if any
         if (selectedImageFiles.length > 0) {
-          const result = await uploadSiteImages(siteId, selectedImageFiles, standard_code);
+          const result = await uploadSiteImages(
+            siteId,
+            selectedImageFiles,
+            standard_code
+          );
           if (!result.success) {
             console.error("Error uploading site images:", result.error);
             // Don't throw error here, continue with the rest of the submission
@@ -873,25 +999,25 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
       } else {
         // Create new site
         const { data: profData, error: profError } = await supabase
-          .from('nd_site_profile')
+          .from("nd_site_profile")
           .insert([site_profile])
-          .select('id');
+          .select("id");
 
         if (profError) throw profError;
 
-        if (!profData) throw new Error('Profile data is null');
+        if (!profData) throw new Error("Profile data is null");
         siteId = profData[0].id;
 
         const { error: addressError } = await supabase
-          .from('nd_site_address')
+          .from("nd_site_address")
           .insert([{ ...site_address, site_id: siteId }]);
 
         if (addressError) throw addressError;
 
         const { error: codeError } = await supabase
-          .from('nd_site')
+          .from("nd_site")
           .insert([{ standard_code: standard_code, site_profile_id: siteId }])
-          .select('id');
+          .select("id");
 
         if (codeError) throw codeError;
 
@@ -902,7 +1028,7 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
         }));
 
         const { error: insertSocioError } = await supabase
-          .from('nd_site_socioeconomic')
+          .from("nd_site_socioeconomic")
           .insert(socioEconomicData);
 
         if (insertSocioError) throw insertSocioError;
@@ -914,7 +1040,7 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
         }));
 
         const { error: insertSpaceError } = await supabase
-          .from('nd_site_space')
+          .from("nd_site_space")
           .insert(spaceData);
 
         if (insertSpaceError) throw insertSpaceError;
@@ -931,7 +1057,7 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
           }));
 
           const { error: operationError } = await supabase
-            .from('nd_site_operation')
+            .from("nd_site_operation")
             .insert(operationRecords);
 
           if (operationError) throw operationError;
@@ -939,7 +1065,11 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
 
         // Upload new site images if any
         if (selectedImageFiles.length > 0) {
-          const result = await uploadSiteImages(siteId, selectedImageFiles, standard_code);
+          const result = await uploadSiteImages(
+            siteId,
+            selectedImageFiles,
+            standard_code
+          );
           if (!result.success) {
             console.error("Error uploading site images:", result.error);
             // Don't throw error here, continue with the rest of the submission
@@ -953,19 +1083,19 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
       }
 
       onOpenChange(false);
-      queryClient.invalidateQueries({ queryKey: ['site-stats'] });
-      queryClient.invalidateQueries({ queryKey: ['sites'] });
+      queryClient.invalidateQueries({ queryKey: ["site-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["sites"] });
 
       resetForm();
       setSelectedImageFiles([]);
     } catch (error) {
-      console.error('Error adding/updating site:', error);
+      console.error("Error adding/updating site:", error);
       toast({
         title: "Error",
-        description: error.message || "Failed to add/update the site. Please try again.",
+        description:
+          error.message || "Failed to add/update the site. Please try again.",
         variant: "destructive",
       });
-
     } finally {
       setIsSubmitting(false);
     }
@@ -980,36 +1110,52 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[90vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-2xl">{site ? "Edit Site" : "Add New Site"}</DialogTitle>
+          <DialogTitle className="text-2xl">
+            {site ? "Edit Site" : "Add New Site"}
+          </DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4" noValidate>
           <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-4 flex flex-wrap">
-              <TabsTrigger 
+              <TabsTrigger
                 value="basic-info"
                 className={cn(
-                  errors.code || errors.name || errors.phase || errors.status || errors.email ? "text-red-500 font-medium" : ""
+                  errors.code ||
+                    errors.name ||
+                    errors.phase ||
+                    errors.status ||
+                    errors.email
+                    ? "text-red-500 font-medium"
+                    : ""
                 )}
               >
                 Basic Info
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="location"
                 className={cn(
-                  errors.address || errors.city || errors.postCode || errors.state || errors.coordinates ? "text-red-500 font-medium" : ""
+                  errors.address ||
+                    errors.city ||
+                    errors.postCode ||
+                    errors.state ||
+                    errors.coordinates
+                    ? "text-red-500 font-medium"
+                    : ""
                 )}
               >
                 Location
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="building"
                 className={cn(
-                  errors.building_area || errors.building_type ? "text-red-500 font-medium" : ""
+                  errors.building_area || errors.building_type
+                    ? "text-red-500 font-medium"
+                    : ""
                 )}
               >
                 Building Info
               </TabsTrigger>
-              <TabsTrigger 
+              <TabsTrigger
                 value="connectivity"
                 className={cn(
                   errors.technology ? "text-red-500 font-medium" : ""
@@ -1021,127 +1167,168 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
               <TabsTrigger value="operation">Operation Hours</TabsTrigger>
               <TabsTrigger value="images">Site Images</TabsTrigger>
             </TabsList>
-            
+
             {/* Basic Info Tab */}
             <TabsContent value="basic-info" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <DialogTitle>Basic Information</DialogTitle>
-                  
+
                   {parsedMetadata?.user_type === "super_admin" && (
                     <div className="space-y-2">
-                      <Label htmlFor="dusp_tp_id" className={shouldShowError('dusp_tp_id') ? "text-red-500" : ""}>
+                      <Label
+                        htmlFor="dusp_tp_id"
+                        className={
+                          shouldShowError("dusp_tp_id") ? "text-red-500" : ""
+                        }
+                      >
                         Organization*
                       </Label>
                       <SelectOne
                         options={organizations.map((org) => ({
                           id: String(org.id),
-                          label: org.displayName
+                          label: org.displayName,
                         }))}
                         value={formState.dusp_tp_id}
                         onChange={(value) => {
-                          setField('dusp_tp_id', value);
-                          handleBlur('dusp_tp_id');
+                          setField("dusp_tp_id", value);
+                          handleBlur("dusp_tp_id");
                         }}
                         placeholder="Select organization"
                         disabled={isOrganizationsLoading}
-                        className={shouldShowError('dusp_tp_id') ? "border-red-500 focus-visible:ring-red-500" : ""}
+                        className={
+                          shouldShowError("dusp_tp_id")
+                            ? "border-red-500 focus-visible:ring-red-500"
+                            : ""
+                        }
                       />
-                      {shouldShowError('dusp_tp_id') && (
-                        <p className="text-sm text-red-500">{errors.dusp_tp_id}</p>
+                      {shouldShowError("dusp_tp_id") && (
+                        <p className="text-sm text-red-500">
+                          {errors.dusp_tp_id}
+                        </p>
                       )}
                     </div>
                   )}
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="name" className={shouldShowError('name') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="name"
+                      className={shouldShowError("name") ? "text-red-500" : ""}
+                    >
                       Site Name*
                     </Label>
-                    <Input 
-                      id="name" 
-                      name="name" 
+                    <Input
+                      id="name"
+                      name="name"
                       value={formState.name}
-                      onChange={(e) => setField('name', e.target.value)}
-                      onBlur={() => handleBlur('name')}
-                      className={shouldShowError('name') ? "border-red-500 focus-visible:ring-red-500" : ""}
-                      required 
+                      onChange={(e) => setField("name", e.target.value)}
+                      onBlur={() => handleBlur("name")}
+                      className={
+                        shouldShowError("name")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
+                      required
                     />
-                    {shouldShowError('name') && (
+                    {shouldShowError("name") && (
                       <p className="text-sm text-red-500">{errors.name}</p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="code" className={shouldShowError('code') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="code"
+                      className={shouldShowError("code") ? "text-red-500" : ""}
+                    >
                       Site Code*
                     </Label>
-                    <Input 
-                      id="code" 
-                      name="code" 
+                    <Input
+                      id="code"
+                      name="code"
                       value={formState.code}
-                      onChange={(e) => setField('code', e.target.value)}
-                      onBlur={() => handleBlur('code')}
-                      className={shouldShowError('code') ? "border-red-500 focus-visible:ring-red-500" : ""}
-                      required 
+                      onChange={(e) => setField("code", e.target.value)}
+                      onBlur={() => handleBlur("code")}
+                      className={
+                        shouldShowError("code")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
+                      required
                     />
-                    {shouldShowError('code') && (
+                    {shouldShowError("code") && (
                       <p className="text-sm text-red-500">{errors.code}</p>
                     )}
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="phase" className={shouldShowError('phase') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="phase"
+                      className={shouldShowError("phase") ? "text-red-500" : ""}
+                    >
                       Phase*
                     </Label>
                     <SelectOne
                       options={sitePhase.map((phase) => ({
                         id: String(phase.id),
-                        label: phase.name
+                        label: phase.name,
                       }))}
                       value={formState.phase}
                       onChange={(value) => {
-                        setField('phase', value);
-                        handleBlur('phase');
+                        setField("phase", value);
+                        handleBlur("phase");
                       }}
                       placeholder="Select phase"
                       disabled={isPhaseLoading}
-                      className={shouldShowError('phase') ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      className={
+                        shouldShowError("phase")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
-                    {shouldShowError('phase') && (
+                    {shouldShowError("phase") && (
                       <p className="text-sm text-red-500">{errors.phase}</p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="status" className={shouldShowError('status') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="status"
+                      className={
+                        shouldShowError("status") ? "text-red-500" : ""
+                      }
+                    >
                       Status*
                     </Label>
                     <SelectOne
                       options={siteStatus.map((status) => ({
                         id: String(status.id),
-                        label: status.eng
+                        label: status.eng,
                       }))}
                       value={formState.status}
                       onChange={(value) => {
-                        setField('status', value);
-                        handleBlur('status');
+                        setField("status", value);
+                        handleBlur("status");
                       }}
                       placeholder="Select status"
                       disabled={isStatusLoading}
-                      className={shouldShowError('status') ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      className={
+                        shouldShowError("status")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
-                    {shouldShowError('status') && (
+                    {shouldShowError("status") && (
                       <p className="text-sm text-red-500">{errors.status}</p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="operate_date">Operate Date</Label>
                     <DateInput
                       id="operate_date"
                       name="operate_date"
                       value={formState.operate_date}
-                      onChange={(e) => setField('operate_date', e.target.value)}
+                      onChange={(e) => setField("operate_date", e.target.value)}
                     />
                   </div>
                 </div>
@@ -1149,121 +1336,170 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                 <div className="space-y-4">
                   <DialogTitle>Contact Information</DialogTitle>
                   <div className="space-y-2">
-                    <Label htmlFor="email" className={shouldShowError('email') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="email"
+                      className={shouldShowError("email") ? "text-red-500" : ""}
+                    >
                       Email
                     </Label>
-                    <Input 
-                      id="email" 
-                      name="email" 
+                    <Input
+                      id="email"
+                      name="email"
                       value={formState.email}
-                      type="email" 
-                      onChange={(e) => setField('email', e.target.value)}
-                      onBlur={() => handleBlur('email')}
-                      className={shouldShowError('email') ? "border-red-500 focus-visible:ring-red-500" : ""} 
+                      type="email"
+                      onChange={(e) => setField("email", e.target.value)}
+                      onBlur={() => handleBlur("email")}
+                      className={
+                        shouldShowError("email")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
-                    {shouldShowError('email') && (
+                    {shouldShowError("email") && (
                       <p className="text-sm text-red-500">{errors.email}</p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="website">Website</Label>
-                    <Input 
-                      id="website" 
-                      name="website" 
+                    <Input
+                      id="website"
+                      name="website"
                       value={formState.website}
-                      onChange={(e) => setField('website', e.target.value)} 
+                      onChange={(e) => setField("website", e.target.value)}
                     />
                   </div>
                 </div>
               </div>
             </TabsContent>
-            
+
             {/* Location Tab */}
             <TabsContent value="location" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <DialogTitle>Address Information</DialogTitle>
                   <div className="space-y-2">
-                    <Label htmlFor="address" className={shouldShowError('address') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="address"
+                      className={
+                        shouldShowError("address") ? "text-red-500" : ""
+                      }
+                    >
                       Address*
                     </Label>
-                    <Textarea 
-                      id="address" 
-                      name="address" 
+                    <Textarea
+                      id="address"
+                      name="address"
                       value={formState.address}
-                      onChange={(e) => setField('address', e.target.value)}
-                      onBlur={() => handleBlur('address')}
-                      className={shouldShowError('address') ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      onChange={(e) => setField("address", e.target.value)}
+                      onBlur={() => handleBlur("address")}
+                      className={
+                        shouldShowError("address")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
-                    {shouldShowError('address') && (
+                    {shouldShowError("address") && (
                       <p className="text-sm text-red-500">{errors.address}</p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="address2">Address 2 (Optional)</Label>
-                    <Textarea 
-                      id="address2" 
-                      name="address2" 
+                    <Textarea
+                      id="address2"
+                      name="address2"
                       value={formState.address2}
-                      onChange={(e) => setField('address2', e.target.value)} 
+                      onChange={(e) => setField("address2", e.target.value)}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="city" className={shouldShowError('city') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="city"
+                      className={shouldShowError("city") ? "text-red-500" : ""}
+                    >
                       City*
                     </Label>
-                    <Input 
-                      id="city" 
-                      name="city" 
+                    <Input
+                      id="city"
+                      name="city"
                       value={formState.city}
-                      onChange={(e) => setField('city', e.target.value)}
-                      onBlur={() => handleBlur('city')}
-                      className={shouldShowError('city') ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      onChange={(e) => setField("city", e.target.value)}
+                      onBlur={() => handleBlur("city")}
+                      className={
+                        shouldShowError("city")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
-                    {shouldShowError('city') && (
+                    {shouldShowError("city") && (
                       <p className="text-sm text-red-500">{errors.city}</p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="postCode" className={shouldShowError('postCode') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="postCode"
+                      className={
+                        shouldShowError("postCode") ? "text-red-500" : ""
+                      }
+                    >
                       Postcode*
                     </Label>
-                    <Input 
-                      id="postCode" 
-                      name="postCode" 
+                    <Input
+                      id="postCode"
+                      name="postCode"
                       value={formState.postCode}
-                      onChange={(e) => setField('postCode', e.target.value)}
-                      onBlur={() => handleBlur('postCode')}
-                      className={shouldShowError('postCode') ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      onChange={(e) => setField("postCode", e.target.value)}
+                      onBlur={() => handleBlur("postCode")}
+                      className={
+                        shouldShowError("postCode")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
-                    {shouldShowError('postCode') && (
+                    {shouldShowError("postCode") && (
                       <p className="text-sm text-red-500">{errors.postCode}</p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="coordinates" className={shouldShowError('coordinates') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="coordinates"
+                      className={
+                        shouldShowError("coordinates") ? "text-red-500" : ""
+                      }
+                    >
                       Coordinates (Longitude, Latitude)
                     </Label>
                     <Input
                       id="coordinates"
                       name="coordinates"
                       placeholder="eg 3.2207, 101.439"
-                      value={formState.coordinates ?? (formState.longitude ? formState.longitude + (formState.latitude ? ',' + formState.latitude : '') : '')}
-                      onChange={(e) => setField('coordinates', e.target.value)}
-                      onBlur={() => handleBlur('coordinates')}
-                      className={shouldShowError('coordinates') ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      value={
+                        formState.coordinates ??
+                        (formState.longitude
+                          ? formState.longitude +
+                            (formState.latitude ? "," + formState.latitude : "")
+                          : "")
+                      }
+                      onChange={(e) => setField("coordinates", e.target.value)}
+                      onBlur={() => handleBlur("coordinates")}
+                      className={
+                        shouldShowError("coordinates")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
-                    {shouldShowError('coordinates') && (
-                      <p className="text-sm text-red-500">{errors.coordinates}</p>
+                    {shouldShowError("coordinates") && (
+                      <p className="text-sm text-red-500">
+                        {errors.coordinates}
+                      </p>
                     )}
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <DialogTitle>Administrative Areas</DialogTitle>
                   <div className="space-y-2">
@@ -1271,89 +1507,96 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                     <SelectOne
                       options={siteRegion.map((region) => ({
                         id: String(region.id),
-                        label: region.eng
+                        label: region.eng,
                       }))}
                       value={formState.region}
-                      onChange={(value) => setField('region', value)}
+                      onChange={(value) => setField("region", value)}
                       placeholder="Select region"
                       disabled={isRegionLoading}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label htmlFor="state" className={shouldShowError('state') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="state"
+                      className={shouldShowError("state") ? "text-red-500" : ""}
+                    >
                       State*
                     </Label>
                     <SelectOne
                       options={siteState.map((state) => ({
                         id: String(state.id),
-                        label: state.name
+                        label: state.name,
                       }))}
                       value={formState.state}
                       onChange={(value) => {
-                        setField('state', value);
-                        handleBlur('state');
+                        setField("state", value);
+                        handleBlur("state");
                       }}
                       placeholder="Select state"
                       disabled={isStateLoading}
-                      className={shouldShowError('state') ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      className={
+                        shouldShowError("state")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
-                    {shouldShowError('state') && (
+                    {shouldShowError("state") && (
                       <p className="text-sm text-red-500">{errors.state}</p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="district">District</Label>
                     <SelectOne
                       options={siteDistrict.map((district) => ({
                         id: String(district.id),
-                        label: district.name
+                        label: district.name,
                       }))}
                       value={formState.district}
-                      onChange={(value) => setField('district', value)}
+                      onChange={(value) => setField("district", value)}
                       placeholder="Select district"
                       disabled={isDistrictLoading}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="mukim">Mukim</Label>
                     <SelectOne
                       options={siteMukim.map((mukim) => ({
                         id: String(mukim.id),
-                        label: mukim.name
+                        label: mukim.name,
                       }))}
                       value={formState.mukim}
-                      onChange={(value) => setField('mukim', value)}
+                      onChange={(value) => setField("mukim", value)}
                       placeholder="Select mukim"
                       disabled={isMukimLoading}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="parliament">Parliament</Label>
                     <SelectOne
                       options={siteParliament.map((parliament) => ({
                         id: String(parliament.id),
-                        label: parliament.fullname
+                        label: parliament.fullname,
                       }))}
                       value={formState.parliament}
-                      onChange={(value) => setField('parliament', value)}
+                      onChange={(value) => setField("parliament", value)}
                       placeholder="Select parliament"
                       disabled={isParliamentLoading}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="dun">Dun</Label>
                     <SelectOne
                       options={siteDun.map((dun) => ({
                         id: String(dun.id),
-                        label: dun.full_name
+                        label: dun.full_name,
                       }))}
                       value={formState.dun}
-                      onChange={(value) => setField('dun', value)}
+                      onChange={(value) => setField("dun", value)}
                       placeholder="Select dun"
                       disabled={isDunLoading}
                     />
@@ -1361,71 +1604,92 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                 </div>
               </div>
             </TabsContent>
-            
+
             {/* Building Info Tab */}
             <TabsContent value="building" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <DialogTitle>Building Information</DialogTitle>
                   <div className="space-y-2">
-                    <Label htmlFor="building_type" className={shouldShowError('building_type') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="building_type"
+                      className={
+                        shouldShowError("building_type") ? "text-red-500" : ""
+                      }
+                    >
                       Building Type*
                     </Label>
                     <SelectOne
                       options={siteBuildingType.map((type) => ({
                         id: String(type.id),
-                        label: type.eng
+                        label: type.eng,
                       }))}
                       value={formState.building_type}
                       onChange={(value) => {
-                        setField('building_type', value);
-                        handleBlur('building_type');
+                        setField("building_type", value);
+                        handleBlur("building_type");
                       }}
                       placeholder="Select building type"
                       disabled={isBuildingTypeLoading}
-                      className={shouldShowError('building_type') ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      className={
+                        shouldShowError("building_type")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
-                    {shouldShowError('building_type') && (
-                      <p className="text-sm text-red-500">{errors.building_type}</p>
+                    {shouldShowError("building_type") && (
+                      <p className="text-sm text-red-500">
+                        {errors.building_type}
+                      </p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
-                    <Label 
+                    <Label
                       htmlFor="building_area"
-                      className={shouldShowError('building_area') ? "text-red-500" : ""}
+                      className={
+                        shouldShowError("building_area") ? "text-red-500" : ""
+                      }
                     >
                       Building Area (sqft)
                     </Label>
-                    <Input 
-                      id="building_area" 
-                      name="building_area" 
-                      type="number" 
-                      placeholder="0" 
+                    <Input
+                      id="building_area"
+                      name="building_area"
+                      type="number"
+                      placeholder="0"
                       value={formState.building_area}
-                      onChange={(e) => setField('building_area', e.target.value)}
-                      onBlur={() => handleBlur('building_area')}
-                      className={shouldShowError('building_area') ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      onChange={(e) =>
+                        setField("building_area", e.target.value)
+                      }
+                      onBlur={() => handleBlur("building_area")}
+                      className={
+                        shouldShowError("building_area")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
-                    {shouldShowError('building_area') && (
-                      <p className="text-sm text-red-500">{errors.building_area}</p>
+                    {shouldShowError("building_area") && (
+                      <p className="text-sm text-red-500">
+                        {errors.building_area}
+                      </p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="building_level">Building Level</Label>
                     <SelectOne
                       options={siteBuildingLevel.map((level) => ({
                         id: String(level.id),
-                        label: level.eng
+                        label: level.eng,
                       }))}
                       value={formState.building_level}
-                      onChange={(value) => setField('building_level', value)}
+                      onChange={(value) => setField("building_level", value)}
                       placeholder="Select building level"
                       disabled={isBuildingLevelLoading}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="building_rental">Building Rental</Label>
                     <div className="flex space-x-4">
@@ -1434,7 +1698,7 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                           type="radio"
                           name="building_rental"
                           checked={formState.building_rental === true}
-                          onChange={() => setField('building_rental', true)}
+                          onChange={() => setField("building_rental", true)}
                         />
                         <span>Yes</span>
                       </label>
@@ -1443,14 +1707,14 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                           type="radio"
                           name="building_rental"
                           checked={formState.building_rental === false}
-                          onChange={() => setField('building_rental', false)}
+                          onChange={() => setField("building_rental", false)}
                         />
                         <span>No</span>
                       </label>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="space-y-4">
                   <DialogTitle>Area Classification</DialogTitle>
                   <div className="space-y-2">
@@ -1458,24 +1722,24 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                     <SelectOne
                       options={siteZone.map((zone) => ({
                         id: String(zone.id),
-                        label: zone.area
+                        label: zone.area,
                       }))}
                       value={formState.zone}
-                      onChange={(value) => setField('zone', value)}
+                      onChange={(value) => setField("zone", value)}
                       placeholder="Select zone"
                       disabled={isZoneLoading}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="area">Category Area</Label>
                     <SelectOne
                       options={siteCategoryArea.map((catA) => ({
                         id: String(catA.id),
-                        label: catA.name
+                        label: catA.name,
                       }))}
                       value={formState.category_area}
-                      onChange={(value) => setField('category_area', value)}
+                      onChange={(value) => setField("category_area", value)}
                       placeholder="Select category area"
                       disabled={isCategoryAreaLoading}
                     />
@@ -1483,44 +1747,55 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                 </div>
               </div>
             </TabsContent>
-            
+
             {/* Connectivity Tab */}
             <TabsContent value="connectivity" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <DialogTitle>Internet Connectivity</DialogTitle>
                   <div className="space-y-2">
-                    <Label htmlFor="technology" className={shouldShowError('technology') ? "text-red-500" : ""}>
+                    <Label
+                      htmlFor="technology"
+                      className={
+                        shouldShowError("technology") ? "text-red-500" : ""
+                      }
+                    >
                       Internet Technology*
                     </Label>
                     <SelectOne
                       options={siteTechnology.map((tech) => ({
                         id: String(tech.id),
-                        label: tech.name
+                        label: tech.name,
                       }))}
                       value={formState.technology}
                       onChange={(value) => {
-                        setField('technology', value);
-                        handleBlur('technology');
+                        setField("technology", value);
+                        handleBlur("technology");
                       }}
                       placeholder="Select technology"
                       disabled={isTechnologyLoading}
-                      className={shouldShowError('technology') ? "border-red-500 focus-visible:ring-red-500" : ""}
+                      className={
+                        shouldShowError("technology")
+                          ? "border-red-500 focus-visible:ring-red-500"
+                          : ""
+                      }
                     />
-                    {shouldShowError('technology') && (
-                      <p className="text-sm text-red-500">{errors.technology}</p>
+                    {shouldShowError("technology") && (
+                      <p className="text-sm text-red-500">
+                        {errors.technology}
+                      </p>
                     )}
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="bandwidth">Internet Speed (Mbps)</Label>
                     <SelectOne
                       options={siteBandwidth.map((bandwidth) => ({
                         id: String(bandwidth.id),
-                        label: bandwidth.name
+                        label: bandwidth.name,
                       }))}
                       value={formState.bandwidth}
-                      onChange={(value) => setField('bandwidth', value)}
+                      onChange={(value) => setField("bandwidth", value)}
                       placeholder="Select bandwidth"
                       disabled={isBandwidthLoading}
                     />
@@ -1528,7 +1803,7 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                 </div>
               </div>
             </TabsContent>
-            
+
             {/* Facilities Tab */}
             <TabsContent value="facilities" className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1542,7 +1817,7 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                           type="radio"
                           name="oku"
                           checked={formState.oku === true}
-                          onChange={() => setField('oku', true)}
+                          onChange={() => setField("oku", true)}
                         />
                         <span>Yes</span>
                       </label>
@@ -1551,13 +1826,13 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                           type="radio"
                           name="oku"
                           checked={formState.oku === false}
-                          onChange={() => setField('oku', false)}
+                          onChange={() => setField("oku", false)}
                         />
                         <span>No</span>
                       </label>
                     </div>
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="socio_economic">Socio-Economic</Label>
                     <SelectMany
@@ -1571,7 +1846,7 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                       disabled={isSocioEconomicLoading}
                     />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <Label htmlFor="space">Space</Label>
                     <SelectMany
@@ -1588,11 +1863,11 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                 </div>
               </div>
             </TabsContent>
-            
+
             {/* Operation Hours Tab */}
             <TabsContent value="operation">
-              <SiteOperationHours 
-                siteId={site?.id} 
+              <SiteOperationHours
+                siteId={site?.id}
                 onOperationTimesChange={handleOperationTimesChange}
                 initialTimes={savedOperationTimes}
               />
@@ -1605,14 +1880,26 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                 {imagesToDelete.length > 0 && (
                   <div className="bg-amber-50 border border-amber-200 rounded-md p-3 mb-4">
                     <div className="flex items-center text-amber-700">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="mr-2">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        width="24"
+                        height="24"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        className="mr-2"
+                      >
                         <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
                         <line x1="12" y1="9" x2="12" y2="13"></line>
                         <line x1="12" y1="17" x2="12.01" y2="17"></line>
                       </svg>
                       <span>
-                        {imagesToDelete.length} image{imagesToDelete.length > 1 ? 's' : ''} marked for deletion. 
-                        Click "Update Site" to apply these changes.
+                        {imagesToDelete.length} image
+                        {imagesToDelete.length > 1 ? "s" : ""} marked for
+                        deletion. Click "Update Site" to apply these changes.
                       </span>
                     </div>
                   </div>
@@ -1626,12 +1913,15 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
                   onFilesSelected={handleImagesChange}
                   multiple={true}
                   existingFiles={formattedExistingImages}
-                  onExistingFilesChange={(files) => handleExistingImagesChange(files, SUPABASE_URL)}
+                  onExistingFilesChange={(files) =>
+                    handleExistingImagesChange(files, SUPABASE_URL)
+                  }
                 >
                   Add Site Images
                 </FileUpload>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Upload images of the site. Accepted formats: jpg, jpeg, png, gif, webp. Max 5 images, each up to 5MB.
+                  Upload images of the site. Accepted formats: jpg, jpeg, png,
+                  gif, webp. Max 5 images, each up to 5MB.
                 </p>
                 {/* <p className="text-sm text-amber-600">
                   <strong>Note:</strong> When you remove an image, it will be marked for deletion but only deleted when you click "Update Site".
@@ -1641,11 +1931,16 @@ export const SiteFormDialog = ({ open, onOpenChange, site }: SiteFormDialogProps
           </Tabs>
 
           <DialogFooter>
-            <Button variant="outline" type="button" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <Button
+              variant="outline"
+              type="button"
+              onClick={() => onOpenChange(false)}
+              disabled={isSubmitting}
+            >
               Cancel
             </Button>
             <Button type="submit" disabled={isSubmitting} className="ml-2">
-              {isSubmitting ? 'Saving...' : site ? 'Update Site' : 'Add Site'}
+              {isSubmitting ? "Saving..." : site ? "Update Site" : "Add Site"}
             </Button>
           </DialogFooter>
         </form>

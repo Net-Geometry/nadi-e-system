@@ -1,5 +1,9 @@
-import { supabase } from "@/lib/supabase";
-import { NADIClosure, NADIClosureFormData, NADIClosureStatus } from "../types/nadi-closure";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  NADIClosure,
+  NADIClosureFormData,
+  NADIClosureStatus,
+} from "../types/nadi-closure";
 
 // Fetch all NADI closures with optional filtering
 export const fetchNADIClosures = async (
@@ -11,7 +15,8 @@ export const fetchNADIClosures = async (
   try {
     let query = supabase
       .from("nd_nadi_closure")
-      .select(`
+      .select(
+        `
         *,
         nd_site_profile!inner(
           id,
@@ -20,17 +25,18 @@ export const fetchNADIClosures = async (
           nd_site(standard_code)
         ),
         nd_nadi_closure_status(id, name, description, color)
-      `)
-      .order('created_at', { ascending: false });
+      `
+      )
+      .order("created_at", { ascending: false });
 
     // Apply organization filter based on user role
     if (organizationId) {
       if (isDUSPUser) {
         // For DUSP users - fetch all TP organizations under this DUSP
         const { data: childOrganizations, error: childError } = await supabase
-          .from('organizations')
-          .select('id')
-          .eq('parent_id', organizationId);
+          .from("organizations")
+          .select("id")
+          .eq("parent_id", organizationId);
 
         if (childError) {
           console.error("Error fetching child organizations:", childError);
@@ -38,10 +44,13 @@ export const fetchNADIClosures = async (
         }
 
         // Get all child organization IDs
-        const childOrganizationIds = childOrganizations.map(org => org.id);
-        
+        const childOrganizationIds = childOrganizations.map((org) => org.id);
+
         // Filter sites where organization ID is in the list of child TPs
-        query = query.in("nd_site_profile.organizations.id", childOrganizationIds);
+        query = query.in(
+          "nd_site_profile.organizations.id",
+          childOrganizationIds
+        );
       } else {
         // For TP users - filter by their organization ID directly
         query = query.eq("nd_site_profile.organizations.id", organizationId);
@@ -87,11 +96,14 @@ export const fetchNADIClosures = async (
 };
 
 // Fetch a single NADI closure by ID
-export const fetchNADIClosureById = async (id: number): Promise<NADIClosure | null> => {
+export const fetchNADIClosureById = async (
+  id: number
+): Promise<NADIClosure | null> => {
   try {
     const { data, error } = await supabase
       .from("nd_nadi_closure")
-      .select(`
+      .select(
+        `
         *,
         nd_site_profile!inner(
           id,
@@ -101,7 +113,8 @@ export const fetchNADIClosureById = async (id: number): Promise<NADIClosure | nu
         ),
         nd_nadi_closure_status(id, name, description, color),
         nd_nadi_closure_attachments(*)
-      `)
+      `
+      )
       .eq("id", id)
       .single();
 
@@ -167,8 +180,10 @@ export const createNADIClosure = async (
     if (files && files.length > 0 && closureRecord) {
       for (const file of files) {
         const fileExt = file.name.split(".").pop();
-        const filePath = `nadi_closures/${closureRecord.id}/${Date.now()}-${file.name}`;
-        
+        const filePath = `nadi_closures/${closureRecord.id}/${Date.now()}-${
+          file.name
+        }`;
+
         // Upload file to storage
         const { error: uploadError } = await supabase.storage
           .from("site-documents")
@@ -259,7 +274,9 @@ export const fetchActionableRequestCount = async (
       // Join to filter by organization if needed
       query = supabase
         .from("nd_nadi_closure")
-        .select("id, nd_site_profile!inner(organizations(id))", { count: "exact" })
+        .select("id, nd_site_profile!inner(organizations(id))", {
+          count: "exact",
+        })
         .eq("status_id", NADIClosureStatus.PENDING)
         .eq("nd_site_profile.organizations.id", organizationId);
     }

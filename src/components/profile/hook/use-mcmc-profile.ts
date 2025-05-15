@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useMCMCProfile = () => {
   const fetchMCMCProfile = async () => {
@@ -15,9 +15,11 @@ export const useMCMCProfile = () => {
     // Fetch the MCMC profile data
     const { data: profile, error: profileError } = await supabase
       .from("nd_mcmc_profile")
-      .select(`
+      .select(
+        `
       *, position_id (id, name)
-    `)
+    `
+      )
       .eq("user_id", userId)
       .single();
 

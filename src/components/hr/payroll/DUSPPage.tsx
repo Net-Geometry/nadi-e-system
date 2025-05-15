@@ -11,28 +11,28 @@ const staffTypeData = [
     id: 1,
     staffType: "Full-time Trainers",
     monthlyCost: 250000,
-    allowance: 42000,
+    incentive: 42000,
     notes: "Core teaching staff",
   },
   {
     id: 2,
     staffType: "Administration",
     monthlyCost: 120000,
-    allowance: 18000,
+    incentive: 18000,
     notes: "Operations support",
   },
   {
     id: 3,
     staffType: "Technical Support",
     monthlyCost: 85000,
-    allowance: 12500,
+    incentive: 12500,
     notes: "IT & equipment maintenance",
   },
   {
     id: 4,
     staffType: "Part-time Instructors",
     monthlyCost: 65000,
-    allowance: 9500,
+    incentive: 9500,
     notes: "Specialized courses",
   },
 ];
@@ -49,8 +49,8 @@ const columns = [
       typeof value === "number" ? `RM ${value.toLocaleString()}` : "RM 0",
   },
   {
-    key: "allowance",
-    title: "Allowance",
+    key: "incentive",
+    title: "Incentive",
     render: (value: number) =>
       typeof value === "number" ? `RM ${value.toLocaleString()}` : "RM 0",
   },
@@ -96,16 +96,16 @@ export function DUSPPage() {
     </div>
   );
 
-  const allowanceBreakdownTab = (
+  const incentivesBreakdownTab = (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2">
         <StatCard
-          title="Total Allowances"
+          title="Total Incentives"
           value="RM 82,000"
           colorVariant="default"
         />
         <StatCard
-          title="Highest Individual Allowance"
+          title="Highest Individual Incentives"
           value="RM 3,500"
           colorVariant="warning"
         />
@@ -128,9 +128,9 @@ export function DUSPPage() {
       content: budgetVsActualTab,
     },
     {
-      value: "allowances",
-      label: "Staff Allowance Breakdown",
-      content: allowanceBreakdownTab,
+      value: "incentives",
+      label: "Staff Incentives Breakdown",
+      content: incentivesBreakdownTab,
     },
     {
       value: "sso",
@@ -160,7 +160,7 @@ export function DUSPPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-amber-700">
-              Training allowances exceed budget by 5% in Eastern region
+              Training Incentives exceed budget by 5% in Eastern region
             </p>
           </CardContent>
         </Card>

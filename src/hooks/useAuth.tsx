@@ -1,8 +1,7 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
 import { useAppSettings } from "@/hooks/use-app-settings";
 import { useSessionTracking } from "@/hooks/use-session-tracking";
@@ -16,29 +15,34 @@ export const useAuth = () => {
   const { settings } = useAppSettings();
 
   // Get session configuration from settings
-  const sessionTimeout = settings.find(s => s.key === 'session_timeout')?.value || '3600'; // Default 1 hour in seconds
-  const sessionInactivityTimeout = settings.find(s => s.key === 'session_inactivity_timeout')?.value || '1800'; // Default 30 minutes
-  const enableInactivityTracking = settings.find(s => s.key === 'enable_inactivity_tracking')?.value === 'true';
+  const sessionTimeout =
+    settings.find((s) => s.key === "session_timeout")?.value || "3600"; // Default 1 hour in seconds
+  const sessionInactivityTimeout =
+    settings.find((s) => s.key === "session_inactivity_timeout")?.value ||
+    "1800"; // Default 30 minutes
+  const enableInactivityTracking =
+    settings.find((s) => s.key === "enable_inactivity_tracking")?.value ===
+    "true";
 
   const logout = async () => {
     try {
       console.log("Logging out user...");
-      
+
       // End session tracking before logout
       await endSessionTracking();
-      
+
       // Get the user type before logging out
       let redirectPath = "/login"; // Default redirect path
-      
+
       if (user) {
         const { data: profileData } = await supabase
-          .from('profiles')
-          .select('user_type')
-          .eq('id', user.id)
+          .from("profiles")
+          .select("user_type")
+          .eq("id", user.id)
           .single();
-          
+
         // If user is a member, redirect to member login
-        if (profileData && profileData.user_type === 'member') {
+        if (profileData && profileData.user_type === "member") {
           redirectPath = "/member-login";
         }
       }
@@ -49,8 +53,10 @@ export const useAuth = () => {
       // Clear all session data
       localStorage.clear();
       setUser(null);
-      
-      console.log(`User logged out successfully, redirecting to ${redirectPath}`);
+
+      console.log(
+        `User logged out successfully, redirecting to ${redirectPath}`
+      );
       toast({
         title: "Logged out successfully",
         description: "You have been logged out of your account",
@@ -74,7 +80,7 @@ export const useAuth = () => {
     startSessionTracking,
     endSessionTracking,
     logInactivityEvent,
-    logSessionRefreshEvent
+    logSessionRefreshEvent,
   } = useSessionTracking(user);
 
   // Initialize session timeout hooks
@@ -93,11 +99,11 @@ export const useAuth = () => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      
+
       if (currentUser) {
         startSessionTracking(currentUser.id);
       }
-      
+
       setLoading(false);
     });
 
@@ -107,14 +113,14 @@ export const useAuth = () => {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       const currentUser = session?.user ?? null;
       setUser(currentUser);
-      
+
       // Handle session start/end based on auth state
       if (currentUser && !user) {
         startSessionTracking(currentUser.id);
       } else if (!currentUser && user) {
         await endSessionTracking();
       }
-      
+
       setLoading(false);
     });
 

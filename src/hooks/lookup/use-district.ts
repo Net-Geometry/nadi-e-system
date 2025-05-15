@@ -1,6 +1,5 @@
-
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export type District = {
@@ -82,7 +81,10 @@ export function useDistrict() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: number) => {
-      const { error } = await supabase.from("nd_district").delete().eq("id", id);
+      const { error } = await supabase
+        .from("nd_district")
+        .delete()
+        .eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {

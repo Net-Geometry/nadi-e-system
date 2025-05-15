@@ -1,6 +1,5 @@
-
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export const useRelationship = () => {
@@ -36,7 +35,9 @@ export const useRelationship = () => {
 
   const addRelationship = async (data: any) => {
     try {
-      const { error } = await supabase.from("nd_type_relationship").insert(data);
+      const { error } = await supabase
+        .from("nd_type_relationship")
+        .insert(data);
       if (error) throw error;
       await fetchRelationships();
     } catch (error: any) {

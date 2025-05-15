@@ -1,6 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
-import { BUCKET_NAME_PROFILEIMAGE, SUPABASE_URL } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  BUCKET_NAME_PROFILEIMAGE,
+  SUPABASE_URL,
+} from "@/integrations/supabase/client";
 
 export const useStaffProfile = () => {
   const fetchStaffProfile = async () => {
@@ -15,14 +18,16 @@ export const useStaffProfile = () => {
     // Fetch the staff profile data
     const { data: profile, error: profileError } = await supabase
       .from("nd_staff_profile")
-      .select(`
+      .select(
+        `
         *, marital_status (id, bm, eng),
         race_id (id, bm, eng),
         religion_id (id, bm, eng),
         nationality_id (id, bm, eng),
         gender_id (id, bm, eng),
         position_id (id, name)
-      `)
+      `
+      )
       .eq("user_id", userId)
       .single();
 

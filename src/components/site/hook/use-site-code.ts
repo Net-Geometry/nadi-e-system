@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 
 export const useSiteCode = (siteProfileId: string) => {
-  const [siteCode, setSiteCode] = useState<string | null>(null);
+  const [siteCodeData, setSiteCodeData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -10,13 +10,13 @@ export const useSiteCode = (siteProfileId: string) => {
     const fetchSiteCode = async () => {
       try {
         const { data, error } = await supabase
-          .from("nd_site")
-          .select("standard_code")
-          .eq("site_profile_id", siteProfileId)
+          .from("nd_site_profile_name")
+          .select("id, sitename, fullname, standard_code, dusp_tp_id, refid_tp, refid_mcmc")
+          .eq("id", siteProfileId)
           .single();
         if (error) throw error;
-        setSiteCode(data?.standard_code || null);
-      } catch (error) {
+        setSiteCodeData(data || null); // Set all data, not just standard_code
+      } catch (error: any) {
         setError(error.message);
       } finally {
         setLoading(false);
@@ -26,5 +26,5 @@ export const useSiteCode = (siteProfileId: string) => {
     fetchSiteCode();
   }, [siteProfileId]);
 
-  return { siteCode, loading, error };
+  return { siteCodeData, loading, error }; // Return all data
 };

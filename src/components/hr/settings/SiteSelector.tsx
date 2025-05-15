@@ -14,7 +14,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { supabase } from "@/lib/supabase";
+import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Site {
@@ -111,10 +111,10 @@ export function SiteSelector({
           <div className="flex items-center border-b px-3 py-2">
             <CommandInput placeholder="Search sites..." className="flex-1" />
             {selectedSite && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                className="h-7 px-2 ml-2" 
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 ml-2"
                 onClick={handleClear}
               >
                 Clear

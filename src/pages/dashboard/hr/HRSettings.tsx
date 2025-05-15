@@ -18,7 +18,7 @@ const HRSettings = () => {
 
   return (
     <DashboardLayout>
-      <div className="container mx-auto max-w-6xl">
+      <div>
         <div className="mb-8">
           <h1 className="text-2xl font-bold">HR Settings</h1>
           <p className="text-muted-foreground">
