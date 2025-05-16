@@ -4,12 +4,13 @@ import React from 'react';
 interface StatCardProps {
   title: string;
   value: string | number;
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   change?: string;
   changeType?: 'increase' | 'decrease' | 'neutral' | 'warning';
   iconBgColor?: string;
   additionalInfo?: React.ReactNode;
   className?: string;
+  customValueColorClass?: string;
 }
 
 const StatCard: React.FC<StatCardProps> = ({
@@ -17,6 +18,7 @@ const StatCard: React.FC<StatCardProps> = ({
   value,
   icon,
   change,
+  customValueColorClass,
   changeType = 'increase',
   iconBgColor = 'bg-blue-100',
   additionalInfo,
@@ -42,7 +44,7 @@ const StatCard: React.FC<StatCardProps> = ({
       <div className="flex justify-between items-start">
         <div>
           <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</h3>
-          <p className="text-2xl font-bold mt-1">{value}</p>
+          <p className={`text-2xl font-bold mt-1 ${customValueColorClass}`}>{value}</p>
           
           {change && (
             <p className={`text-xs mt-1 ${getChangeTypeColor()}`}>
@@ -51,9 +53,11 @@ const StatCard: React.FC<StatCardProps> = ({
           )}
         </div>
         
-        <div className={`${iconBgColor} dark:bg-opacity-20 p-3 rounded-full`}>
-          {icon}
-        </div>
+        { icon && (
+          <div className={`${iconBgColor} dark:bg-opacity-20 p-3 rounded-full`}>
+            {icon}
+          </div>
+        )}
       </div>
       
       {additionalInfo && (

@@ -1,5 +1,5 @@
 export interface Site {
-  id: string;
+  id: number;
   sitename: string;
   standard_code?: string;
   phase_id: string;

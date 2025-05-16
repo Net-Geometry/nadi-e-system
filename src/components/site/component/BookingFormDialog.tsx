@@ -1,8 +1,9 @@
 import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Booking } from "@/types/booking";
 import { lazy, Suspense, useEffect, useState } from "react";
+import { LoadingFormSkeleton } from "./LoadingFormSkeleton";
 
-const BookingForm =  lazy(() => import('./BookingForm'));
+const BookingForm = lazy(() => import('./BookingForm'));
 
 interface BookingFormDialogProps {
     pcsName: string[],
@@ -35,26 +36,25 @@ export const BookingFormDialog = ({
             setShowForm(false);
         }
     }, [open]);
-    
+
     return (
         <DialogContent className="h-screen overflow-auto [&::-webkit-scrollbar]:hidden scrollbar-hide">
-            <DialogHeader>
-                <DialogTitle>Create New PC Booking</DialogTitle>
-            </DialogHeader>
-            { 
-                !showForm ? 
-                <div>Loading form...</div> :
-                // <FormLoadingSkeleton />:
-                (
-                    <Suspense fallback={<div>Loading form...</div>}>
-                        <BookingForm 
-                            setOpen={setOpen} 
-                            pcsName={pcsName}
-                            setBookingsData={setBookingsData}
-                            setBookingCalendarData={setBookingCalendarData}
-                        />
-                    </Suspense>
-                )
+            {
+                !showForm ?
+                    <LoadingFormSkeleton /> :
+                    (
+                        <Suspense fallback={<LoadingFormSkeleton />}>
+                            <DialogHeader>
+                                <DialogTitle>Create New PC Booking</DialogTitle>
+                            </DialogHeader>
+                            <BookingForm
+                                setOpen={setOpen}
+                                pcsName={pcsName}
+                                setBookingsData={setBookingsData}
+                                setBookingCalendarData={setBookingCalendarData}
+                            />
+                        </Suspense>
+                    )
             }
         </DialogContent>
     )

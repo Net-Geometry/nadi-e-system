@@ -12,7 +12,7 @@ import { useBookingMutation } from "@/hooks/booking/use-booking-mutation";
 import { useState } from "react";
 import { Booking } from "@/types/booking";
 import { assetClient } from "@/hooks/assets/asset-client";
-import { useUserId } from "@/hooks/use-user-id";
+import { useUserId } from "@/hooks/use-user";
 import { toast } from "@/hooks/use-toast";
 import { stringToDateWithTime } from "../utils/stringToDateWithTime";
 
@@ -35,6 +35,7 @@ interface BookingFormProps {
 const BookingForm = ({
     pcsName,
     setBookingCalendarData,
+    setBookingsData,
     setOpen
 }: BookingFormProps) => {
     const form = useForm<BookingPcFormInput>({});
@@ -72,6 +73,11 @@ const BookingForm = ({
             console.log(newBookingData)
 
             setBookingCalendarData((prevBook) => [
+                ...prevBook,
+                newBookingData
+            ])
+
+            setBookingsData((prevBook) => [
                 ...prevBook,
                 newBookingData
             ])

@@ -22,6 +22,29 @@ export const bookingClient = {
         return data;
     },
 
+    getAllBookings: async(isSuperAdmin: boolean, assetTypeId: number) => {
+        if (!isSuperAdmin) {
+            throw new Error("Error dannied: you don't have permission to get all booking data!")
+        }
+
+        const { data, error } = await supabase
+            .from("nd_booking")
+            .select(`
+                *,
+                nd_asset!inner (
+                    name
+                ),
+                profiles (
+                    full_name
+                )
+            `)
+            .eq("nd_asset.type_id", assetTypeId);
+
+        if (error) throw error;
+
+        return data;
+    },
+
     getBooking: async (bookingAssetTypeId: number): Promise<Booking[]> => {
         const { data, error } = await supabase
             .from("nd_booking")

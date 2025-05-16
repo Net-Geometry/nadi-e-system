@@ -56,11 +56,18 @@ export const useAssetQueries = () => {
       enabled: !!id,
     });
 
-  const useAssetsInTpsSites = (tps_sites_ids: number[], assetType: number) => 
+  const useAllAssets = (isSuperAdmin: boolean, assetTypeId: number) =>
+    useQuery({
+      queryKey: ["allAssets"],
+      queryFn: () => assetClient.fetchSuperAdminAsset(isSuperAdmin, assetTypeId),
+      enabled: isSuperAdmin && !!assetTypeId
+    })
+
+  const useAssetBySite = (tps_sites_id: number, assetType: number) => 
     useQuery({
       queryKey: ["tpsAssets"],
-      queryFn: () => assetClient.getAllPcInTpsSite(tps_sites_ids, assetType),
-      enabled: tps_sites_ids.length > 0
+      queryFn: () => assetClient.fetchAssetsBySiteId(tps_sites_id, assetType),
+      enabled: !!tps_sites_id
     });
 
   return {
@@ -68,6 +75,7 @@ export const useAssetQueries = () => {
     useAssetsByNameQuery,
     useAssetQuery,
     useAssetsByTypeQuery,
-    useAssetsInTpsSites
+    useAssetBySite,
+    useAllAssets
   };
 };

@@ -16,6 +16,8 @@ import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 import { Dialog } from "@/components/ui/dialog";
 import { DialogTrigger } from "@radix-ui/react-dialog";
 import { BookingFormDialog } from "./BookingFormDialog";
+import BookingAssetCard from "./BookingAssetCard";
+import { Label } from "@/components/ui/label";
 
 interface BookingCalendarProp {
     bookingType: string,
@@ -108,7 +110,19 @@ export const BookingCalendar = ({
                                 description="There are no PC bookings scheduled for this date."
                             />
                         ) : bookingData.map((booking) => (
-                            <div key={booking.id}>{booking.created_at}</div>
+                            // real data will be integrated soon
+                            // <BookingAssetCard 
+                            //     assetSpec={booking.nd_asset?.nd_brand.name}
+                            //     assetType={booking?.nd_asset?.nd_brand.brand_type}
+                            //     requesterName={booking.requester_id}
+                            //     AssetName={booking?.nd_asset?.name}
+                            //     icon={(<Server />)}
+                            //     started={booking?.booking_start}
+                            //     label={<Label>in-use</Label>}
+                            //     duration="1h 40m"
+                            //     key={booking.id}
+                            // />
+                            <h1>{booking.booking_start}</h1>
                         ))
                     }
                 </div>

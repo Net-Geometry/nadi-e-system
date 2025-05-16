@@ -30,12 +30,19 @@ export const useBookingQueries = () => {
             queryFn: () => bookingClient.getBrands()
         })
 
-    const useTpsSites = (dusp_tp_id: string) => 
+    const useTpsSites = (dusp_tp_id: string | null) => 
         useQuery({
             queryKey: ["tpsSites"],
             queryFn: () => bookingClient.getAllTpsSites(dusp_tp_id),
             enabled: !!dusp_tp_id
         })
+
+    // const useAllSites = (isSuperAdmin: boolean) =>
+    //     useQuery({
+    //         queryKey: ["allSites"],
+    //         queryFn: () => bookingClient.
+    //         enabled: isSuperAdmin
+    //     })
 
     const useBookingAssetInTpsSites = (tps_site_ids: number[], bookingAssetType: number) => 
         useQuery({
@@ -44,10 +51,18 @@ export const useBookingQueries = () => {
             enabled: tps_site_ids.length > 0
         })
 
+    const useAllBookings = (isSuperAdmin: boolean, assetTypeId: number) =>
+        useQuery({
+            queryKey: ["allBookings"],
+            queryFn: () => bookingClient.getAllBookings(isSuperAdmin, assetTypeId),
+            enabled: isSuperAdmin && !!assetTypeId
+        })
+
     return {
         useBookingQuery,
         useBookingAssetBrandQuery,
         useTpsSites,
-        useBookingAssetInTpsSites
+        useBookingAssetInTpsSites,
+        useAllBookings
     };
 };
