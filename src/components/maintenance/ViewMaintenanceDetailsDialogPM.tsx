@@ -56,6 +56,8 @@ export const ViewMaintenanceDetailsDialogPM = ({
     attachmentFileName = attachmenUrl.pathname.split("/").pop();
   }
 
+  const { user } = useAuth();
+
   const isVendorAssigned =
     userMetadata?.user_group_name == "TP" &&
     (maintenanceRequest?.status == null ||
@@ -205,7 +207,6 @@ export const ViewMaintenanceDetailsDialogPM = ({
   function VendorProgressUpdate() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { user } = useAuth();
     const [status, setStatus] = useState(null);
 
     const {
@@ -273,6 +274,19 @@ export const ViewMaintenanceDetailsDialogPM = ({
           status: MaintenanceStatus.Deffered,
         };
       }
+
+      const logs = maintenanceRequest?.logs || [];
+      logs.push({
+        description: "Progress Update",
+        status: MaintenanceStatus.InProgress,
+        created_at: new Date().toISOString(),
+        created_by: user?.id,
+      });
+
+      data = {
+        ...data,
+        logs: logs,
+      };
 
       try {
         const { error: updateError } = await supabase
@@ -343,10 +357,22 @@ export const ViewMaintenanceDetailsDialogPM = ({
   function TPCloseRequest() {
     const handleUpdateStatus = async (status: MaintenanceStatus) => {
       try {
+        const logs = maintenanceRequest?.logs || [];
+        logs.push({
+          description:
+            status === MaintenanceStatus.Completed
+              ? "TP close the request"
+              : "TP reject the completion",
+          status: status,
+          created_at: new Date().toISOString(),
+          created_by: user?.id,
+        });
+
         const { error: updateError } = await supabase
           .from("nd_maintenance_request")
           .update({
             status: status,
+            logs: logs,
             updated_at: new Date().toISOString(),
           })
           .eq("id", maintenanceRequest.id);
@@ -471,45 +497,87 @@ export const ViewMaintenanceDetailsDialogPM = ({
             {isVendorAssigned && <UpdateVendor />}
             {isVendorApproval && <VendorApproval />}
           </TabsContent>
+
           <TabsContent value="history" className="space-y-4">
-            <Label className="text-sm font-medium text-gray-500">
-              Updates History
-            </Label>
-            {maintenanceRequest?.updates &&
-              maintenanceRequest.updates.map((update, index) => {
-                let attachmentFileName: string | null = null;
+            <div>
+              <Label className="text-sm font-medium text-gray-500">
+                Updates History
+              </Label>
+              {maintenanceRequest?.updates ? (
+                <div className="mt-1">
+                  {maintenanceRequest.updates.map((update, index) => {
+                    let attachmentFileName: string | null = null;
 
-                if (update.attachment) {
-                  try {
-                    const attachmentUrl = new URL(update.attachment);
-                    attachmentFileName =
-                      attachmentUrl.pathname.split("/").pop() || null;
-                  } catch (e) {
-                    console.error("Invalid attachment URL", e);
-                  }
-                }
+                    if (update.attachment) {
+                      try {
+                        const attachmentUrl = new URL(update.attachment);
+                        attachmentFileName =
+                          attachmentUrl.pathname.split("/").pop() || null;
+                      } catch (e) {
+                        console.error("Invalid attachment URL", e);
+                      }
+                    }
 
-                return (
-                  <div
-                    className="bg-gray-100 border-2 border-gray-300 p-2 mb-2"
-                    key={index}
-                  >
-                    <p className="mb-2">{update.description}</p>
-                    <p className="text-xs">
-                      {format(update.created_at, "dd-MM-yyyy")}
-                    </p>
-                    {attachmentFileName && (
-                      <Link
-                        to={update.attachment}
-                        target="_blank"
-                        className="text-blue-500 hover:underline text-xs"
+                    return (
+                      <div
+                        className="bg-gray-100 border-2 border-gray-300 p-2 mb-2"
+                        key={index}
                       >
-                        {attachmentFileName}
-                      </Link>
-                    )}
-                  </div>
-                );
-              })}
+                        <p className="mb-2">{update.description}</p>
+                        <p className="text-xs">
+                          {format(update.created_at, "dd-MM-yyyy")}
+                        </p>
+                        {attachmentFileName && (
+                          <Link
+                            to={update.attachment}
+                            target="_blank"
+                            className="text-blue-500 hover:underline text-xs"
+                          >
+                            {attachmentFileName}
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p>No updates</p>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Logs</Label>
+              {maintenanceRequest?.logs ? (
+                <div className="mt-1">
+                  {maintenanceRequest.logs.map((log, index) => (
+                    <div
+                      className="flex flex-row justify-between bg-gray-100 border-2 border-gray-300 py-2 px-4 mb-2"
+                      key={index}
+                    >
+                      <div>
+                        <p className="mb-2">{log.description}</p>
+                        <p className="text-xs">
+                          {format(log.created_at, "dd/MM/yyyy h:mm a")}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <Badge
+                          className={getMaintenanceStatusClass(
+                            getMaintenanceStatus(log.status)
+                          )}
+                        >
+                          {log.status
+                            ? humanizeMaintenanceStatus(log.status)
+                            : "No status"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>No logs</p>
+              )}
+            </div>
 
             {isVendorProgressUpdate && <VendorProgressUpdate />}
           </TabsContent>

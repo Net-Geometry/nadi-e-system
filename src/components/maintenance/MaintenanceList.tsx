@@ -322,13 +322,13 @@ export const MaintenanceList = ({
                         )}
                         {type === "cm" && (
                           <>
-                            <TableCell>
+                            <TableCell className="whitespace-nowrap">
                               <Badge
                                 className={getSLACategoryClass(
                                   maintenanceRequest?.sla
                                 )}
                               >
-                                {maintenanceRequest?.sla?.name || "Not set"}{" "}
+                                {maintenanceRequest?.sla?.name || "Not set"}
                               </Badge>
                             </TableCell>
                             <TableCell>
@@ -341,7 +341,7 @@ export const MaintenanceList = ({
                             </TableCell>
                           </>
                         )}
-                        <TableCell>
+                        <TableCell className="whitespace-nowrap">
                           <div className="flex items-center space-x-2">
                             <div>
                               {getMaintenanceStatusIcon(

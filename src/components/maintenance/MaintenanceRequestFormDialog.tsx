@@ -278,7 +278,6 @@ export const MaintenanceRequestFormDialog = ({
       }}
     >
       <p className="font-semibold text-sm">{asset.name}</p>
-      <p className="text-sm text-muted-foreground">{asset.id}</p>
     </div>
   );
 

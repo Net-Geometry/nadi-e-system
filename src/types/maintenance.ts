@@ -16,6 +16,7 @@ export interface MaintenanceRequest {
   updates?: MaintenanceUpdate[];
   maintenance_date?: string;
   priority_type_id?: number;
+  logs?: MaintenanceLogs[];
   frequency?: number;
   created_at?: string;
   updated_at?: string;
@@ -26,6 +27,13 @@ export interface MaintenanceRequest {
 export interface MaintenanceUpdate {
   description: string;
   attachment?: string;
+  created_at?: string;
+  created_by?: string;
+}
+
+export interface MaintenanceLogs {
+  description: string;
+  status: MaintenanceStatus;
   created_at?: string;
   created_by?: string;
 }
