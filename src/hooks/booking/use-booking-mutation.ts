@@ -14,9 +14,8 @@ export const useBookingMutation = () => {
       parsedUserMetaData?.organization_id
         ? parsedUserMetaData.organization_id
         : null;
-    const isBookingAllowed = !!organizationId;
 
-    const useBookingPcMutation = () => 
+    const useBookingPcMutation = (isBookingAllowed: boolean) => 
         useMutation({
             mutationKey: ["assets", siteId, organizationId],
             mutationFn: (

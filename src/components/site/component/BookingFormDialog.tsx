@@ -9,7 +9,9 @@ interface BookingFormDialogProps {
     assetsName: string[],
     isLoading: boolean,
     open: boolean,
-    isFacility?: boolean
+    isFacility?: boolean,
+    isMember: boolean,
+    isTpSite: boolean,
     setBookingCalendarData: React.Dispatch<React.SetStateAction<Booking[]>>,
     setBookingsData: React.Dispatch<React.SetStateAction<Booking[]>>,
     setOpen: React.Dispatch<React.SetStateAction<boolean>>
@@ -17,6 +19,8 @@ interface BookingFormDialogProps {
 
 export const BookingFormDialog = ({
     assetsName,
+    isMember,
+    isTpSite,
     isLoading,
     isFacility,
     setBookingCalendarData,
@@ -44,16 +48,18 @@ export const BookingFormDialog = ({
             {
                 !showForm ?
                     <LoadingFormSkeleton 
-                        inputSum={isFacility ? 4 : 5}
+                        inputSum={5}
                     /> :
                     (
                         <Suspense fallback={<LoadingFormSkeleton 
-                            inputSum={isFacility ? 4 : 5}
+                            inputSum={5}
                         />}>
                             <DialogHeader>
                                 <DialogTitle>Create New PC Booking</DialogTitle>
                             </DialogHeader>
                             <BookingForm
+                                isTpSite={isTpSite}
+                                isMember={isMember}
                                 isFacility={isFacility}
                                 setOpen={setOpen}
                                 assetsName={assetsName}

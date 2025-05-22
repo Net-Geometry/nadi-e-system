@@ -1,4 +1,4 @@
-import { SiteProfile } from "@/components/member/hook/useSiteProfile";
+import { Asset } from "./asset";
 
 export interface Site {
   id: number;
@@ -87,6 +87,7 @@ export interface Site {
     close_time: string;
     is_closed: boolean;
   }[];
+  nd_asset?: Asset[]
 }
 
 export interface SiteStatus {
@@ -125,7 +126,7 @@ export interface Mukim {
 }
 
 export interface State {
-  id: string;
+  id: string | number;
   name: string;
 }
 
@@ -181,4 +182,27 @@ export interface SiteSpace {
   updated_at?: string | Date,
   created_by?: string,
   updated_by?: string
+}
+
+export interface SiteProfile {
+  id: number,
+  refid_tp?: string,
+  dusp_tp_id?: string,
+  region_id?: number,
+  phase_id?: number,
+  state_id?: number,
+  parliament_rfid?: number,
+  dun_rfid?: number,
+  mukim_id?: number,
+  ust_id?: number,
+  active_status?: number,
+  sitename?: string,
+  fullname?: string,
+  latitude?: string,
+  longtitude?: string,
+  website?: string,
+  operate_date?: string, 
+  nd_site?: Site[],
+  nd_state?: State,
+  nd_region?: Region
 }

@@ -78,7 +78,14 @@ export const useAssetQueries = () => {
     useQuery({
       queryKey: ["tpsAssets", tps_sites_id],
       queryFn: () => assetClient.fetchAssetsBySiteId(tps_sites_id),
-      enabled: !!tps_sites_id,
+      enabled: !!tps_sites_id
+    });
+
+  const useAssetsInTpsSites = (tpOrgId: string) =>
+    useQuery({
+      queryKey: ["tpsAssets", tpOrgId],
+      queryFn: () => assetClient.fetchAssetsInTpsSites(tpOrgId),
+      enabled: !!tpOrgId
     });
 
   return {
@@ -88,5 +95,6 @@ export const useAssetQueries = () => {
     useAssetsByTypeQuery,
     useAssetBySite,
     useAllAssets,
+    useAssetsInTpsSites
   };
 };

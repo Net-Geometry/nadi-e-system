@@ -19,28 +19,29 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight, Eye, FolderX } from "lucide-react";
 import { NoBookingFound } from "./NoBookingFound";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
 
-interface PaginationTableProps {
+interface PaginationTableServer {
+    setPage: React.Dispatch<React.SetStateAction<number>>,
+    handleSelectedSite: (id: number) => void,
+    contentResult: any[],
     headTable: any[]
+    page: number
     header?: string
-    bodyTableData: any[]
-    handleSelectedSite?: (id: number) => void
+    totalPages: number
+    isLoading?: boolean
 }
 
-export const PaginationTable = ({
-    bodyTableData,
-    headTable,
+export const PaginationTableServer = ({
+    contentResult,
+    page,
+    setPage,
     header,
-    handleSelectedSite
-}: PaginationTableProps) => {
-    const {
-        currentPage,
-        currentItems,
-        handlePageChange,
-        setCurrentPage,
-        startIndex,
-        totalPages
-    } = usePaginationClient(bodyTableData, 8);
+    headTable,
+    totalPages,
+    handleSelectedSite,
+    isLoading
+}: PaginationTableServer) => {
 
     const renderCell = (rowItem: any, key: string) => {
         const value = rowItem[key];
@@ -82,19 +83,25 @@ export const PaginationTable = ({
                         }
                     </TableRow>
                 </TableHeader>
-                <TableBody>
-                    {currentItems.map((rowItem) => (
-                        <TableRow key={rowItem.id}>
-                            {headTable.map((col) => (
-                                <TableCell key={col.key}>
-                                    {renderCell(rowItem, col.key)}
-                                </TableCell>
-                            ))}
-                        </TableRow>
-                    ))}
-                </TableBody>
+                {isLoading ? (
+                    <TableBody className="flex justify-center">
+                        <LoadingSpinner />
+                    </TableBody>
+                ) : (
+                    <TableBody>
+                        {contentResult.map((rowItem) => (
+                            <TableRow key={rowItem.id}>
+                                {headTable.map((col) => (
+                                    <TableCell key={col.key}>
+                                        {renderCell(rowItem, col.key)}
+                                    </TableCell>
+                                ))}
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                )}
             </Table>
-            {currentItems.length === 0 && (
+            {contentResult.length === 0 && (
                 <NoBookingFound
                     icon={(<FolderX />)}
                     title="Data Not Found"
@@ -106,8 +113,8 @@ export const PaginationTable = ({
                 <PaginationContent>
                     <PaginationItem>
                         <Button
-                            onClick={() => handlePageChange(currentPage - 1)}
-                            className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
+                            onClick={() => setPage(page => page - 1)}
+                            className={page === 1 ? "pointer-events-none opacity-50" : ""}
                         >
                             <ChevronLeft />
                         </Button>
@@ -115,7 +122,7 @@ export const PaginationTable = ({
 
                     {(() => {
                         const maxVisiblePages = 5;
-                        const pageGroup = Math.floor((currentPage - 1) / maxVisiblePages);
+                        const pageGroup = Math.floor((page - 1) / maxVisiblePages);
                         const startPage = pageGroup * maxVisiblePages + 1;
                         const endPage = Math.min(startPage + maxVisiblePages - 1, totalPages);
 
@@ -125,8 +132,8 @@ export const PaginationTable = ({
                                 <>
                                     <PaginationItem key={pageNumber}>
                                         <PaginationLink
-                                            isActive={pageNumber === currentPage}
-                                            onClick={() => handlePageChange(pageNumber)}
+                                            isActive={pageNumber === page}
+                                            onClick={() => setPage(pageNumber)}
                                         >
                                             {pageNumber}
                                         </PaginationLink>
@@ -138,8 +145,8 @@ export const PaginationTable = ({
 
                     <PaginationItem>
                         <Button
-                            onClick={() => handlePageChange(currentPage + 1)}
-                            className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
+                            onClick={() => setPage(page => page + 1)}
+                            className={page === totalPages ? "pointer-events-none opacity-50" : ""}
                         >
                             <ChevronRight />
                         </Button>

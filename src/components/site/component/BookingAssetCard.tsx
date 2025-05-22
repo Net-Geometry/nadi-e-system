@@ -10,9 +10,12 @@ import {
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
-import { Plus, Server, SquarePen } from "lucide-react";
+import { Building, CircleDot, Plus, Server, SquarePen, User } from "lucide-react";
 import { BulkActionButtons } from "./BulkActionButtons";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Space } from "@/types/site";
+import { Badge } from "@/components/ui/badge";
 
 interface DataCardProps {
     assetType: string;
@@ -93,7 +96,7 @@ export const BookingAssetCard = ({
                 </Card>
             </DialogTrigger>
             {!isFacility ? (
-                <BookingPcCardDetails 
+                <BookingPcCardDetails
                     name={AssetName}
                     status={status}
                     duration={duration}
@@ -162,15 +165,179 @@ const BookingPcCardDetails = ({
 }
 
 interface BookingFacilityCardDetailsProps {
-    
+    facilityDetails?: Space
 }
 
-const BookingFacilityCardDetails = () => {
+const BookingFacilityCardDetails = ({
+    facilityDetails
+}: BookingFacilityCardDetailsProps) => {
 
     return (
-        <DialogContent>
-            <h1>SOON: Dialog content for facility</h1>
+        <DialogContent className="max-w-5xl max-h-screen overflow-scroll">
+            <header className="space-y-3">
+                <h1 className="w-full flex items-center gap-3 justify-start text-2xl font-bold">
+                    <Building />
+                    Meeting Room A
+                </h1>
+                <p className="text-gray-500">Control Panel and Facility Information</p>
+            </header>
+            <Tabs defaultValue="Details" className="w-full grid place-items-center mt-7">
+                <TabsList className="w-full bg-white inline-flex h-11 flex-wrap justify-between gap-2 items-center">
+                    <TabsTrigger
+                        className="flex-grow text-md px-2 py-1 min-w-max data-[state=active]:bg-muted rounded whitespace-nowrap"
+                        key="Details"
+                        value="Details">Details</TabsTrigger>
+                    <TabsTrigger
+                        className="flex-grow text-md px-2 py-1 min-w-max data-[state=active]:bg-muted rounded whitespace-nowrap"
+                        key="Bookings"
+                        value="Bookings">Bookings</TabsTrigger>
+                    <TabsTrigger
+                        className="flex-grow text-md px-2 py-1 min-w-max data-[state=active]:bg-muted rounded whitespace-nowrap"
+                        key="Maintenance"
+                        value="Maintenance">Maintenance</TabsTrigger>
+                    <TabsTrigger
+                        className="flex-grow text-md px-2 py-1 min-w-max data-[state=active]:bg-muted rounded whitespace-nowrap"
+                        key="Settings"
+                        value="Settings">Settings</TabsTrigger>
+                </TabsList>
+                <Details
+                    value="Details"
+                />
+                <Bookings
+                    value="Bookings"
+                />
+                <Maintenance
+                    value="Maintenance"
+                />
+                <Settings
+                    value="Settings"
+                />
+            </Tabs>
         </DialogContent>
+    )
+}
+
+const Details = ({value}) => {
+    return (
+        <TabsContent className="w-full flex items-start gap-4" value={value}>
+           <section className="py-5 space-y-4 w-[40%]">
+                <div className="space-y-2">
+                    <h1 className="font-medium">Quick Action</h1>
+                    <BulkActionButtons 
+                    className="grid grid-cols-2 my-0"
+                    useHeader={false}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <h1 className="font-medium">Status</h1>
+                    <Card className="px-4 py-3 space-y-2">
+                        <h2 className="flex items-center gap-2">
+                            <CircleDot />
+                            In-Use
+                        </h2>
+                        <h3 className="font-semibold">Sarah Johnson</h3>
+                        <p className="text-sm text-gray-500">Time: 13:00 - Duration: 2h</p>
+                        <small className="flex text-gray-500 gap-2 items-center">
+                            <User className="size-5"/>
+                            8 Attendees
+                        </small>
+                    </Card>
+                </div>
+                <div className="space-y-2">
+                    <h1 className="font-medium">Today's Statistics</h1>
+                    <Card className="px-4 py-3">
+                        <div className="flex items-center justify-between">
+                            <p>Total Bookings: </p>
+                            <p>5</p>
+                        </div>
+                        <div className="flex items-center justify-between">
+                            <p>Utilization: </p>
+                            <p>85%</p>
+                        </div>
+                    </Card>
+                </div>
+           </section>
+           <section className="py-5 space-y-4 flex-grow">
+                <div className="space-y-2">
+                    <h1 className="font-medium">Facility Details</h1>
+                    <Card className="px-5 py-3 flex items-center justify-between">
+                        <div className="flex flex-col items-start gap-3">
+                            <div className="flex items-center gap-2">
+                                <p className="text-gray-500">ID: </p>
+                                <p>F-003</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <p className="text-gray-500">Capacity: </p>
+                                <p>5 Poeple</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <p className="text-gray-500">Next Maintenance: </p>
+                                <p>5</p>
+                            </div>
+                        </div>
+                        <div className="flex flex-col items-start justify-between gap-3">
+                            <div className="flex items-center gap-2">
+                                <p className="text-gray-500">Type: </p>
+                                <p>Study Romm</p>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <p className="text-gray-500">Last Maintenance: </p>
+                                <p>2025-4-16</p>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+                <div className="space-y-2">
+                    <h1 className="font-medium">Equipment and Amenities</h1>
+                    <Card className="px-5 py-3 space-y-2">
+                        <div className="flex flex-col justify-center">
+                            <h1>Equipment:</h1>
+                            <div className="flex items-center gap-2">
+                                <Badge>Small Whiteboard</Badge>
+                                <Badge>Monitor</Badge>
+                            </div>
+                        </div>
+                        <div className="flex flex-col justify-center">
+                            <h1>Amenties: </h1>
+                            <div className="flex items-center gap-2">
+                                <Badge>Air Conditioning</Badge>
+                                <Badge>WiFi</Badge>
+                            </div>
+                        </div>
+                    </Card>
+                </div>
+                <div>
+                    <h1 className="font-medium">Upcoming Bookings</h1>
+                    <Card className="px-5 py-3">
+                        <p>No Upcoming Booking</p>
+                    </Card>
+                </div>
+           </section>
+        </TabsContent>
+    )
+}
+
+const Bookings = ({value}) => {
+    return (
+        <TabsContent value={value}>
+            <h1>This is {value}</h1>
+        </TabsContent>
+    )
+}
+
+const Maintenance = ({value}) => {
+    return (
+        <TabsContent value={value}>
+            <h1>This is {value}</h1>
+        </TabsContent>
+    )
+}
+
+const Settings = ({value}) => {
+    return (
+        <TabsContent value={value}>
+            <h1>This is {value}</h1>
+        </TabsContent>
     )
 }
 

@@ -12,6 +12,7 @@ const {
     useAssetQuery,
     useAssetsByTypeQuery,
     useAssetsByNameQuery,
+    useAssetsInTpsSites,
     useAssetBySite,
     useAllAssets
   } = useAssetQueries();
@@ -30,6 +31,7 @@ const {
     useAssetQuery,
     useAssetsByTypeQuery,
     useAssetTypesQuery,
+    useAssetsInTpsSites,
     useAssetCategoriesQuery,
     useAssetTypeWithCategoryQuery,
     useAssetBySite,

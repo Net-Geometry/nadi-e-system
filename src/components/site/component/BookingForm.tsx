@@ -19,8 +19,11 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
+import { useMemberSiteId, useTpManagerSiteId } from "@/hooks/use-site-id";
+import { LoadingSpinner } from "@/components/shared/LoadingSpinner";
+import { bookingClient } from "@/hooks/booking/booking-client";
 
-interface BookingPcFormInput {
+interface BookingFormInput {
     pc?: string,
     facility?: string,
     userName: string,
@@ -32,6 +35,8 @@ interface BookingPcFormInput {
 
 interface BookingFormProps {
     assetsName: string[],
+    isMember: boolean,
+    isTpSite: boolean,
     isFacility?: boolean,
     setBookingCalendarData: React.Dispatch<React.SetStateAction<Booking[]>>,
     setBookingsData: React.Dispatch<React.SetStateAction<Booking[]>>,
@@ -40,20 +45,42 @@ interface BookingFormProps {
 
 const BookingForm = ({
     assetsName,
+    isMember,
+    isTpSite,
     isFacility,
     setBookingCalendarData,
     setBookingsData,
     setOpen
 }: BookingFormProps) => {
-    const form = useForm<BookingPcFormInput>({});
+    const { siteId: memberSiteId, isLoading: memberSiteIdLoading } = useMemberSiteId(isMember);
+    const { siteId: tpManagerSiteId, isLoading: tpManagerSiteIdLoading } = useTpManagerSiteId(isTpSite);
+    console.log("Member site ID in form", memberSiteId)
+    console.log("Tp manager site ID in form", tpManagerSiteId)
+
+    if (
+        memberSiteIdLoading ||
+        tpManagerSiteIdLoading
+    ) {
+        return <LoadingSpinner />
+    }
+
+    // Member or TP Site Site ID
+    const siteId =
+        memberSiteId
+            ? Number(memberSiteId)
+            : tpManagerSiteId
+                ? Number(tpManagerSiteId)
+                : undefined;
+
+    const form = useForm<BookingFormInput>({});
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { useBookingPcMutation } = useBookingMutation();
-    const bookingPcMutation = useBookingPcMutation();
+    const bookingPcMutation = useBookingPcMutation(!!siteId);
 
     const { fetchUserByName } = useUserId();
 
-    const onSubmit: SubmitHandler<BookingPcFormInput> = async (formData) => {
+    const onSubmitPcBooking: SubmitHandler<BookingFormInput> = async (formData) => {
         // SOON: new booking request
         setIsSubmitting(true);
 
@@ -73,7 +100,8 @@ const BookingForm = ({
                 requester_id: userId,
                 id: bookingId,
                 created_at: new Date().toISOString(),
-                is_using: true
+                is_using: true,
+                site_id: siteId
             }
 
             const newBookingData = await bookingPcMutation.mutateAsync(submitedFormData);
@@ -99,13 +127,79 @@ const BookingForm = ({
             setOpen(false);
             toast({
                 title: "Add new booking failed",
-                description: `${error.message}`
+                description: "Something went wrong when submitting the new booking",
+                variant: "destructive"
             });
         } finally {
             setIsSubmitting(false);
         }
 
 
+    }
+
+    const onSubmitFacilityBooking: SubmitHandler<BookingFormInput> = async (formData) => {
+        // SOON: new booking request
+        setIsSubmitting(true);
+
+        try {
+            const { id: spaceId } = await bookingClient.getSpaceByName(formData.facility, siteId);
+            const { id: userId } = await fetchUserByName(formData.userName);
+            console.log("submiited requester id", userId);
+            const startTime = stringToDateWithTime(formData.startTime);
+            const endTime = stringToDateWithTime(formData.endTime);
+            const bookingId = crypto.randomUUID();
+
+            const submitedFormData: Booking = {
+                site_space_id: spaceId,
+                booking_start: startTime.toISOString(),
+                booking_end: endTime.toISOString(),
+                created_by: userId,
+                requester_id: userId,
+                id: bookingId,
+                created_at: new Date().toISOString(),
+                is_using: true,
+                site_id: siteId
+            }
+
+            const newBookingData = await bookingPcMutation.mutateAsync(submitedFormData);
+            console.log(newBookingData)
+
+            setBookingCalendarData((prevBook) => [
+                ...prevBook,
+                newBookingData
+            ])
+
+            setBookingsData((prevBook) => [
+                ...prevBook,
+                newBookingData
+            ])
+
+            setOpen(false);
+            toast({
+                title: "Add new booking success",
+                description: `Success request new ${isFacility ? "Facility" : "PC" }: ${formData.facility}`
+            });
+        } catch (error) {
+            console.log(error);
+            setOpen(false);
+            toast({
+                title: "Add new booking failed",
+                description: "Something went wrong when submitting the new booking",
+                variant:"destructive"
+            });
+        } finally {
+            setIsSubmitting(false);
+        }
+
+
+    }
+
+    const onSubmit: SubmitHandler<BookingFormInput> = (formData) => {
+        if (isFacility) {
+            onSubmitFacilityBooking(formData);
+        } else {
+            onSubmitPcBooking(formData)
+        }
     }
 
     return (
@@ -136,20 +230,18 @@ const BookingForm = ({
                         </FormItem>
                     )}
                 />
-                {!isFacility && (
-                    <FormField
-                        control={form.control}
-                        name="userName"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>User Name</FormLabel>
-                                <FormControl>
-                                    <Input {...field} placeholder="Enter user name" />
-                                </FormControl>
-                            </FormItem>
-                        )}
-                    />
-                )}
+                <FormField
+                    control={form.control}
+                    name="userName"
+                    render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>User Name</FormLabel>
+                            <FormControl>
+                                <Input {...field} placeholder="Enter user name" />
+                            </FormControl>
+                        </FormItem>
+                    )}
+                />
                 <FormField
                     control={form.control}
                     name="date"

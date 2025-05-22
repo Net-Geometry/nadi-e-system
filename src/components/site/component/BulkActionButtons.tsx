@@ -47,7 +47,7 @@ export const BulkActionButtons = ({
     useHeader = true
 }: BulkActionButtonsProps) => {
     return (
-        <div className="flex flex-col my-5">
+        <div className={`flex flex-col ${useHeader ? "my-5" : ""}`}>
             { useHeader && 
                 <h1 className="text-2xl font-semibold">Bulk Action</h1>
             }
