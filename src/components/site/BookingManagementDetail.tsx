@@ -5,7 +5,6 @@ import FilterBar from "./component/FilterBar";
 import { Badge } from "../ui/badge";
 import { useEffect, useState } from "react";
 import { useAssets } from "@/hooks/use-assets";
-import { BookingListsTable } from "./component/BookingListTable";
 import { BookingCalendar } from "./component/BookingCalendar";
 import { useBookingQueries } from "@/hooks/booking/use-booking-queries";
 import { Booking } from "@/types/booking";
@@ -14,9 +13,7 @@ import { getDuration } from "./utils/duration";
 import { Asset } from "@/types/asset";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
-import BookingAssetCard from "./component/BookingAssetCard";
-import { CircleDot } from "lucide-react";
-import { Site, SiteSpace, Space } from "@/types/site";
+import { SiteProfile, SiteSpace } from "@/types/site";
 import { TpAdminDashBoard } from "./component/TpAdminDashboard";
 import { Button } from "../ui/button";
 import { NoBookingFound } from "./component/NoBookingFound";
@@ -38,8 +35,6 @@ type FilterParams = {
     searchQuery?: string
 };
 
-const tabsMenu = ["PC Bookings", "PC Calendar", "Facility Bookings", "Facility Calendar"];
-
 export const BookingManagementDetail = () => {
     // Set UI content based on role access modifier
     const userMetadata = useUserMetadata();
@@ -52,11 +47,11 @@ export const BookingManagementDetail = () => {
             parsedMetadata?.organization_id
             ? parsedMetadata.organization_id
             : null;
-    const tpSiteOrganizationId = 
+    const tpSiteOrganizationId =
         parsedMetadata?.user_group === 9 &&
             parsedMetadata?.user_group_name === "Site" &&
             parsedMetadata?.user_type === "tp_site" &&
-            parsedMetadata?.organization_id 
+            parsedMetadata?.organization_id
             ? parsedMetadata.organization_id
             : null;
     console.log("tp manager org id", tpSiteOrganizationId)
@@ -68,15 +63,18 @@ export const BookingManagementDetail = () => {
 
     console.log("is tp site", isTpSite)
 
-    const {siteId: memberSiteId, isLoading: memberSiteIdLoading} = useMemberSiteId(isMember);
-    const {siteId: tpManagerSiteId, isLoading: tpManagerSiteIdLoading} = useTpManagerSiteId(isTpSite);
+    const { siteId: memberSiteId, isLoading: memberSiteIdLoading } = useMemberSiteId(isMember);
+    const { siteId: tpManagerSiteId, isLoading: tpManagerSiteIdLoading } = useTpManagerSiteId(isTpSite);
     console.log("Member site ID", memberSiteId)
     console.log("Tp manager site ID", tpManagerSiteId)
+
+    console.log("tp admin org id", tpAdminOrganizationId)
 
     const {
         useAssetsByTypeQuery,
         useAssetBySite,
-        useAllAssets
+        useAllAssets,
+        useAssetsInTpsSites
     } = useAssets();
     const {
         useBookingQuery,
@@ -98,7 +96,6 @@ export const BookingManagementDetail = () => {
     // Member or TP Site Site ID
     const siteId = memberSiteId ? Number(memberSiteId) : tpManagerSiteId ? Number(tpManagerSiteId) : undefined;
 
-    console.log("site id", siteId)
     // All pcs and pcs booking data
     const { data: allPcs, isLoading: isAllPcsLoading } = useAllAssets(isSuperAdmin);
     const { data: sitesPcs, isLoading: isSitesPcsLoading } = useAssetsByTypeQuery(siteId);
@@ -114,12 +111,13 @@ export const BookingManagementDetail = () => {
     const { data: tpsSitesFacilitiesBookings, isLoading: isTpsSitesFacilitiesBookingsLoading } = useBookingSpacesInTpsSites(
         tpsSiteIds
     );
-    console.log("sites Pcs", sitesPcs)
-    console.log("sites Facility", sitesFacilities)
+
+    // All PC in tp admin sites
+    const { data: pcsInTpsAdminSites, isLoading: pcsInTpsAdminSitesLoading } = useAssetsInTpsSites(tpAdminOrganizationId);
+    console.log("total pc in tp admin site", pcsInTpsAdminSites)
 
     // State to share to the TP admin dashboard (choosing a site)
-    const [selectedSite, setSelectedSite] = useState<Site | null>();
-    console.log("selected site", selectedSite)
+    const [selectedSite, setSelectedSite] = useState<SiteProfile | null>();
 
     const { data: tpsSitePcs, isLoading: isAssetTpsSiteLoading } = useAssetBySite(
         selectedSite?.id
@@ -129,15 +127,14 @@ export const BookingManagementDetail = () => {
         selectedSite?.id
     );
 
-    console.log("tps site pc", tpsSitePcs)
-
     function handleResetselectedSite() {
         setSelectedSite(null);
     }
 
-    // State to share to the pc calendar component (UI update when submitted a form)
     const filterededBookingInTpSite = (tpsSitesPcsBookings?.length ? tpsSitesPcsBookings : tpsSitesFacilitiesBookings)
         ?.filter((pcBooking) => pcBooking?.nd_asset?.site_id === selectedSite?.id)
+
+    // State to share to the pc calendar component (UI update when submitted a form)
     const [pcsBookingsData, setPcsBookingsData] = useState([]);
     const [facilitiesBookingsData, setFacilitiesBookingsData] = useState([]);
 
@@ -164,10 +161,10 @@ export const BookingManagementDetail = () => {
         }
     }, [
         pcsBooking,
+        facilitiesBooking,
+        allBookingFacilities,
+        allBookingPcs,
         tpsSitesPcsBookings,
-        isTpAdmin,
-        isSuperAdmin,
-        tpsSitesFacilities,
         tpsSitesFacilitiesBookings,
         selectedSite
     ]);
@@ -188,7 +185,8 @@ export const BookingManagementDetail = () => {
         isTpsSitesFacilitiesBookingsLoading ||
         isTpsSitesFacilities ||
         !parsedMetadata ||
-        memberSiteIdLoading || 
+        memberSiteIdLoading ||
+        pcsInTpsAdminSitesLoading ||
         tpManagerSiteIdLoading
     ) {
         return <LoadingSpinner />;
@@ -200,12 +198,6 @@ export const BookingManagementDetail = () => {
             : isTpAdmin
                 ? tpsSitePcs
                 : sitesPcs;
-    const selectedPcsBookingData =
-        isSuperAdmin
-            ? allBookingPcs
-            : isTpAdmin
-                ? pcsBookingsData
-                : pcsBooking;
 
     // Selected Facility
     const selectedFacilitiesData =
@@ -214,15 +206,6 @@ export const BookingManagementDetail = () => {
             : isTpAdmin
                 ? tpsSitesFacilities
                 : sitesFacilities;
-    const selectedFacilitiesBookingData =
-        isSuperAdmin
-            ? allBookingFacilities
-            : isTpAdmin
-                ? facilitiesBookingsData
-                : facilitiesBooking;
-
-    console.log("selected PCS", selectedPcsData)
-    console.log("selected facilities", selectedFacilitiesData)
 
     if (
         isTpAdmin &&
@@ -230,7 +213,8 @@ export const BookingManagementDetail = () => {
     ) {
         return (
             <TpAdminDashBoard
-                selectedSite={selectedSite}
+                pcsInTpsAdminSite={pcsInTpsAdminSites}
+                tpAdminOrgId={tpAdminOrganizationId}
                 setSelecTedSite={setSelectedSite}
                 tpsSites={tpsSites}
             />
@@ -249,8 +233,10 @@ export const BookingManagementDetail = () => {
                 )}
                 <BookingHeader />
                 <BookingContent
-                    pcsBooking={selectedPcsBookingData}
-                    facilitiesBooking={selectedFacilitiesBookingData}
+                    isTpSite={isTpSite}
+                    isMember={isMember}
+                    pcsBooking={pcsBookingsData}
+                    facilitiesBooking={facilitiesBookingsData}
                     pcsData={selectedPcsData}
                     facilitiesData={selectedFacilitiesData}
                     setPcsBookingsData={setPcsBookingsData}
@@ -273,6 +259,8 @@ const BookingHeader = () => {
 }
 
 interface BookingContentProps {
+    isTpSite: boolean
+    isMember: boolean
     pcsData: Asset[]
     facilitiesData: SiteSpace[]
     pcsBooking: Booking[]
@@ -286,6 +274,8 @@ interface BookingContentProps {
 const BookingContent = ({
     pcsData,
     pcsBooking,
+    isMember,
+    isTpSite,
     isTpAdmin,
     setPcsBookingsData,
     setFacilitiesBookingsData,
@@ -293,8 +283,8 @@ const BookingContent = ({
     facilitiesBooking,
     facilitiesData
 }: BookingContentProps) => {
-    console.log("facilities boooking", facilitiesBooking)
-    console.log("pcs boooking", pcsBooking)
+
+    const tabsMenu = ["PC Bookings", "PC Calendar", "Facility Bookings", "Facility Calendar"];
 
     const tpsSitespcsAvailibility = pcsData?.map((pc) => {
         const currentBooking = pc.nd_booking?.find((b) => {
@@ -314,11 +304,26 @@ const BookingContent = ({
     return (
         <Tabs defaultValue="PC Bookings" className="w-full grid place-items-center mt-7">
             <TabsList className="bg-white inline-flex h-11 flex-wrap justify-center gap-2 items-center">
-                {
-                    tabsMenu.map((menu) => (
-                        <TabsTrigger className="text-md px-2 py-1 min-w-max data-[state=active]:bg-muted rounded whitespace-nowrap" key={menu} value={menu}>{menu}</TabsTrigger>
-                    ))
-                }
+                <TabsTrigger
+                    className="text-md px-2 py-1 min-w-max data-[state=active]:bg-muted rounded whitespace-nowrap"
+                    key="PC Bookings"
+                    value="PC Bookings">PC Bookings</TabsTrigger>
+                <TabsTrigger
+                    className="text-md px-2 py-1 min-w-max data-[state=active]:bg-muted rounded whitespace-nowrap"
+                    key="PC Calendar"
+                    value="PC Calendar">PC Calendar</TabsTrigger>
+                {!isMember && (
+                    <>
+                        <TabsTrigger
+                            className="text-md px-2 py-1 min-w-max data-[state=active]:bg-muted rounded whitespace-nowrap"
+                            key="Facility Bookings"
+                            value="Facility Bookings">Facility Bookings</TabsTrigger>
+                        <TabsTrigger
+                            className="text-md px-2 py-1 min-w-max data-[state=active]:bg-muted rounded whitespace-nowrap"
+                            key="Facility Calendar"
+                            value="Facility Calendar">Facility Calendar</TabsTrigger>
+                    </>
+                )}
             </TabsList>
             <PcBookings
                 value="PC Bookings"
@@ -335,6 +340,8 @@ const BookingContent = ({
             />
             <PcCalender
                 isTpAdmin={isTpAdmin}
+                isMember={isMember}
+                isTpSite={isTpSite}
                 value="PC Calendar"
                 pcsData={pcsData.map((pc) => pc.name)}
                 bookingsData={pcsBooking}
@@ -346,6 +353,8 @@ const BookingContent = ({
                 facilitiesData={facilitiesData}
             />
             <FacilityCalender
+                isMember={isMember}
+                isTpSite={isTpSite}
                 value="Facility Calendar"
                 bookingsData={facilitiesBooking}
                 facilitiesData={facilitiesData.map(facility => facility?.nd_space?.eng)}
@@ -450,9 +459,9 @@ export const PcMainContent = ({
         { key: "duration", label: "Duration" },
     ];
 
-    const recentBookings = bookingsData?.map((booking) => {
+    const recentBookings = bookingsData?.map((booking: Booking) => {
         return {
-            userName: booking.profiles.full_name,
+            userName: booking.profiles?.full_name,
             bookingAssetTypeName: booking.nd_asset.name,
             startTime: toTwentyFourFormat(new Date(booking.booking_start)),
             endTime: toTwentyFourFormat(new Date(booking.booking_end)),
@@ -480,6 +489,8 @@ export const PcMainContent = ({
 
 interface PcCalenderProps {
     value: string,
+    isMember: boolean,
+    isTpSite: boolean,
     isTpAdmin: boolean,
     pcsData: string[],
     bookingsData: Booking[],
@@ -490,6 +501,8 @@ interface PcCalenderProps {
 export const PcCalender = ({
     value,
     pcsData,
+    isMember,
+    isTpSite,
     bookingsData,
     isTpAdmin,
     setBookingsData,
@@ -545,6 +558,8 @@ export const PcCalender = ({
     return (
         <TabsContent className="w-full" value={value}>
             <BookingCalendar
+                isMember={isMember}
+                isTpSite={isTpSite}
                 assetTypeNames={[
                     "All PC",
                     ...pcsData
@@ -599,11 +614,15 @@ interface FacilityCalendarProps {
     bookingsData: Booking[];
     setBookingsData: React.Dispatch<Booking[]>;
     isLoading?: boolean;
+    isMember: boolean;
+    isTpSite: boolean;
     isTpAdmin: boolean;
 }
 
 const FacilityCalender = ({
     value,
+    isMember,
+    isTpSite,
     facilitiesData,
     isTpAdmin,
     bookingsData,
@@ -696,6 +715,8 @@ const FacilityCalender = ({
                     "All Facilities",
                     ...facilitiesData
                 ]}
+                isMember={isMember}
+                isTpSite={isTpSite}
                 date={date}
                 setDate={setDate}
                 header="Booking Records"
@@ -763,6 +784,7 @@ const AssetStatus = ({
                     const booking: Booking = await bookingClient.getBookingBySiteSpaceId(facility?.id);
 
                     return {
+                        id: facility.id,
                         status: !booking ? "Available" : "in-use",
                         type: facility.nd_space?.eng,
                         name: facility.nd_space?.eng,
@@ -821,6 +843,7 @@ const AssetStatus = ({
                     const isBooking = !!booking;
 
                     return {
+                        id: pc.id,
                         status: booking?.is_using ? "in-use" : "Available",
                         type: pc.nd_brand?.brand_type,
                         name: pc.name,

@@ -1,3 +1,4 @@
+import React, { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -8,31 +9,93 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye } from "lucide-react"; // Import the Eye icon
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"; // Import Tooltip components
-import React, { useState } from "react";
-import { useFetchClaimMCMC } from "./hooks/fetch-claim-mcmc";
-import ClaimViewDialog from "../component/ClaimViewDialog"; // Import the dialog
+import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { PaginationComponent } from "@/components/ui/PaginationComponent";
+import { exportToCSV } from "@/utils/export-utils";
+import { Eye } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import ClaimViewDialog from "../component/ClaimViewDialog";
 import ClaimStatusDescriptionDialog from "../component/ClaimStatusLegend";
+import { useFetchClaimMCMC } from "./hooks/fetch-claim-mcmc";
 
 export function ClaimListMcmc() {
-  const { data: claimMCMCData, isLoading: isclaimMCMCLoading } = useFetchClaimMCMC();
+  const { data: claimMCMCData, isLoading: isClaimMCMCLoading } = useFetchClaimMCMC();
   const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [selectedClaim, setSelectedClaim] = useState<any>(null);
+  const [selectedClaim, setSelectedClaim] = useState<number | null>(null);
+
+  // Filter states
+  const [search, setSearch] = useState<string>("");
+  const [filterYear, setFilterYear] = useState<string | null>(null);
+  const [filterMonth, setFilterMonth] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+  const [filterPaymentStatus, setFilterPaymentStatus] = useState<string | null>(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleOpenDescriptionDialog = (status: string) => {
     setSelectedStatus(status);
     setIsDescriptionDialogOpen(true);
   };
 
-  const handleView = (claim: any) => {
-    setSelectedClaim(claim);
+  const handleView = (claimId: number) => {
+    setSelectedClaim(claimId);
     setIsViewDialogOpen(true);
   };
 
-  if (isclaimMCMCLoading) {
+  const handleExport = () => {
+    if (!filteredClaims) return;
+
+    const exportData = filteredClaims.map((claim) => ({
+      DUSP: claim.tp_dusp_id?.parent_id.name || "N/A",
+      TP: claim.tp_dusp_id.name,
+      ReferenceNumber: claim.ref_no,
+      Year: claim.year,
+      Month: claim.month
+        ? new Date(0, claim.month - 1).toLocaleString("default", { month: "long" })
+        : "N/A",
+      Status: claim.claim_status.name,
+      PaymentStatus: claim.payment_status ? "Paid" : "Unpaid",
+    }));
+
+    exportToCSV(exportData, `claim_list_mcmc_${new Date().toISOString().split("T")[0]}`);
+  };
+
+  const filteredClaims = useMemo(() => {
+    return claimMCMCData?.filter((claim) => {
+      return (
+        (!search ||
+          claim.tp_dusp_id?.parent_id.name?.toLowerCase().includes(search.toLowerCase()) ||
+          claim.tp_dusp_id.name?.toLowerCase().includes(search.toLowerCase()) ||
+          claim.ref_no?.toLowerCase().includes(search.toLowerCase())) &&
+        (!filterYear || claim.year?.toString() === filterYear) &&
+        (!filterMonth ||
+          (claim.month &&
+            new Date(0, claim.month - 1)
+              .toLocaleString("default", { month: "long" })
+              .includes(filterMonth))) &&
+        (!filterStatus || claim.claim_status.name === filterStatus) &&
+        (!filterPaymentStatus ||
+          (filterPaymentStatus === "Paid" && claim.payment_status) ||
+          (filterPaymentStatus === "Unpaid" && !claim.payment_status))
+      );
+    });
+  }, [claimMCMCData, search, filterYear, filterMonth, filterStatus, filterPaymentStatus]);
+
+  const paginatedClaims = useMemo(() => {
+    return filteredClaims?.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [filteredClaims, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil((filteredClaims?.length || 0) / itemsPerPage);
+
+  if (isClaimMCMCLoading) {
     return (
       <div className="flex items-center justify-center p-8">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
@@ -55,8 +118,89 @@ export function ClaimListMcmc() {
     }
   };
 
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: i + 1,
+    label: new Date(0, i).toLocaleString("default", { month: "long" }),
+  }));
+
   return (
-    <div className="rounded-md border">
+    <div className="rounded-md border p-4 space-y-4">
+      <h2 className="text-xl font-bold">Claim List (MCMC)</h2>
+
+      {/* Search and Export */}
+      <div className="flex items-center justify-between">
+        <Input
+          placeholder="Search by DUSP, TP, or Reference Number"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="mr-4"
+        />
+        <Button variant="outline" onClick={handleExport}>
+          Export
+        </Button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4">
+        {/* Year Filter */}
+        <Select onValueChange={(value) => setFilterYear(value === "all" ? null : value)} value={filterYear || "all"}>
+          <SelectTrigger className="w-[200px]">
+            <span>Filter by Year</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Years</SelectItem>
+            {[...new Set(claimMCMCData?.map((claim) => claim.year))].map((year) => (
+              <SelectItem key={year} value={year.toString()}>
+                {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Month Filter */}
+        <Select onValueChange={(value) => setFilterMonth(value === "all" ? null : value)} value={filterMonth || "all"}>
+          <SelectTrigger className="w-[200px]">
+            <span>Filter by Month</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Months</SelectItem>
+            {months.map((month) => (
+              <SelectItem key={month.value} value={month.label}>
+                {month.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Status Filter */}
+        <Select onValueChange={(value) => setFilterStatus(value === "all" ? null : value)} value={filterStatus || "all"}>
+          <SelectTrigger className="w-[200px]">
+            <span>Filter by Status</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            {[...new Set(claimMCMCData?.map((claim) => claim.claim_status.name))].map((status) => (
+              <SelectItem key={status} value={status}>
+                {status}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Payment Status Filter */}
+        <Select onValueChange={(value) => setFilterPaymentStatus(value === "all" ? null : value)} value={filterPaymentStatus || "all"}>
+          <SelectTrigger className="w-[200px]">
+            <span>Filter by Payment Status</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Payment Statuses</SelectItem>
+            <SelectItem value="Paid">Paid</SelectItem>
+            <SelectItem value="Unpaid">Unpaid</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Table */}
       <Table>
         <TableHeader>
           <TableRow>
@@ -67,55 +211,67 @@ export function ClaimListMcmc() {
             <TableHead>Year</TableHead>
             <TableHead>Month</TableHead>
             <TableHead>Status</TableHead>
+            <TableHead>Payment Status</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {claimMCMCData?.length > 0 ? (
-            claimMCMCData.map((claim, index) => (
+          {paginatedClaims?.length > 0 ? (
+            paginatedClaims.map((claim, index) => (
               <TableRow key={claim.id}>
-                <TableCell className="text-center">{index + 1}</TableCell>
+                <TableCell className="text-center">
+                  {(currentPage - 1) * itemsPerPage + index + 1}
+                </TableCell>
                 <TableCell>{claim.tp_dusp_id?.parent_id.name || "N/A"}</TableCell>
                 <TableCell>{claim.tp_dusp_id.name}</TableCell>
                 <TableCell>{claim.ref_no}</TableCell>
                 <TableCell>{claim.year}</TableCell>
-                <TableCell>{claim.month}</TableCell>
-                <TableCell className="flex items-center gap-2">
-                  <Badge className="min-w-[6rem] text-center" variant={getStatusBadgeVariant(claim.claim_status.name)}>
-                    {claim.claim_status.name}
-                  </Badge>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full p-0 w-6 h-6 flex items-center justify-center"
-                    onClick={() => handleOpenDescriptionDialog(claim.claim_status.name)}
-                  >
-                    i
-                  </Button>
+                <TableCell>
+                  {claim.month
+                    ? new Date(0, claim.month - 1).toLocaleString("default", { month: "long" })
+                    : "N/A"}
                 </TableCell>
                 <TableCell>
-                  <div className="flex gap-2">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button size="sm" variant="outline" onClick={() => handleView(claim)}>
-                          <Eye className="h-4 w-4" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>View</TooltipContent>
-                    </Tooltip>
-                  </div>
+                  <Badge variant={getStatusBadgeVariant(claim.claim_status.name)}>
+                    {claim.claim_status.name}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Badge variant={claim.payment_status ? "success" : "warning"}>
+                    {claim.payment_status ? "Paid" : "Unpaid"}
+                  </Badge>
+                </TableCell>
+                <TableCell>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button size="sm" variant="outline" onClick={() => handleView(claim.id)}>
+                        <Eye className="h-4 w-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>View</TooltipContent>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))
           ) : (
             <TableRow>
-              <TableCell colSpan={8} className="text-center">
+              <TableCell colSpan={9} className="text-center">
                 No data available
               </TableCell>
             </TableRow>
           )}
         </TableBody>
       </Table>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <PaginationComponent
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filteredClaims?.length || 0}
+        />
+      )}
 
       {/* Claim Status Description Dialog */}
       <ClaimStatusDescriptionDialog
@@ -129,7 +285,7 @@ export function ClaimListMcmc() {
         <ClaimViewDialog
           isOpen={isViewDialogOpen}
           onClose={() => setIsViewDialogOpen(false)}
-          claim={selectedClaim}
+          claimId={selectedClaim}
         />
       )}
     </div>

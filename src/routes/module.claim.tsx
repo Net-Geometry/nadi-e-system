@@ -7,6 +7,7 @@ import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 // Lazy load components
 const ClaimDashboard = lazy(() => import("@/pages/dashboard/claim/ClaimDashboard"));
 const ClaimSettings = lazy(() => import("@/pages/dashboard/claim/ClaimSettings"));
+const ClaimRegister = lazy(() => import("@/pages/dashboard/claim/ClaimRegister"));
 // const ClaimRegister = lazy(() => import("@/pages/dashboard/claim/ClaimRegister"));
 // const ClaimList = lazy(() => import("@/pages/dashboard/claim/ClaimList"));
 // const ClaimReport = lazy(() => import("@/pages/dashboard/claim/ClaimReport"));
@@ -32,16 +33,16 @@ export const claimRoutes = [
             </Suspense>
         ),
     },
-    // {
-    //     path: "/claim/register",
-    //     element: (
-    //         <Suspense fallback={<LoadingSpinner />}>
-    //             {/* <ProtectedRoute requiredPermission=""> */}
-    //             <ClaimRegister />
-    //             {/* </ProtectedRoute> */}
-    //         </Suspense>
-    //     ),
-    // },
+    {
+        path: "/claim/register",
+        element: (
+            <Suspense fallback={<LoadingSpinner />}>
+                {/* <ProtectedRoute requiredPermission=""> */}
+                <ClaimRegister/>
+                {/* </ProtectedRoute> */}
+            </Suspense>
+        ),
+    },
     // {
     //     path: "/claim/list-record",
     //     element: (

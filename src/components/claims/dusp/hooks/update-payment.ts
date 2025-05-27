@@ -10,6 +10,14 @@ type UpdatePaymentData = {
 
 export const updatePayment = async (data: UpdatePaymentData) => {
     try {
+
+        const { data: userData, error: userError } = await supabase.auth.getUser();
+        if (userError || !userData.user) {
+            console.error("Error fetching user:", userError);
+            throw new Error("Failed to fetch user");
+        }
+        const createdBy = userData.user.id;
+
         // Update the payment_status and date_paid in nd_claim_application
         const { error: updateError } = await supabase
             .from("nd_claim_application")
@@ -17,6 +25,7 @@ export const updatePayment = async (data: UpdatePaymentData) => {
                 claim_status: data.claim_status,
                 payment_status: data.payment_status,
                 date_paid: data.date_paid,
+                updated_by: createdBy
             })
             .eq("id", data.claim_id);
 
@@ -32,6 +41,8 @@ export const updatePayment = async (data: UpdatePaymentData) => {
                 claim_id: data.claim_id,
                 status_id: data.claim_status,
                 remark: data.remark,
+                created_by: createdBy,
+
             });
 
         if (logError) {

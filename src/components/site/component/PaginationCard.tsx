@@ -31,25 +31,26 @@ export const PaginationCard = ({
     return (
         <section className="space-y-6">
             <div className="grid grid-cols-4 gap-5 mt-4">
-                {currentItems.map((pc, i) => (
+                {currentItems.map((asset, i) => (
                     <BookingAssetCard
+                        id={asset.id}
                         key={i}
                         isFacility={isFacility}
-                        assetSpec={pc.spec}
-                        assetType={pc.type}
-                        requesterName={pc.staffName}
-                        AssetName={pc.name}
-                        icon={pc.icon}
+                        assetSpec={asset.spec}
+                        assetType={asset.type}
+                        requesterName={asset.staffName}
+                        assetName={asset.name}
+                        icon={asset.icon}
                         label={(
-                            <Badge className={`${pc.customClass} mt-0 flex items-center gap-1`}>
+                            <Badge className={`${asset.customClass} mt-0 flex items-center gap-1`}>
                                 <CircleDot className="size-3" />
-                                {pc.status}
+                                {asset.status}
                             </Badge>
                         )}
-                        status={pc.status}
-                        started={pc.startDate}
-                        duration={pc.duration}
-                        className={`hover:scale-105 hover:shadow-sm hover:shadow-blue-300 ${pc.bgCustomClass}`}
+                        status={asset.status}
+                        started={asset.startDate}
+                        duration={asset.duration}
+                        className={`hover:scale-105 hover:shadow-sm hover:shadow-blue-300 ${asset.bgCustomClass}`}
                     />
                 ))}
             </div>

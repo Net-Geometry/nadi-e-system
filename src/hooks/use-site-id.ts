@@ -93,7 +93,7 @@ export const useMemberSiteId = (isMember?: boolean) => {
     const { data, error } = await supabase
       .from("nd_member_profile")
       .select("ref_id")
-      .eq("user_id", user.id)
+      .eq("user_id", user?.id)
       .single();
 
     if (error) {

@@ -1,5 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import React, { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -10,49 +9,89 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckSquare, Send, Settings, Trash2, XSquare } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
-import { TableRowNumber } from "@/components/ui/TableRowNumber";
-import { useFetchClaimTP } from "./hooks/fetch-claim-tp"; // Import the hook
-import { Eye } from "lucide-react"; // Import the Eye icon
-import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip"; // Import Tooltip components
-import React, { useState } from "react";
-import ClaimViewDialog from "../component/ClaimViewDialog"; // Import the dialog
-import TpSubmitDialog from "./TpSubmitDialog"; // Import the dialog
+import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { PaginationComponent } from "@/components/ui/PaginationComponent";
+import { exportToCSV } from "@/utils/export-utils";
+import { Eye, Trash2 } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import ClaimViewDialog from "../component/ClaimViewDialog";
 import TPDeleteDialog from "./TPDeleteDialog";
 import ClaimStatusDescriptionDialog from "../component/ClaimStatusLegend";
+import { useFetchClaimTP } from "./hooks/fetch-claim-tp";
 
 export function ClaimListTp() {
-  const { toast } = useToast();
   const { data: claimTPData, isLoading: isClaimTPLoading } = useFetchClaimTP();
   const [isDescriptionDialogOpen, setIsDescriptionDialogOpen] = useState(false);
   const [selectedStatus, setSelectedStatus] = useState<string>("");
-
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
-  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false); // State for TPSubmitDialog
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false); // State for TPDeleteDialog
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedClaim, setSelectedClaim] = useState<any>(null);
+
+  // Filter states
+  const [search, setSearch] = useState<string>("");
+  const [filterYear, setFilterYear] = useState<string | null>(null);
+  const [filterMonth, setFilterMonth] = useState<string | null>(null);
+  const [filterStatus, setFilterStatus] = useState<string | null>(null);
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   const handleOpenDescriptionDialog = (status: string) => {
     setSelectedStatus(status);
     setIsDescriptionDialogOpen(true);
   };
 
-
-  const handleView = (claim: any) => {
-    setSelectedClaim(claim);
+  const handleView = (claimId: number) => {
+    setSelectedClaim(claimId);
     setIsViewDialogOpen(true);
-  };
-
-  const handleSubmitTP = (claim: any) => {
-    setSelectedClaim(claim);
-    setIsSubmitDialogOpen(true); // Open the TPSubmitDialog
   };
 
   const handleDelete = (claim: any) => {
     setSelectedClaim(claim);
-    setIsDeleteDialogOpen(true); // Open the TPDeleteDialog
+    setIsDeleteDialogOpen(true);
   };
+
+  const handleExport = () => {
+    if (!filteredClaims) return;
+
+    const exportData = filteredClaims.map((claim) => ({
+      ReferenceNumber: claim.ref_no,
+      Year: claim.year,
+      Month: claim.month
+        ? new Date(0, claim.month - 1).toLocaleString("default", { month: "long" })
+        : "N/A",
+      Status: claim.claim_status.name,
+    }));
+
+    exportToCSV(exportData, `claim_list_tp_${new Date().toISOString().split("T")[0]}`);
+  };
+
+  const filteredClaims = useMemo(() => {
+    return claimTPData?.filter((claim) => {
+      return (
+        (!search ||
+          claim.ref_no?.toLowerCase().includes(search.toLowerCase())) &&
+        (!filterYear || claim.year?.toString() === filterYear) &&
+        (!filterMonth ||
+          (claim.month &&
+            new Date(0, claim.month - 1)
+              .toLocaleString("default", { month: "long" })
+              .includes(filterMonth))) &&
+        (!filterStatus || claim.claim_status.name === filterStatus)
+      );
+    });
+  }, [claimTPData, search, filterYear, filterMonth, filterStatus]);
+
+  const paginatedClaims = useMemo(() => {
+    return filteredClaims?.slice(
+      (currentPage - 1) * itemsPerPage,
+      currentPage * itemsPerPage
+    );
+  }, [filteredClaims, currentPage, itemsPerPage]);
+
+  const totalPages = Math.ceil((filteredClaims?.length || 0) / itemsPerPage);
 
   if (isClaimTPLoading) {
     return (
@@ -77,10 +116,77 @@ export function ClaimListTp() {
     }
   };
 
-  return (
-    <div className="rounded-md border">
-      {/* <pre>{JSON.stringify(claimTPData, null, 2)}</pre> */}
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    value: i + 1,
+    label: new Date(0, i).toLocaleString("default", { month: "long" }),
+  }));
 
+  return (
+    <div className="rounded-md border p-4 space-y-4">
+      <h2 className="text-xl font-bold">Claim List (TP)</h2>
+
+      {/* Search and Export */}
+      <div className="flex items-center justify-between">
+        <Input
+          placeholder="Search by Reference Number"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="mr-4"
+        />
+        <Button variant="outline" onClick={handleExport}>
+          Export
+        </Button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex flex-wrap gap-4">
+        {/* Year Filter */}
+        <Select onValueChange={(value) => setFilterYear(value === "all" ? null : value)} value={filterYear || "all"}>
+          <SelectTrigger className="w-[200px]">
+            <span>Filter by Year</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Years</SelectItem>
+            {[...new Set(claimTPData?.map((claim) => claim.year))].map((year) => (
+              <SelectItem key={year} value={year.toString()}>
+                {year}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Month Filter */}
+        <Select onValueChange={(value) => setFilterMonth(value === "all" ? null : value)} value={filterMonth || "all"}>
+          <SelectTrigger className="w-[200px]">
+            <span>Filter by Month</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Months</SelectItem>
+            {months.map((month) => (
+              <SelectItem key={month.value} value={month.label}>
+                {month.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        {/* Status Filter */}
+        <Select onValueChange={(value) => setFilterStatus(value === "all" ? null : value)} value={filterStatus || "all"}>
+          <SelectTrigger className="w-[200px]">
+            <span>Filter by Status</span>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Statuses</SelectItem>
+            {[...new Set(claimTPData?.map((claim) => claim.claim_status.name))].map((status) => (
+              <SelectItem key={status} value={status}>
+                {status}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Table */}
       <Table>
         <TableHeader>
           <TableRow>
@@ -93,31 +199,29 @@ export function ClaimListTp() {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {claimTPData?.length > 0 ? (
-            claimTPData.map((claim, index) => (
+          {paginatedClaims?.length > 0 ? (
+            paginatedClaims.map((claim, index) => (
               <TableRow key={claim.id}>
-                <TableRowNumber index={index} />
+                <TableCell className="text-center">
+                  {(currentPage - 1) * itemsPerPage + index + 1}
+                </TableCell>
                 <TableCell>{claim.ref_no}</TableCell>
                 <TableCell>{claim.year}</TableCell>
-                <TableCell>{claim.month}</TableCell>
-                <TableCell className="flex items-center gap-2">
-                  <Badge className="min-w-[6rem] text-center" variant={getStatusBadgeVariant(claim.claim_status.name)}>
+                <TableCell>
+                  {claim.month
+                    ? new Date(0, claim.month - 1).toLocaleString("default", { month: "long" })
+                    : "N/A"}
+                </TableCell>
+                <TableCell>
+                  <Badge variant={getStatusBadgeVariant(claim.claim_status.name)}>
                     {claim.claim_status.name}
                   </Badge>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="rounded-full p-0 w-6 h-6 flex items-center justify-center"
-                    onClick={() => handleOpenDescriptionDialog(claim.claim_status.name)}
-                  >
-                    i
-                  </Button>
                 </TableCell>
                 <TableCell>
                   <div className="flex gap-2">
                     <Tooltip>
                       <TooltipTrigger asChild>
-                        <Button size="sm" variant="outline" onClick={() => handleView(claim)}>
+                        <Button size="sm" variant="outline" onClick={() => handleView(claim.id)}>
                           <Eye className="h-4 w-4" />
                         </Button>
                       </TooltipTrigger>
@@ -125,29 +229,19 @@ export function ClaimListTp() {
                     </Tooltip>
 
                     {claim.claim_status.name === "DRAFTED" && (
-                      <>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="text-destructive"
-                              onClick={() => handleDelete(claim)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Delete</TooltipContent>
-                        </Tooltip>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <Button size="sm" variant="outline" onClick={() => handleSubmitTP(claim)}>
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          </TooltipTrigger>
-                          <TooltipContent>Submit to DUSP</TooltipContent>
-                        </Tooltip>
-                      </>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-destructive"
+                            onClick={() => handleDelete(claim)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete</TooltipContent>
+                      </Tooltip>
                     )}
                   </div>
                 </TableCell>
@@ -163,6 +257,16 @@ export function ClaimListTp() {
         </TableBody>
       </Table>
 
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <PaginationComponent
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+          totalItems={filteredClaims?.length || 0}
+        />
+      )}
+
       {/* Claim Status Description Dialog */}
       <ClaimStatusDescriptionDialog
         isOpen={isDescriptionDialogOpen}
@@ -175,16 +279,7 @@ export function ClaimListTp() {
         <ClaimViewDialog
           isOpen={isViewDialogOpen}
           onClose={() => setIsViewDialogOpen(false)}
-          claim={selectedClaim}
-        />
-      )}
-
-      {/* TP Submit Dialog */}
-      {selectedClaim && (
-        <TpSubmitDialog
-          isOpen={isSubmitDialogOpen}
-          onClose={() => setIsSubmitDialogOpen(false)}
-          claim={selectedClaim}
+          claimId={selectedClaim}
         />
       )}
 

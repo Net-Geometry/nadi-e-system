@@ -31,7 +31,7 @@ const ProfileEditDialogMember: React.FC<ProfileEditDialogMemberProps> = ({
     onSave,
 }) => {
     const { toast } = useToast();
-    const { races, nationalities, genders, ethnics, occupations, typeSectors, socioeconomics, ictKnowledge, educationLevels, statusMemberships } = useGeneralData();
+    const { races, nationalities, genders, ethnics, occupations, typeSectors, ictKnowledge, educationLevels, statusMemberships } = useGeneralData();
     const [formState, setFormState] = useState<any>({});
     const userMetadata = useUserMetadata();
     const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
@@ -66,7 +66,6 @@ const ProfileEditDialogMember: React.FC<ProfileEditDialogMemberProps> = ({
                 ethnic_id: formState.ethnic_id?.id,
                 occupation_id: formState.occupation_id?.id,
                 type_sector: formState.type_sector?.id,
-                socio_id: formState.socio_id?.id,
                 ict_knowledge: formState.ict_knowledge?.id,
                 education_level: formState.education_level?.id,
                 oku_status: formState.oku_status,
@@ -104,7 +103,7 @@ const ProfileEditDialogMember: React.FC<ProfileEditDialogMemberProps> = ({
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {(userType === "super_admin" || userGroup ===6 || userGroup ===3) && (
+                        {(userType === "super_admin" || userGroup ===9 || userGroup ===3) && (
                             <>
                                 <div>
                                     <Label htmlFor="fullname">Full Name</Label>
@@ -150,7 +149,7 @@ const ProfileEditDialogMember: React.FC<ProfileEditDialogMemberProps> = ({
                                 </div>
                             </>
                         )}
-                        {(userType === "super_admin" || userGroup === 7  || userGroup ===6 || userGroup ===3) && (
+                        {(userType === "super_admin" || userGroup === 7  || userGroup ===9 || userGroup ===3) && (
                             <>
                                 <div>
                                     <Label htmlFor="mobile_no">Mobile Number</Label>
@@ -172,7 +171,7 @@ const ProfileEditDialogMember: React.FC<ProfileEditDialogMemberProps> = ({
                                 </div>
                             </>
                         )}
-                        {(userType === "super_admin" || userGroup ===6 || userGroup ===3) && (
+                        {(userType === "super_admin" || userGroup ===9 || userGroup ===3) && (
                             <>
                                 <div>
                                     <Label htmlFor="dob">Date Of Birth</Label>
@@ -267,7 +266,7 @@ const ProfileEditDialogMember: React.FC<ProfileEditDialogMemberProps> = ({
 
                             </>
                         )}
-                        {(userType === "super_admin" || userGroup === 7 || userGroup ===6 || userGroup ===3) && (
+                        {(userType === "super_admin" || userGroup === 7 || userGroup ===9 || userGroup ===3) && (
                             <>
                                 <div>
                                     <Label htmlFor="occupation_id">Occupation</Label>
@@ -306,27 +305,6 @@ const ProfileEditDialogMember: React.FC<ProfileEditDialogMemberProps> = ({
                                             {typeSectors.map((sector) => (
                                                 <SelectItem key={sector.id} value={sector.id.toString()}>
                                                     {sector.eng}
-                                                </SelectItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <div>
-                                    <Label htmlFor="socio_id">Socioeconomic</Label>
-                                    <Select
-                                        name="socio_id"
-                                        value={formState.socio_id?.id?.toString() || ""}
-                                        onValueChange={(value) =>
-                                            setField("socio_id", socioeconomics.find((socioeconomic) => socioeconomic.id.toString() === value))
-                                        }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select socioeconomic" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            {socioeconomics.map((socioeconomic) => (
-                                                <SelectItem key={socioeconomic.id} value={socioeconomic.id.toString()}>
-                                                    {socioeconomic.eng}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -376,7 +354,7 @@ const ProfileEditDialogMember: React.FC<ProfileEditDialogMemberProps> = ({
                                 </div>
                             </>
                         )}
-                        {(userType === "super_admin" || userGroup ===6 || userGroup ===3) && (
+                        {(userType === "super_admin" || userGroup ===9 || userGroup ===3) && (
                             <>
                                 <div>
                                     <Label htmlFor="join_date">Join Date</Label>
@@ -434,9 +412,9 @@ const ProfileEditDialogMember: React.FC<ProfileEditDialogMemberProps> = ({
                                     >
                                         <div className="flex items-center space-x-4 mt-3">
                                             <RadioGroupItem value="true" id="community_status_yes" />
-                                            <Label htmlFor="community_status_yes">Active</Label>
+                                            <Label htmlFor="community_status_yes">Yes</Label>
                                             <RadioGroupItem value="false" id="community_status_no" />
-                                            <Label htmlFor="community_statusr_no">Inactive</Label>
+                                            <Label htmlFor="community_statusr_no">No</Label>
                                         </div>
                                     </RadioGroup>
                                 </div>

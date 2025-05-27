@@ -43,12 +43,16 @@ interface BookingCalendarProp {
     setBookingsData: React.Dispatch<React.SetStateAction<Booking[]>>,
     isLoading?: boolean,
     isFacility?: boolean,
+    isMember: boolean,
+    isTpSite: boolean
 }
 
 export const BookingCalendar = ({
     bookingType,
     assetTypeNames,
     isTpAdmin,
+    isMember,
+    isTpSite,
     header,
     date,
     setDate,
@@ -59,6 +63,8 @@ export const BookingCalendar = ({
     onChangeFilter,
     isLoading
 }: BookingCalendarProp) => {
+    console.log("isMember from pc asset calendar", isMember)
+    console.log("isMember from pc asset calendar", isMember)
     const [formattedBookingData, setFormattedBookingData] = useState<BodyTableData[]>([]);
     const [assetTypeName, setAssetTypeName] = useState<string>(`all ${bookingType}`);
     const [searchInput, setSearchInput] = useState("");
@@ -166,7 +172,7 @@ export const BookingCalendar = ({
                         Export
                     </Button>
                 </div>
-                {!isTpAdmin && (
+                {(isTpSite || isMember) && (
                     <Dialog open={open} onOpenChange={setOpen}>
                         <DialogTrigger >
                             <Button className="text-base font-semibold">
@@ -175,6 +181,8 @@ export const BookingCalendar = ({
                             </Button>
                         </DialogTrigger>
                         <BookingFormDialog
+                            isTpSite={isTpSite}
+                            isMember={isMember}
                             isFacility={isFacility}
                             setOpen={setOpen}
                             open={open}

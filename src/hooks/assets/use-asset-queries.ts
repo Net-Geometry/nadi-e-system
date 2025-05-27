@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 
 import { assetClient } from "./asset-client";
 
@@ -78,8 +78,21 @@ export const useAssetQueries = () => {
     useQuery({
       queryKey: ["tpsAssets", tps_sites_id],
       queryFn: () => assetClient.fetchAssetsBySiteId(tps_sites_id),
-      enabled: !!tps_sites_id,
+      enabled: !!tps_sites_id
     });
+
+  const useAssetsInTpsSites = (tpOrgId: string) =>
+    useQuery({
+      queryKey: ["tpsAssets", tpOrgId],
+      queryFn: () => assetClient.fetchAssetsInTpsSites(tpOrgId),
+      enabled: !!tpOrgId
+    });
+
+  const useToggleAssetStatus = (assetId: string, currentStatus: boolean) =>
+    useMutation({
+      mutationKey: ["toggleStatus"],
+      mutationFn: () => assetClient.toggleAssetActiveStatus(assetId, currentStatus)
+    })
 
   return {
     useAssetsQuery,
@@ -88,5 +101,7 @@ export const useAssetQueries = () => {
     useAssetsByTypeQuery,
     useAssetBySite,
     useAllAssets,
+    useAssetsInTpsSites,
+    useToggleAssetStatus
   };
 };

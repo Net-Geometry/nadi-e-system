@@ -8,10 +8,18 @@ type UpdateClaimData = {
 
 export const updateClaim = async (data: UpdateClaimData) => {
   try {
+
+    const { data: userData, error: userError } = await supabase.auth.getUser();
+    if (userError || !userData.user) {
+      console.error("Error fetching user:", userError);
+      throw new Error("Failed to fetch user");
+    }
+    const createdBy = userData.user.id;
+
     // // Update the claim status
     const { error: updateError } = await supabase
       .from("nd_claim_application")
-      .update({ claim_status: data.claim_status })
+      .update({ claim_status: data.claim_status, updated_by: createdBy })
       .eq("id", data.claim_id);
 
     if (updateError) {
@@ -26,6 +34,7 @@ export const updateClaim = async (data: UpdateClaimData) => {
         claim_id: data.claim_id,
         status_id: data.claim_status,
         remark: data.request_remark,
+        created_by: createdBy,
       });
 
     if (logError) {

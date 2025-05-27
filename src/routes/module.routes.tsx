@@ -68,6 +68,7 @@ import WorkflowDashboard from "@/pages/workflow/WorkflowDashboard";
 import { RouteObject } from "react-router-dom";
 
 import ProgrammeRegistration from "@/pages/dashboard/programmes/ProgrammeRegistration";
+import ClaimRegister from "@/pages/dashboard/claim/ClaimRegister";
 
 export const moduleRoutes: RouteObject[] = [
   // HR Routes
@@ -190,6 +191,14 @@ export const moduleRoutes: RouteObject[] = [
     element: (
       // <ProtectedRoute requiredPermission="manage_claim_settings">
       <ClaimSettings />
+      // </ProtectedRoute>
+    ),
+  },
+  {
+    path: "/claim/register",
+    element: (
+      // <ProtectedRoute requiredPermission="manage_claim_settings">
+      <ClaimRegister />
       // </ProtectedRoute>
     ),
   },

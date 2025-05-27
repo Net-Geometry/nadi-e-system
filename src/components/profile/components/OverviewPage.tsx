@@ -414,8 +414,19 @@ const ProfileOverviewPage = ({
 
 
         {userGroup === 7 && (
+          <>
           <div>
             <p className="text-sm text-gray-500">Status Entrepreneur:</p>
+            <p className="text-base font-medium">
+              {profileData.community_status === true
+                ? "Active"
+                : profileData.community_status === false
+                  ? "Inactive"
+                  : "N/A"}
+            </p>
+          </div>
+                    <div>
+            <p className="text-sm text-gray-500">Status MADANI Community:</p>
             <p className="text-base font-medium">
               {profileData.status_entrepreneur === true
                 ? "Active"
@@ -424,6 +435,7 @@ const ProfileOverviewPage = ({
                   : "N/A"}
             </p>
           </div>
+          </>
         )}
         {userGroup === 3 && (
           <div>

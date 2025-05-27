@@ -15,8 +15,8 @@ export const useBookingQueries = () => {
 
     const useBookingQuery = (siteId: number) =>
         useQuery({
-            queryKey: ["booking", organizationId, siteId],
-            queryFn: () => bookingClient.getBooking(),
+            queryKey: ["booking", siteId],
+            queryFn: () => bookingClient.getBooking(siteId),
             enabled:
                 !!siteId
         });
@@ -27,17 +27,38 @@ export const useBookingQueries = () => {
             queryFn: () => bookingClient.getBrands()
         })
 
-    const useTpsSites = (dusp_tp_id: string | null) => 
+    const useTpsSites = (dusp_tp_id: string) => 
         useQuery({
             queryKey: ["tpsSites", dusp_tp_id],
             queryFn: () => bookingClient.getAllTpsSites(dusp_tp_id),
             enabled: !!dusp_tp_id
         })
 
+    const useTpsSitesWithPagination = (
+        dusp_tp_id: string, 
+        page: number, 
+        perPage: number, 
+        {searchInput, region, state}
+    ) =>
+        useQuery({
+            queryKey:["sites", page, perPage, dusp_tp_id, searchInput, region, state],
+            queryFn: async () => {
+                try {
+                    return await bookingClient.getAllTpsSitesWithPagination(dusp_tp_id, page, perPage, searchInput, region, state)
+                } catch (error) {
+                    console.error(error);
+                    throw error;
+                }
+            },
+            enabled: page !== undefined && 
+                perPage !== undefined && 
+                !!dusp_tp_id
+        })
+
     const useBookingAssetInTpsSites = (tps_site_ids: number[]) => 
         useQuery({
             queryKey: ["bookingInTpsSites", tps_site_ids],
-            queryFn: () => bookingClient.getAllPcBoookingInTpsSites(tps_site_ids),
+            queryFn: () => bookingClient.getAllPcBookingInTpsSites(tps_site_ids),
             enabled: tps_site_ids.length > 0
         })
 
@@ -72,14 +93,20 @@ export const useBookingQueries = () => {
     const usesitesSpacesBookings = (siteId: number) =>
         useQuery({
             queryKey: ["sitesSpaceBookings", siteId],
-            queryFn: () => bookingClient.getSitesSpaceBookings(siteId),
+            queryFn: () => {
+                try {
+                    return bookingClient.getSitesSpaceBookings(siteId)
+                } catch (error) {
+                    console.log(error.message)
+                }
+            },
             enabled: !!siteId
         })
 
     const useBookingSpacesInTpsSites = (siteIds: number[]) =>
         useQuery({
             queryKey: ["BookingSpaceInTpsSites", siteIds],
-            queryFn: () => bookingClient.getAllPcBoookingInTpsSites(siteIds),
+            queryFn: () => bookingClient.getAllPcBookingInTpsSites(siteIds),
             enabled: siteIds.length > 0
         })
 
@@ -88,6 +115,18 @@ export const useBookingQueries = () => {
             queryKey: ["sitesSpaces", site_id],
             queryFn: () => bookingClient.getSitesSpaces(site_id),
             enabled: !!site_id
+        })
+
+    const useAllRegion = (stateId: number) => 
+        useQuery({
+            queryKey: ["allRegion", stateId],
+            queryFn: () => bookingClient.getAllRegion(stateId)
+        })
+
+    const useAllState = (regionId: number) => 
+        useQuery({
+            queryKey: ["allState", regionId],
+            queryFn: () => bookingClient.getAllState(regionId)
         })
 
     return {
@@ -101,6 +140,9 @@ export const useBookingQueries = () => {
         useAllSpacesBookings,
         usesitesSpacesBookings,
         useBookingSpacesInTpsSites,
-        useSpacesBySite
+        useSpacesBySite,
+        useAllRegion,
+        useTpsSitesWithPagination,
+        useAllState
     };
 };

@@ -1,42 +1,40 @@
 import { BUCKET_NAME_SITE_CLAIM, supabase } from "@/integrations/supabase/client";
 
 type ItemData = {
-  id: number;
-  name: string;
-  need_support_doc: boolean;
-  need_summary_report: boolean;
-}
-
-type CategoryData = {
-  id: number;
-  name: string;
-  item_ids: ItemData[];
-}
-
-type ReportData = {
-  category_ids: CategoryData[];
-  report_file: Uint8Array | null; // New state for the report
-  status_item: boolean;
-}
-
-type ClaimData = {
-  phase_id: number;
-  year: number;
-  quarter: number;
-  month: number;
-  ref_no: string;
-  tp_dusp_id: string;
-  site_profile_ids: number[];
-  tp_name: string; //additional
-  dusp_name: string; //additional
-
-  reports: ReportData[]; // New state for the report
-
+    id: number;
+    name: string;
+    need_support_doc: boolean;
+    need_summary_report: boolean;
+    summary_report_file: File | null;
+    suppport_doc_file: File[] | null;
+    status_item: boolean;
+    remark: string;
+    site_ids: number[];
 };
 
-export const insertClaimData = async (data: ClaimData) => {
+type CategoryData = {
+    id: number;
+    name: string;
+    item_ids: ItemData[];
+};
+
+type FormData = {
+    claim_type: string;
+    year: number;
+    quarter: number;
+    month: number;
+    ref_no: string;
+    tp_dusp_id: string;
+    tp_name: string;
+    dusp_name: string;
+    phase_id: number;
+    category_ids: CategoryData[];
+    is_finished_generate: boolean;
+};
+
+export const insertClaimData = async (data: FormData) => {
     try {
-        // Get the current user
+        // Step 1: Get the current user
         const { data: userData, error: userError } = await supabase.auth.getUser();
         if (userError || !userData.user) {
             console.error("Error fetching user:", userError);
@@ -44,7 +42,7 @@ export const insertClaimData = async (data: ClaimData) => {
         }
         const createdBy = userData.user.id;
 
-        // Insert into nd_claim_application
+        // Step 2: Insert into nd_claim_application
         const { data: claimApplication, error: claimApplicationError } = await supabase
             .from("nd_claim_application")
             .insert({
@@ -57,7 +55,7 @@ export const insertClaimData = async (data: ClaimData) => {
                 payment_status: false,
                 created_by: createdBy,
                 tp_dusp_id: data.tp_dusp_id,
-                site_profile_ids: data.site_profile_ids,
+                claim_type: data.claim_type,
             })
             .select("id")
             .single();
@@ -68,16 +66,18 @@ export const insertClaimData = async (data: ClaimData) => {
         }
         const claimId = claimApplication.id;
 
-        // Process each report
-        for (const report of data.reports) {
-            for (const category of report.category_ids) {
-                // Insert into nd_claim_request
+        // Step 3: Process each category and item
+        for (const category of data.category_ids) {
+            for (const item of category.item_ids) {
+                // Step 3.1: Insert into nd_claim_request
                 const { data: claimRequest, error: claimRequestError } = await supabase
                     .from("nd_claim_request")
                     .insert({
                         category_id: category.id,
-                        item_ids: category.item_ids.map(item => item.id),
-                        status_item: report.status_item,
+                        item_id: item.id,
+                        status_item: item.status_item ?? false,
+                        remark: item.remark,
+                        site_ids: item.site_ids,
                         created_by: createdBy,
                         application_id: claimId,
                     })
@@ -90,42 +90,73 @@ export const insertClaimData = async (data: ClaimData) => {
                 }
                 const requestId = claimRequest.id;
 
-                // Upload report_file to storage and insert into nd_claim_attachment
-                if (report.report_file) {
-                    const fileName = `report_${Date.now()}.pdf`;
-                    const filePath = `${data.dusp_name}/${data.tp_name}/${data.year}/${data.quarter}/${data.month}_${fileName}`;
+                // Step 3.2: Upload summary_report_file to storage
+                if (item.summary_report_file) {
+                    const fileName = `summary_${Date.now()}_${item.summary_report_file.name}`;
+                    const filePath = `${data.dusp_name}/${data.tp_name}/${data.year}/${data.ref_no}_${fileName}`;
 
-                    // Convert Uint8Array to Blob
-                    const fileBlob = new Blob([report.report_file], { type: "application/pdf" });
+                    const fileBlob = new Blob([item.summary_report_file], { type: "application/pdf" });
 
-                    // Upload the file to Supabase storage
                     const { error: uploadError } = await supabase.storage
                         .from(BUCKET_NAME_SITE_CLAIM)
                         .upload(filePath, fileBlob);
 
                     if (uploadError) {
-                        console.error("Error uploading file to storage:", uploadError);
-                        throw new Error("Failed to upload file to storage");
+                        console.error("Error uploading summary_report_file:", uploadError);
+                        throw new Error("Failed to upload summary_report_file");
                     }
 
-                    // Insert file details into nd_claim_attachment
+                    // Insert into nd_claim_attachment
                     const { error: attachmentError } = await supabase
                         .from("nd_claim_attachment")
                         .insert({
                             request_id: requestId,
-                            claim_type_id: 2,
+                            claim_type_id: 2, // Summary report
                             file_path: filePath,
                         });
 
                     if (attachmentError) {
-                        console.error("Error inserting into nd_claim_attachment:", attachmentError);
-                        throw new Error("Failed to insert into nd_claim_attachment");
+                        console.error("Error inserting summary_report_file into nd_claim_attachment:", attachmentError);
+                        throw new Error("Failed to insert summary_report_file into nd_claim_attachment");
+                    }
+                }
+
+                // Step 3.3: Upload suppport_doc_file to storage
+                if (item.suppport_doc_file && item.suppport_doc_file.length > 0) {
+                    for (const file of item.suppport_doc_file) {
+                        const fileName = `support_${Date.now()}_${file.name}`;
+                        const filePath = `${data.dusp_name}/${data.tp_name}/${data.year}/${data.ref_no}_${fileName}`;
+
+                        const fileBlob = new Blob([file], { type: "application/pdf" });
+
+                        const { error: uploadError } = await supabase.storage
+                            .from(BUCKET_NAME_SITE_CLAIM)
+                            .upload(filePath, fileBlob);
+
+                        if (uploadError) {
+                            console.error("Error uploading suppport_doc_file:", uploadError);
+                            throw new Error("Failed to upload suppport_doc_file");
+                        }
+
+                        // Insert into nd_claim_attachment
+                        const { error: attachmentError } = await supabase
+                            .from("nd_claim_attachment")
+                            .insert({
+                                request_id: requestId,
+                                claim_type_id: 1, // Supporting document
+                                file_path: filePath,
+                            });
+
+                        if (attachmentError) {
+                            console.error("Error inserting suppport_doc_file into nd_claim_attachment:", attachmentError);
+                            throw new Error("Failed to insert suppport_doc_file into nd_claim_attachment");
+                        }
                     }
                 }
             }
         }
 
-        // Insert into nd_claim_log
+        // Step 4: Insert into nd_claim_log
         const { error: logError } = await supabase
             .from("nd_claim_log")
             .insert({

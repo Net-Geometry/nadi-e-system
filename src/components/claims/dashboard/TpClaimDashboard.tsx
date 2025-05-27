@@ -9,15 +9,15 @@ import { useState } from "react";
 import ClaimForm from "@/components/claims/tp/ClaimForm"; // Adjusted for default import
 import { ClaimListTp } from "@/components/claims/tp/ClaimListTp";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
-import { useDuspTpData } from "../hook/use-claim-data";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const TpClaimDashboard = () => {
   const userMetadata = useUserMetadata();
   const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
   const organizationId = parsedMetadata?.organization_id;
-  const { duspTpData, isLoading: duspTpLoading, error: duspTpError } = useDuspTpData();
 
-  const [showNewClaimForm, setShowNewClaimForm] = useState(false);
+  const navigate = useNavigate(); // Initialize useNavigate
+
   const { toast } = useToast();
 
   const { data: claimStats, isLoading } = useQuery({
@@ -44,18 +44,20 @@ const TpClaimDashboard = () => {
     },
   });
 
-
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-
           <h1 className="text-xl font-bold">Claim Management</h1>
-          <p className="text-muted-foreground mt-2">
-            Submit and track your claims
-          </p>
+          <p className="text-muted-foreground mt-2">Submit and track your claims</p>
         </div>
-        <Button onClick={() => setShowNewClaimForm(true)}>
+        {/* <pre>{JSON.stringify(profileData, null, 2)}</pre> */}
+
+        <Button
+          onClick={() =>
+            navigate("/claim/register")
+          }
+        >
           <Plus className="h-4 w-4 mr-2" />
           New Claim
         </Button>
@@ -68,9 +70,7 @@ const TpClaimDashboard = () => {
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "..." : claimStats?.drafted || 0}
-            </div>
+            <div className="text-2xl font-bold">{isLoading ? "..." : claimStats?.drafted || 0}</div>
           </CardContent>
         </Card>
 
@@ -80,9 +80,7 @@ const TpClaimDashboard = () => {
             <Send className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "..." : claimStats?.submitted || 0}
-            </div>
+            <div className="text-2xl font-bold">{isLoading ? "..." : claimStats?.submitted || 0}</div>
           </CardContent>
         </Card>
 
@@ -92,9 +90,7 @@ const TpClaimDashboard = () => {
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "..." : claimStats?.processing || 0}
-            </div>
+            <div className="text-2xl font-bold">{isLoading ? "..." : claimStats?.processing || 0}</div>
           </CardContent>
         </Card>
 
@@ -104,23 +100,12 @@ const TpClaimDashboard = () => {
             <CheckSquare className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {isLoading ? "..." : claimStats?.completed || 0}
-            </div>
+            <div className="text-2xl font-bold">{isLoading ? "..." : claimStats?.completed || 0}</div>
           </CardContent>
         </Card>
       </div>
 
-      {showNewClaimForm ? (
-        <ClaimForm
-          isOpen={showNewClaimForm}
-          onClose={() => setShowNewClaimForm(false)}
-          duspTpData={duspTpData}
-          organizationId={organizationId}
-        />
-      ) : (
-        <ClaimListTp />
-      )}
+      <ClaimListTp />
     </div>
   );
 };

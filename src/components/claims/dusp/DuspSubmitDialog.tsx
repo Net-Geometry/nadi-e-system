@@ -28,6 +28,8 @@ const DuspSubmitDialog: React.FC<DuspSubmitDialogProps> = ({ isOpen, onClose, cl
       // Invalidate the query to refresh the ClaimList
       queryClient.invalidateQueries({ queryKey: ["claimStats"] });
       queryClient.invalidateQueries({ queryKey: ["fetchClaimDUSP"] });
+      queryClient.invalidateQueries({ queryKey: ["fetchClaimById", claim.id] });
+
 
       onClose();
     } catch (error) {
