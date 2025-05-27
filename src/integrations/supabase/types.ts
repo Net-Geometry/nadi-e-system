@@ -9421,57 +9421,57 @@ export type Database = {
       }
       nd_vendor_contract: {
         Row: {
-          contract_end: string | null
-          contract_start: string | null
-          created_at: string | null
-          created_by: string | null
-          duration: number | null
-          id: number
-          is_active: boolean | null
-          registration_number: number | null
-          updated_at: string | null
-          updated_by: string | null
-          user_id: string | null
-          vendor_staff_id: number | null
-        }
+          contract_end: string | null;
+          contract_start: string | null;
+          created_at: string | null;
+          created_by: string | null;
+          duration: number | null;
+          id: number;
+          is_active: boolean | null;
+          registration_number: string | null;
+          updated_at: string | null;
+          updated_by: string | null;
+          user_id: string | null;
+          vendor_staff_id: number | null;
+        };
         Insert: {
-          contract_end?: string | null
-          contract_start?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          duration?: number | null
-          id?: number
-          is_active?: boolean | null
-          registration_number?: number | null
-          updated_at?: string | null
-          updated_by?: string | null
-          user_id?: string | null
-          vendor_staff_id?: number | null
-        }
+          contract_end?: string | null;
+          contract_start?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          duration?: number | null;
+          id?: number;
+          is_active?: boolean | null;
+          registration_number?: string | null;
+          updated_at?: string | null;
+          updated_by?: string | null;
+          user_id?: string | null;
+          vendor_staff_id?: number | null;
+        };
         Update: {
-          contract_end?: string | null
-          contract_start?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          duration?: number | null
-          id?: number
-          is_active?: boolean | null
-          registration_number?: number | null
-          updated_at?: string | null
-          updated_by?: string | null
-          user_id?: string | null
-          vendor_staff_id?: number | null
-        }
+          contract_end?: string | null;
+          contract_start?: string | null;
+          created_at?: string | null;
+          created_by?: string | null;
+          duration?: number | null;
+          id?: number;
+          is_active?: boolean | null;
+          registration_number?: string | null;
+          updated_at?: string | null;
+          updated_by?: string | null;
+          user_id?: string | null;
+          vendor_staff_id?: number | null;
+        };
         Relationships: [
           {
-            foreignKeyName: "nd_vendor_contract_registration_number_fkey"
-            columns: ["registration_number"]
-            isOneToOne: false
-            referencedRelation: "nd_vendor_profile"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
+            foreignKeyName: "nd_vendor_contract_registration_number_fkey";
+            columns: ["registration_number"];
+            isOneToOne: false;
+            referencedRelation: "nd_vendor_profile";
+            referencedColumns: ["registration_number"];
+          }
+        ];
+      };
       nd_vendor_profile: {
         Row: {
           bank_account_number: number | null
@@ -11075,6 +11075,10 @@ export type Database = {
       }
     }
     Functions: {
+      check_all_contract_statuses: {
+        Args: Record<PropertyKey, never>;
+        Returns: undefined;
+      };
       check_expired_closures_daily: {
         Args: Record<PropertyKey, never>
         Returns: undefined
