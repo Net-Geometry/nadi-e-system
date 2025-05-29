@@ -165,7 +165,7 @@ const ClaimFormPage = () => {
     } else {
       try {
         setLoading(true); // Start loading
-        // console.log("Data to be saved:", data);
+        console.log("Data to be saved:", data);
         await insertClaimData(data); // Call the insertClaimData function
         toast({
           title: "Success",
