@@ -4,6 +4,7 @@ import { MaintenanceStatus } from "@/types/maintenance";
 import { useSiteId, useTpManagerSiteId } from "../use-site-id";
 import { useSiteIdFromSiteProfile } from "../use-site-profile-site-id";
 import { useUserMetadata } from "../use-user-metadata";
+import { useVendorProfileId } from "../use-vendor";
 import { maintenanceClient } from "./maintenance-client";
 
 export const useMaintenanceQueries = () => {
@@ -34,6 +35,8 @@ export const useMaintenanceQueries = () => {
     site_id = siteIdTpManager;
   }
 
+  const vendorId = useVendorProfileId(isVendor);
+
   let statuses = [] as MaintenanceStatus[];
 
   if (isVendor) {
@@ -48,13 +51,15 @@ export const useMaintenanceQueries = () => {
         statuses,
         organizationId,
         site_id,
+        vendorId,
       ],
       queryFn: () =>
         maintenanceClient.fetchMaintenanceRequests(
           requestsType,
           statuses,
           organizationId,
-          site_id
+          site_id,
+          vendorId
         ),
     });
   const useMaintenanceTypesQuery = () =>

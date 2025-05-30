@@ -25,6 +25,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { fetchUserProfileNameById } from "@/hooks/auth/utils/profile-handler";
 import { toast } from "@/hooks/use-toast";
+import { useVendors } from "@/hooks/use-vendor";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -33,9 +34,10 @@ import {
   humanizeMaintenanceStatus,
   MaintenanceRequest,
   MaintenanceStatus,
-  MaintenanceUpdate,
+  MaintenanceUpdate
 } from "@/types/maintenance";
 import { format } from "date-fns";
+
 import { CalendarDays, CalendarIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
@@ -46,6 +48,10 @@ import {
   getMaintenanceStatusIcon,
   getSLACategoryClass,
 } from "./MaintenanceStatusBadge";
+
+import "@/fonts/Verdana-normal.js";
+import "@/fonts/VerdanaBd-bold.js";
+import GenerateMaintenanceReportCM from "./report/GenerateMaintenanceReportCM";
 
 export interface ViewMaintenanceDetailsDialogProps {
   open: boolean;
@@ -65,6 +71,8 @@ export const ViewMaintenanceDetailsDialog = ({
     const attachmenUrl = new URL(maintenanceRequest?.attachment);
     attachmentFileName = attachmenUrl.pathname.split("/").pop();
   }
+
+  const { user } = useAuth();
 
   /**
    * CM process flow
@@ -110,6 +118,10 @@ export const ViewMaintenanceDetailsDialog = ({
     userMetadata?.user_group_name == "TP" &&
     maintenanceRequest?.status == MaintenanceStatus.InProgress;
 
+  const isCompleted =
+    userMetadata?.user_group_name == "TP" &&
+    maintenanceRequest?.status == MaintenanceStatus.Completed;
+
   const [activeTab, setActiveTab] = useState("details");
 
   const [requestedByName, setRequestedByName] = useState("N/A");
@@ -142,11 +154,20 @@ export const ViewMaintenanceDetailsDialog = ({
 
       setIsSubmitting(true);
 
+      const logs = maintenanceRequest?.logs || [];
+      logs.push({
+        description: "Approved by DUSP",
+        status: MaintenanceStatus.Approved,
+        created_at: new Date().toISOString(),
+        created_by: user?.id,
+      });
+
       try {
         const { error: updateError } = await supabase
           .from("nd_maintenance_request")
           .update({
             status: MaintenanceStatus.Approved,
+            logs: logs,
             updated_at: new Date().toISOString(),
           })
           .eq("id", maintenanceRequest.id);
@@ -224,12 +245,21 @@ export const ViewMaintenanceDetailsDialog = ({
 
       setIsSubmitting(true);
 
+      const logs = maintenanceRequest?.logs || [];
+      logs.push({
+        description: "SLA updated",
+        status: maintenanceRequest?.status,
+        created_at: new Date().toISOString(),
+        created_by: user?.id,
+      });
+
       try {
         const { error: updateError } = await supabase
           .from("nd_maintenance_request")
           .update({
             sla_id: sla,
             maintenance_date: estimatedCompletionDate,
+            logs: logs,
             updated_at: new Date().toISOString(),
           })
           .eq("id", maintenanceRequest.id);
@@ -303,16 +333,11 @@ export const ViewMaintenanceDetailsDialog = ({
   function UpdateVendor() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const vendors = [
-      {
-        id: 1,
-        name: "Vendor 1",
-      },
-      {
-        id: 2,
-        name: "Vendor 2",
-      },
-    ];
+    const {
+      data: vendors,
+      loading: isVendorLoading,
+      error: vendorError,
+    } = useVendors();
 
     const handleUpdateVendor = async (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
@@ -322,12 +347,21 @@ export const ViewMaintenanceDetailsDialog = ({
       const formData = new FormData(e.currentTarget);
       const selectedVendor = formData.get("vendor");
 
+      const logs = maintenanceRequest?.logs || [];
+      logs.push({
+        description: "Vendor is assigned",
+        status: MaintenanceStatus.Issued,
+        created_at: new Date().toISOString(),
+        created_by: user?.id,
+      });
+
       try {
         const { error: updateError } = await supabase
           .from("nd_maintenance_request")
           .update({
-            // vendor_id: Number(selectedSLA),
+            vendor_id: Number(selectedVendor),
             status: MaintenanceStatus.Issued,
+            logs: logs,
             updates: null,
             updated_at: new Date().toISOString(),
           })
@@ -356,16 +390,17 @@ export const ViewMaintenanceDetailsDialog = ({
       <form className="space-y-4" onSubmit={handleUpdateVendor}>
         <div className="space-y-2">
           <Label className="text-sm font-medium text-gray-500">Vendor</Label>
-          <Select name="vendor" required>
+          <Select name="vendor" required disabled={isVendorLoading}>
             <SelectTrigger>
               <SelectValue placeholder="Select Vendor" />
             </SelectTrigger>
             <SelectContent>
-              {vendors.map((type, index) => (
-                <SelectItem key={index} value={type.id.toString()}>
-                  {type?.name}
-                </SelectItem>
-              ))}
+              {vendors &&
+                vendors.map((vendor) => (
+                  <SelectItem key={vendor.id} value={vendor.id.toString()}>
+                    {vendor.business_name}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
         </div>
@@ -378,11 +413,23 @@ export const ViewMaintenanceDetailsDialog = ({
 
   function VendorApproval() {
     const handleUpdateStatus = async (status: MaintenanceStatus) => {
+      const logs = maintenanceRequest?.logs || [];
+      logs.push({
+        description:
+          status === MaintenanceStatus.InProgress
+            ? "Vendor accept the request"
+            : "Vendor reject the request",
+        status: status,
+        created_at: new Date().toISOString(),
+        created_by: user?.id,
+      });
+
       try {
         const { error: updateError } = await supabase
           .from("nd_maintenance_request")
           .update({
             status: status,
+            logs: logs,
             updated_at: new Date().toISOString(),
           })
           .eq("id", maintenanceRequest.id);
@@ -429,7 +476,6 @@ export const ViewMaintenanceDetailsDialog = ({
   function VendorProgressUpdate() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { user } = useAuth();
     const [status, setStatus] = useState(null);
 
     const {
@@ -497,6 +543,19 @@ export const ViewMaintenanceDetailsDialog = ({
           status: MaintenanceStatus.Deffered,
         };
       }
+
+      const logs = maintenanceRequest?.logs || [];
+      logs.push({
+        description: "Progress Update",
+        status: MaintenanceStatus.InProgress,
+        created_at: new Date().toISOString(),
+        created_by: user?.id,
+      });
+
+      data = {
+        ...data,
+        logs: logs,
+      };
 
       try {
         const { error: updateError } = await supabase
@@ -574,6 +633,17 @@ export const ViewMaintenanceDetailsDialog = ({
       if (status === MaintenanceStatus.Submitted) {
         data.updates = null;
       }
+
+      const logs = maintenanceRequest?.logs || [];
+      logs.push({
+        description: "Deffered Request",
+        status: MaintenanceStatus.Approved,
+        created_at: new Date().toISOString(),
+        created_by: user?.id,
+      });
+
+      data.logs = logs;
+
       try {
         const { error: updateError } = await supabase
           .from("nd_maintenance_request")
@@ -621,10 +691,22 @@ export const ViewMaintenanceDetailsDialog = ({
   function TPCloseRequest() {
     const handleUpdateStatus = async (status: MaintenanceStatus) => {
       try {
+        const logs = maintenanceRequest?.logs || [];
+        logs.push({
+          description:
+            status === MaintenanceStatus.Completed
+              ? "TP close the request"
+              : "TP reject the completion",
+          status: status,
+          created_at: new Date().toISOString(),
+          created_by: user?.id,
+        });
+
         const { error: updateError } = await supabase
           .from("nd_maintenance_request")
           .update({
             status: status,
+            logs: logs,
             updated_at: new Date().toISOString(),
           })
           .eq("id", maintenanceRequest.id);
@@ -673,6 +755,14 @@ export const ViewMaintenanceDetailsDialog = ({
         >
           Reject Completion
         </Button>
+      </div>
+    );
+  }
+
+  function TPGenerateReport() {
+    return (
+      <div className="flex justify-center items-center gap-4">
+        <GenerateMaintenanceReportCM maintenanceRequest={maintenanceRequest} />
       </div>
     );
   }
@@ -754,6 +844,15 @@ export const ViewMaintenanceDetailsDialog = ({
 
               <div>
                 <Label className="text-sm font-medium text-gray-500">
+                  Vendor
+                </Label>
+                <div className="mt-1">
+                  {maintenanceRequest?.vendor?.business_name || "Not assigned"}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-500">
                   Requested By
                 </Label>
                 <div className="mt-1">{requestedByName}</div>
@@ -810,49 +909,85 @@ export const ViewMaintenanceDetailsDialog = ({
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4">
-            <Label className="text-sm font-medium text-gray-500">
-              Updates History
-            </Label>
-            {maintenanceRequest?.updates ? (
-              <div>
-                {maintenanceRequest.updates.map((update, index) => {
-                  let attachmentFileName: string | null = null;
+            <div>
+              <Label className="text-sm font-medium text-gray-500">
+                Updates History
+              </Label>
+              {maintenanceRequest?.updates ? (
+                <div className="mt-1">
+                  {maintenanceRequest.updates.map((update, index) => {
+                    let attachmentFileName: string | null = null;
 
-                  if (update.attachment) {
-                    try {
-                      const attachmentUrl = new URL(update.attachment);
-                      attachmentFileName =
-                        attachmentUrl.pathname.split("/").pop() || null;
-                    } catch (e) {
-                      console.error("Invalid attachment URL", e);
+                    if (update.attachment) {
+                      try {
+                        const attachmentUrl = new URL(update.attachment);
+                        attachmentFileName =
+                          attachmentUrl.pathname.split("/").pop() || null;
+                      } catch (e) {
+                        console.error("Invalid attachment URL", e);
+                      }
                     }
-                  }
 
-                  return (
+                    return (
+                      <div
+                        className="bg-gray-100 border-2 border-gray-300 py-2 px-4 mb-2"
+                        key={index}
+                      >
+                        <p className="mb-2">{update.description}</p>
+                        <p className="text-xs">
+                          {format(update.created_at, "dd/MM/yyyy h:mm a")}
+                        </p>
+                        {attachmentFileName && (
+                          <Link
+                            to={update.attachment}
+                            target="_blank"
+                            className="text-blue-500 hover:underline text-xs"
+                          >
+                            {attachmentFileName}
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p>No updates</p>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Logs</Label>
+              {maintenanceRequest?.logs ? (
+                <div className="mt-1">
+                  {maintenanceRequest.logs.map((log, index) => (
                     <div
-                      className="bg-gray-100 border-2 border-gray-300 p-2 mb-2"
+                      className="flex flex-row justify-between bg-gray-100 border-2 border-gray-300 py-2 px-4 mb-2"
                       key={index}
                     >
-                      <p className="mb-2">{update.description}</p>
-                      <p className="text-xs">
-                        {format(update.created_at, "dd/MM/yyyy h:mm a")}
-                      </p>
-                      {attachmentFileName && (
-                        <Link
-                          to={update.attachment}
-                          target="_blank"
-                          className="text-blue-500 hover:underline text-xs"
+                      <div>
+                        <p className="mb-2">{log.description}</p>
+                        <p className="text-xs">
+                          {format(log.created_at, "dd/MM/yyyy h:mm a")}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <Badge
+                          className={getMaintenanceStatusClass(
+                            getMaintenanceStatus(log.status)
+                          )}
                         >
-                          {attachmentFileName}
-                        </Link>
-                      )}
+                          {log.status
+                            ? humanizeMaintenanceStatus(log.status)
+                            : "No status"}
+                        </Badge>
+                      </div>
                     </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <p>No updates</p>
-            )}
+                  ))}
+                </div>
+              ) : (
+                <p>No logs</p>
+              )}
+            </div>
 
             {isVendorProgressUpdate && <VendorProgressUpdate />}
           </TabsContent>
@@ -862,6 +997,7 @@ export const ViewMaintenanceDetailsDialog = ({
         {isDefferedFlow && <ProcessDefferedRequest />}
         {isVendorApproval && <VendorApproval />}
         {isTPCloseRequest && <TPCloseRequest />}
+        {isCompleted && <TPGenerateReport />}
       </DialogContent>
     </Dialog>
   );

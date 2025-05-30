@@ -1,4 +1,5 @@
 import { Asset } from "@/types/asset";
+import { Vendor } from "./vendor";
 
 export interface MaintenanceRequest {
   id: number;
@@ -8,6 +9,7 @@ export interface MaintenanceRequest {
   asset?: Asset;
   type_id?: number;
   type?: TypeMaintenance;
+  docket_type?: "cm" | "pm";
   sla_id?: number;
   sla: SLACategories;
   status: MaintenanceStatus;
@@ -16,7 +18,10 @@ export interface MaintenanceRequest {
   updates?: MaintenanceUpdate[];
   maintenance_date?: string;
   priority_type_id?: number;
-  frequency?: number;
+  logs?: MaintenanceLogs[];
+  vendor_id?: number;
+  vendor?: Vendor;
+  frequency?: MaintenanceFrequency;
   created_at?: string;
   updated_at?: string;
   created_by?: string;
@@ -26,6 +31,13 @@ export interface MaintenanceRequest {
 export interface MaintenanceUpdate {
   description: string;
   attachment?: string;
+  created_at?: string;
+  created_by?: string;
+}
+
+export interface MaintenanceLogs {
+  description: string;
+  status: MaintenanceStatus;
   created_at?: string;
   created_by?: string;
 }
@@ -116,4 +128,43 @@ export const getSLACategoryColor = (category: string): string => {
     case "Low":
       return "bg-green-100 text-green-800 hover:bg-green-200";
   }
+};
+
+export enum MaintenanceFrequency {
+  Weekly = "weekly",
+  Monthly = "monthly",
+  Yearly = "yearly",
+}
+
+export const humanizeMaintenanceFrequency = (frequency: string) => {
+  switch (frequency) {
+    case "weekly":
+      return "Weekly";
+    case "monthly":
+      return "Monthly";
+    case "yearly":
+      return "Yearly";
+    default:
+      return "Unknown frequency";
+  }
+};
+
+export const calculateNewDateByFrequency = (
+  date: string,
+  frequency
+): string => {
+  const newDate = new Date(date);
+
+  switch (frequency) {
+    case "weekly":
+      newDate.setDate(newDate.getDate() + 7);
+      break;
+    case "monthly":
+      newDate.setMonth(newDate.getMonth() + 1);
+      break;
+    case "yearly":
+      newDate.setFullYear(newDate.getFullYear() + 1);
+      break;
+  }
+  return newDate.toISOString().split("T")[0];
 };

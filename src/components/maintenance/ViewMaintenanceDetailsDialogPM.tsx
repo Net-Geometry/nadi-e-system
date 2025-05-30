@@ -21,13 +21,17 @@ import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import {
+  calculateNewDateByFrequency,
   getMaintenanceStatus,
+  humanizeMaintenanceFrequency,
   humanizeMaintenanceStatus,
+  MaintenanceDocketType,
   MaintenanceRequest,
   MaintenanceStatus,
   MaintenanceUpdate,
 } from "@/types/maintenance";
 import { format } from "date-fns";
+import { CalendarDays } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { AttachmentUploadField } from "./AttachmentUploadField";
@@ -36,6 +40,8 @@ import {
   getMaintenanceStatusClass,
   getMaintenanceStatusIcon,
 } from "./MaintenanceStatusBadge";
+import GenerateMaintenanceReportPM from "./report/GenerateMaintenanceReportPM";
+import { generateDocketNumber } from "./report/utils";
 
 export interface ViewMaintenanceDetailsDialogPMProps {
   open: boolean;
@@ -56,6 +62,8 @@ export const ViewMaintenanceDetailsDialogPM = ({
     attachmentFileName = attachmenUrl.pathname.split("/").pop();
   }
 
+  const { user } = useAuth();
+
   const isVendorAssigned =
     userMetadata?.user_group_name == "TP" &&
     (maintenanceRequest?.status == null ||
@@ -73,6 +81,10 @@ export const ViewMaintenanceDetailsDialogPM = ({
   const isTPCloseRequest =
     userMetadata?.user_group_name == "TP" &&
     maintenanceRequest?.status == MaintenanceStatus.InProgress;
+
+  const isCompleted =
+    userMetadata?.user_group_name == "TP" &&
+    maintenanceRequest?.status == MaintenanceStatus.Completed;
 
   const [activeTab, setActiveTab] = useState("details");
 
@@ -205,7 +217,6 @@ export const ViewMaintenanceDetailsDialogPM = ({
   function VendorProgressUpdate() {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const { user } = useAuth();
     const [status, setStatus] = useState(null);
 
     const {
@@ -273,6 +284,19 @@ export const ViewMaintenanceDetailsDialogPM = ({
           status: MaintenanceStatus.Deffered,
         };
       }
+
+      const logs = maintenanceRequest?.logs || [];
+      logs.push({
+        description: "Progress Update",
+        status: MaintenanceStatus.InProgress,
+        created_at: new Date().toISOString(),
+        created_by: user?.id,
+      });
+
+      data = {
+        ...data,
+        logs: logs,
+      };
 
       try {
         const { error: updateError } = await supabase
@@ -343,15 +367,70 @@ export const ViewMaintenanceDetailsDialogPM = ({
   function TPCloseRequest() {
     const handleUpdateStatus = async (status: MaintenanceStatus) => {
       try {
+        const logs = maintenanceRequest?.logs || [];
+        logs.push({
+          description:
+            status === MaintenanceStatus.Completed
+              ? "TP close the request"
+              : "TP reject the completion",
+          status: status,
+          created_at: new Date().toISOString(),
+          created_by: user?.id,
+        });
+
         const { error: updateError } = await supabase
           .from("nd_maintenance_request")
           .update({
             status: status,
+            logs: logs,
             updated_at: new Date().toISOString(),
           })
           .eq("id", maintenanceRequest.id);
 
         if (updateError) throw updateError;
+
+        // create a new PM request based on frequency
+        if (
+          status === MaintenanceStatus.Completed &&
+          maintenanceRequest?.frequency
+        ) {
+          const now = new Date();
+          const docketNumber = generateDocketNumber(
+            MaintenanceDocketType.Preventive,
+            now,
+            undefined,
+            maintenanceRequest.type_id
+          );
+
+          const newMaintenanceDate = calculateNewDateByFrequency(
+            maintenanceRequest.maintenance_date,
+            maintenanceRequest.frequency
+          );
+
+          const newPMRequest: Partial<MaintenanceRequest> = {
+            no_docket: docketNumber,
+            description: maintenanceRequest.description,
+            type_id: maintenanceRequest.type_id,
+            asset_id: maintenanceRequest.asset_id,
+            frequency: maintenanceRequest.frequency,
+            requester_by: maintenanceRequest.requester_by,
+            vendor_id: maintenanceRequest.vendor_id,
+            maintenance_date: newMaintenanceDate,
+            status: MaintenanceStatus.Issued,
+          };
+
+          const { error: createPMRequestError } = await supabase
+            .from("nd_maintenance_request")
+            .insert({
+              ...newPMRequest,
+              created_at: now.toISOString(),
+              updated_at: now.toISOString(),
+            });
+
+          if (createPMRequestError) {
+            throw createPMRequestError;
+          }
+        }
 
         toast({
           title: "Maintenance Request updated successfully",
@@ -386,6 +465,14 @@ export const ViewMaintenanceDetailsDialogPM = ({
         >
           Reject Completion
         </Button>
+      </div>
+    );
+  }
+
+  function TPGenerateReport() {
+    return (
+      <div className="flex justify-center items-center gap-4">
+        <GenerateMaintenanceReportPM maintenanceRequest={maintenanceRequest} />
       </div>
     );
   }
@@ -445,16 +532,29 @@ export const ViewMaintenanceDetailsDialogPM = ({
 
               <div>
                 <Label className="text-sm font-medium text-gray-500">
+                  {maintenanceRequest?.maintenance_date
+                    ? "Estimated Completion"
+                    : "No Estimated Date"}
+                </Label>
+                <div className="mt-1 flex items-center">
+                  {maintenanceRequest?.maintenance_date && (
+                    <>
+                      <CalendarDays className="h-4 w-4 text-gray-400 mr-2" />
+                      {format(
+                        maintenanceRequest?.maintenance_date,
+                        "dd/MM/yyyy"
+                      )}
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div>
+                <Label className="text-sm font-medium text-gray-500">
                   Frequency
                 </Label>
                 <div className="mt-1">
-                  {maintenanceRequest?.frequency === 0
-                    ? "Weekly"
-                    : maintenanceRequest?.frequency === 1
-                    ? "Monthly"
-                    : maintenanceRequest?.frequency === 2
-                    ? "Yearly"
-                    : "N/A"}
+                  {humanizeMaintenanceFrequency(maintenanceRequest?.frequency)}
                 </div>
               </div>
 
@@ -471,51 +571,94 @@ export const ViewMaintenanceDetailsDialogPM = ({
             {isVendorAssigned && <UpdateVendor />}
             {isVendorApproval && <VendorApproval />}
           </TabsContent>
+
           <TabsContent value="history" className="space-y-4">
-            <Label className="text-sm font-medium text-gray-500">
-              Updates History
-            </Label>
-            {maintenanceRequest?.updates &&
-              maintenanceRequest.updates.map((update, index) => {
-                let attachmentFileName: string | null = null;
+            <div>
+              <Label className="text-sm font-medium text-gray-500">
+                Updates History
+              </Label>
+              {maintenanceRequest?.updates ? (
+                <div className="mt-1">
+                  {maintenanceRequest.updates.map((update, index) => {
+                    let attachmentFileName: string | null = null;
 
-                if (update.attachment) {
-                  try {
-                    const attachmentUrl = new URL(update.attachment);
-                    attachmentFileName =
-                      attachmentUrl.pathname.split("/").pop() || null;
-                  } catch (e) {
-                    console.error("Invalid attachment URL", e);
-                  }
-                }
+                    if (update.attachment) {
+                      try {
+                        const attachmentUrl = new URL(update.attachment);
+                        attachmentFileName =
+                          attachmentUrl.pathname.split("/").pop() || null;
+                      } catch (e) {
+                        console.error("Invalid attachment URL", e);
+                      }
+                    }
 
-                return (
-                  <div
-                    className="bg-gray-100 border-2 border-gray-300 p-2 mb-2"
-                    key={index}
-                  >
-                    <p className="mb-2">{update.description}</p>
-                    <p className="text-xs">
-                      {format(update.created_at, "dd-MM-yyyy")}
-                    </p>
-                    {attachmentFileName && (
-                      <Link
-                        to={update.attachment}
-                        target="_blank"
-                        className="text-blue-500 hover:underline text-xs"
+                    return (
+                      <div
+                        className="bg-gray-100 border-2 border-gray-300 p-2 mb-2"
+                        key={index}
                       >
-                        {attachmentFileName}
-                      </Link>
-                    )}
-                  </div>
-                );
-              })}
+                        <p className="mb-2">{update.description}</p>
+                        <p className="text-xs">
+                          {format(update.created_at, "dd-MM-yyyy")}
+                        </p>
+                        {attachmentFileName && (
+                          <Link
+                            to={update.attachment}
+                            target="_blank"
+                            className="text-blue-500 hover:underline text-xs"
+                          >
+                            {attachmentFileName}
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p>No updates</p>
+              )}
+            </div>
+
+            <div>
+              <Label className="text-sm font-medium text-gray-500">Logs</Label>
+              {maintenanceRequest?.logs ? (
+                <div className="mt-1">
+                  {maintenanceRequest.logs.map((log, index) => (
+                    <div
+                      className="flex flex-row justify-between bg-gray-100 border-2 border-gray-300 py-2 px-4 mb-2"
+                      key={index}
+                    >
+                      <div>
+                        <p className="mb-2">{log.description}</p>
+                        <p className="text-xs">
+                          {format(log.created_at, "dd/MM/yyyy h:mm a")}
+                        </p>
+                      </div>
+                      <div className="flex items-center">
+                        <Badge
+                          className={getMaintenanceStatusClass(
+                            getMaintenanceStatus(log.status)
+                          )}
+                        >
+                          {log.status
+                            ? humanizeMaintenanceStatus(log.status)
+                            : "No status"}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p>No logs</p>
+              )}
+            </div>
 
             {isVendorProgressUpdate && <VendorProgressUpdate />}
           </TabsContent>
         </Tabs>
 
         {isTPCloseRequest && <TPCloseRequest />}
+        {isCompleted && <TPGenerateReport />}
       </DialogContent>
     </Dialog>
   );

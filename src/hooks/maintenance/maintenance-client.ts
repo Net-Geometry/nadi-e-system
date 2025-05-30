@@ -12,19 +12,21 @@ export const maintenanceClient = {
     type?: string,
     statuses?: MaintenanceStatus[],
     organizationId?: string | null,
-    siteId?: string | null
+    siteId?: string | null,
+    vendorId?: number | null
   ): Promise<MaintenanceRequest[]> => {
     let query = supabase
       .from("nd_maintenance_request")
       .select(
         `*,
-      nd_type_maintenance ( id, name ),
-      sla:nd_sla_categories ( id, name, min_day, max_day ),
-      asset:nd_asset (
-        id,
-        name,
-        site_id
-      )`
+        nd_type_maintenance ( id, name ),
+        sla:nd_sla_categories ( id, name, min_day, max_day ),
+        asset:nd_asset (
+          id,
+          name,
+          site_id
+        ),
+        vendor:nd_vendor_profile ( id, business_name, registration_number, business_type, phone_number )`
       )
       .order("updated_at", { ascending: false });
 
@@ -48,6 +50,10 @@ export const maintenanceClient = {
       query = query.eq("nd_asset.site_id", siteId);
     }
 
+    if (vendorId) {
+      query = query.eq("vendor_id", vendorId);
+    }
+
     const { data, error } = await query;
 
     if (error) {
@@ -58,21 +64,21 @@ export const maintenanceClient = {
       data
         .filter((item) => item.asset && item.asset.site_id)
         .map(async (item) => {
-          if (type === "cm") {
-            const profile = await fetchSiteBySiteId(item.asset.site_id);
-            item.asset.site = profile;
-            return {
-              ...item,
-              type: item.nd_type_maintenance,
-              sla: item.sla,
-              asset: item.asset,
-            };
-          } else {
-            return {
-              ...item,
-              type: item.nd_type_maintenance,
-            };
+          const profile = await fetchSiteBySiteId(item.asset.site_id);
+          item.asset.site = profile;
+
+          if (item.no_docket && item.no_docket.startsWith("1")) {
+            item.docket_type = "cm";
+          } else if (item.no_docket && item.no_docket.startsWith("2")) {
+            item.docket_type = "pm";
           }
+
+          return {
+            ...item,
+            type: item.nd_type_maintenance,
+            sla: item.sla,
+            asset: item.asset,
+          };
         })
     );
 
@@ -91,7 +97,8 @@ export const maintenanceClient = {
           id,
           name,
           site_id
-        )`
+        ),
+        vendor:nd_vendor_profile ( id, business_name, registration_number, business_type, phone_number )`
       )
       .eq("id", id)
       .single();

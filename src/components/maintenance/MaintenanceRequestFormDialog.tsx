@@ -18,17 +18,23 @@ import { useAssets } from "@/hooks/use-assets";
 import { useMaintenance } from "@/hooks/use-maintenance";
 import { useToast } from "@/hooks/use-toast";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
+import { useVendors } from "@/hooks/use-vendor";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import { Asset } from "@/types/asset";
 import { MaintenanceDocketType, MaintenanceStatus } from "@/types/maintenance";
-import { Search, X } from "lucide-react";
+import { format } from "date-fns";
+import { CalendarIcon, Search, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
+import { Calendar } from "../ui/calendar";
 import { Input } from "../ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Textarea } from "../ui/textarea";
 import { AttachmentUploadField } from "./AttachmentUploadField";
 import { useAttachment } from "./hooks/use-attachment";
+import { generateDocketNumber } from "./report/utils";
 
 export interface MaintenanceRequestFormDialogProps {
   open: boolean;
@@ -56,22 +62,20 @@ export const MaintenanceRequestFormDialog = ({
   >("");
   const [description, setDescription] = useState("");
 
+  const [estimatedCompletionDate, setEstimatedCompletionDate] =
+    useState<Date | null>(null);
+
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [assetsFilter, setAssetsFilter] = useState("");
   const { useAssetsByNameQuery } = useAssets();
   const { data: assets = [], isLoading: isLoadingAssets } =
     useAssetsByNameQuery(assetsFilter, true); // get only active assets
 
-  const vendors = [
-    {
-      id: 1,
-      name: "Vendor 1",
-    },
-    {
-      id: 2,
-      name: "Vendor 2",
-    },
-  ];
+  const {
+    data: vendors,
+    loading: isVendorLoading,
+    error: vendorError,
+  } = useVendors();
 
   const {
     attachmentFile,
@@ -95,34 +99,6 @@ export const MaintenanceRequestFormDialog = ({
 
   const { data: maintenanceTypes = [], isLoading: isLoadingMaintenanceTypes } =
     useMaintenanceTypesQuery();
-
-  const generateDocketNumber = (now: Date, formData: FormData) => {
-    /**
-     * Docket number generation
-     * Format: XYYYYMMDDHHMMSSTT
-     *
-     * X: 1 -> cm, 2 -> pm
-     * YYYY: year
-     * MM: month
-     * DD: day
-     * HH: hour
-     * MM: minute
-     * SS: second
-     * TT: type_id
-     */
-
-    const docketNumber =
-      (maintenanceDocketType === MaintenanceDocketType.Corrective ? "1" : "2") +
-      now.getFullYear() +
-      ("0" + (now.getMonth() + 1)).slice(-2) +
-      ("0" + now.getDate()).slice(-2) +
-      ("0" + now.getHours()).slice(-2) +
-      ("0" + now.getMinutes()).slice(-2) +
-      ("0" + now.getSeconds()).slice(-2) +
-      ("0" + Number(formData.get("maintenanceType") ?? "")).slice(-2);
-
-    return docketNumber;
-  };
 
   const handleSubmitCM = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -168,7 +144,11 @@ export const MaintenanceRequestFormDialog = ({
     }
 
     const now = new Date();
-    const docketNumber = generateDocketNumber(now, formData);
+    const docketNumber = generateDocketNumber(
+      MaintenanceDocketType.Corrective,
+      now,
+      formData
+    );
 
     const request = {
       no_docket: docketNumber,
@@ -222,12 +202,17 @@ export const MaintenanceRequestFormDialog = ({
   const handleSubmitPM = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    const formData = new FormData(e.currentTarget);
-
     setIsSubmitting(true);
 
+    const formData = new FormData(e.currentTarget);
+    const selectedVendor = formData.get("vendor");
+
     const now = new Date();
-    const docketNumber = generateDocketNumber(now, formData);
+    const docketNumber = generateDocketNumber(
+      MaintenanceDocketType.Preventive,
+      now,
+      formData
+    );
 
     const request = {
       no_docket: docketNumber,
@@ -236,6 +221,9 @@ export const MaintenanceRequestFormDialog = ({
       asset_id: selectedAsset?.id as number,
       frequency: Number(formData.get("frequency")),
       requester_by: user.id,
+      vendor_id: Number(selectedVendor),
+      maintenance_date: estimatedCompletionDate,
+      status: MaintenanceStatus.Issued,
     };
 
     try {
@@ -278,7 +266,6 @@ export const MaintenanceRequestFormDialog = ({
       }}
     >
       <p className="font-semibold text-sm">{asset.name}</p>
-      <p className="text-sm text-muted-foreground">{asset.id}</p>
     </div>
   );
 
@@ -538,17 +525,62 @@ export const MaintenanceRequestFormDialog = ({
                 </div>
 
                 <div className="space-y-2">
+                  <Label className="text-sm font-medium text-gray-500">
+                    Estimated Completion Date
+                  </Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant={"outline"}
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !estimatedCompletionDate && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {estimatedCompletionDate ? (
+                          format(estimatedCompletionDate, "PPP")
+                        ) : (
+                          <span>Pick a date</span>
+                        )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent
+                      className="w-auto p-0 bg-white shadow-md border"
+                      align="start"
+                    >
+                      <Calendar
+                        mode="single"
+                        selected={estimatedCompletionDate}
+                        onSelect={(date) => {
+                          setEstimatedCompletionDate(date);
+                        }}
+                        initialFocus
+                        className="pointer-events-auto"
+                        disabled={(date) =>
+                          date <= new Date(new Date().setHours(0, 0, 0, 0))
+                        } // disable dates before today
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                <div className="space-y-2">
                   <Label htmlFor="vendor">Vendor</Label>
                   <Select name="vendor" required>
                     <SelectTrigger>
                       <SelectValue placeholder="Select Vendor" />
                     </SelectTrigger>
                     <SelectContent>
-                      {vendors.map((type, index) => (
-                        <SelectItem key={index} value={type.id.toString()}>
-                          {type?.name}
-                        </SelectItem>
-                      ))}
+                      {!isVendorLoading &&
+                        vendors.map((vendor) => (
+                          <SelectItem
+                            key={vendor.id}
+                            value={vendor.id.toString()}
+                          >
+                            {vendor.business_name}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>

@@ -232,16 +232,13 @@ export const MaintenanceList = ({
               <TableRow>
                 <TableHead>No.</TableHead>
                 <TableHead>Docket No.</TableHead>
+                <TableHead>Docket Type</TableHead>
                 <TableHead>Type</TableHead>
                 {!isStaffUser && !isTpSiteUser && (
                   <TableHead>TP Site</TableHead>
                 )}
-                {type === "cm" && (
-                  <>
-                    <TableHead>SLA</TableHead>
-                    <TableHead>Estimate Date</TableHead>
-                  </>
-                )}
+                <TableHead>SLA</TableHead>
+                <TableHead>Estimate Date</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Last Action</TableHead>
                 <TableHead>Actions</TableHead>
@@ -287,16 +284,15 @@ export const MaintenanceList = ({
               <TableRow>
                 <TableHead>No.</TableHead>
                 <TableHead>Docket No.</TableHead>
+                <TableHead>Docket Type</TableHead>
                 <TableHead>Type</TableHead>
                 {!isStaffUser && !isTpSiteUser && (
                   <TableHead>TP Site</TableHead>
                 )}
-                {type === "cm" && (
-                  <>
-                    <TableHead>SLA</TableHead>
-                    <TableHead>Estimate Date</TableHead>
-                  </>
-                )}
+
+                <TableHead>SLA</TableHead>
+                <TableHead>Estimate Date</TableHead>
+
                 <TableHead>Status</TableHead>
                 <TableHead>Last Action</TableHead>
                 <TableHead>Actions</TableHead>
@@ -313,6 +309,12 @@ export const MaintenanceList = ({
                         </TableCell>
                         <TableCell>{maintenanceRequest?.no_docket}</TableCell>
                         <TableCell>
+                          {maintenanceRequest?.docket_type &&
+                          maintenanceRequest?.docket_type === "cm"
+                            ? "Comprehensive Maintenance"
+                            : "Preventive Maintenance"}
+                        </TableCell>
+                        <TableCell>
                           {maintenanceRequest?.type?.name || ""}
                         </TableCell>
                         {!isStaffUser && !isTpSiteUser && (
@@ -320,28 +322,24 @@ export const MaintenanceList = ({
                             {maintenanceRequest?.asset?.site?.sitename || ""}
                           </TableCell>
                         )}
-                        {type === "cm" && (
-                          <>
-                            <TableCell>
-                              <Badge
-                                className={getSLACategoryClass(
-                                  maintenanceRequest?.sla
-                                )}
-                              >
-                                {maintenanceRequest?.sla?.name || "Not set"}{" "}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {(maintenanceRequest?.maintenance_date &&
-                                format(
-                                  maintenanceRequest?.maintenance_date,
-                                  "dd/MM/yyyy"
-                                )) ||
-                                "Not set"}
-                            </TableCell>
-                          </>
-                        )}
+                        <TableCell className="whitespace-nowrap">
+                          <Badge
+                            className={getSLACategoryClass(
+                              maintenanceRequest?.sla
+                            )}
+                          >
+                            {maintenanceRequest?.sla?.name || "Not set"}
+                          </Badge>
+                        </TableCell>
                         <TableCell>
+                          {(maintenanceRequest?.maintenance_date &&
+                            format(
+                              maintenanceRequest?.maintenance_date,
+                              "dd/MM/yyyy"
+                            )) ||
+                            "Not set"}
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap">
                           <div className="flex items-center space-x-2">
                             <div>
                               {getMaintenanceStatusIcon(
@@ -376,7 +374,7 @@ export const MaintenanceList = ({
                             title="View Details"
                             onClick={() => {
                               setSelectedItem(maintenanceRequest);
-                              if (type === "cm") {
+                              if (maintenanceRequest?.docket_type === "cm") {
                                 setIsViewDetailsDialogCMOpen(true);
                               } else {
                                 setIsViewDetailsDialogPMOpen(true);
