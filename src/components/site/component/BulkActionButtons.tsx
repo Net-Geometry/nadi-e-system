@@ -43,18 +43,20 @@ interface BulkActionButtonsProps {
         action?: () => void
     }[],
     className?: string,
-    useHeader?: boolean
+    useHeader?: boolean,
+    classNameForHeader?: string
 }
 
 export const BulkActionButtons = ({
     buttonsData = initialButtons,
     className,
-    useHeader = true
+    useHeader = true,
+    classNameForHeader
 }: BulkActionButtonsProps) => {
     return (
         <div className={`flex flex-col ${useHeader ? "my-5" : ""}`}>
             {useHeader &&
-                <h1 className="text-2xl font-semibold">Bulk Action</h1>
+                <h1 className={cn("text-2xl font-semibold", classNameForHeader)}>Bulk Action</h1>
             }
             <div className={cn("flex items-center justify-between gap-4 mt-4", className)}>
                 {buttonsData.map((button) => (

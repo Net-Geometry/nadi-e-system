@@ -272,19 +272,24 @@ export const bookingClient = {
     },
 
     getAllPcBookingInTpsSites: async (tps_site_ids: number[]) => {
-        try {
-            const results = await Promise.all(
-                tps_site_ids.map(async (id) => {
-                    const asset = await bookingClient.getBookingBySiteId(id);
-                    return asset;
-                })
-            );
+        const { data, error } = await supabase
+            .from("nd_booking")
+            .select(`
+                *,
+                nd_asset (
+                    site_id,
+                    name
+                ),
+                profiles (
+                    full_name
+                )    
+            `);
 
-            return results.flat();
-        } catch (error) {
-            console.error("Failed to fetch bookings:", error);
-            return [];
-        }
+        if (error) throw error;
+
+        const filtered = data.filter((site) => tps_site_ids.includes(site?.nd_asset?.site_id));
+
+        return filtered;
     },
 
     getAllSpaces: async (isSuperAdmin: boolean) => {
@@ -380,19 +385,20 @@ export const bookingClient = {
     },
 
     getAllSpaceBookingsInTpsSites: async (siteIds: number[]) => {
-        try {
-            const results = await Promise.all(
-                siteIds.map(async (id) => {
-                    const asset = await bookingClient.getSitesSpaceBookings(id);
-                    return asset;
-                })
-            );
+        const {data, error} = await supabase
+            .from("nd_booking")
+            .select(`
+                *,
+                nd_site_space (
+                    *
+                )
+            `);
 
-            return results.flat();
-        } catch (error) {
-            console.error("Failed to fetch bookings:", error);
-            return [];
-        }
+        if (error) throw error;
+
+        const filtered = data.filter((space) => siteIds.includes(space?.nd_site_space?.site_id));
+
+        return filtered;
     },
 
     getBookingBySiteSpaceId: async (id: number) => {
@@ -436,6 +442,19 @@ export const bookingClient = {
             .select("*")
             .textSearch("full_name", full_name)
             .or("user_type.eq.member, user_type.eq.tp_site")
+
+        if (error) throw error;
+
+        return data;
+    },
+
+    triggerPcCommands: async (asset_id: string, command: string) => {
+        const { data, error } = await supabase.functions.invoke("trigger-pc-command",
+            {
+                body: { asset_id, command },
+                method: "POST"
+            }
+        );
 
         if (error) throw error;
 

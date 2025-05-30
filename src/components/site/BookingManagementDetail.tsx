@@ -20,9 +20,6 @@ import { NoBookingFound } from "./component/NoBookingFound";
 import { useUserName } from "@/hooks/use-user";
 import { BulkActionButtons } from "./component/BulkActionButtons";
 import { DateRange } from "react-day-picker";
-import FacilityUtilization from "./component/FacilityUtilizationChart";
-import ChartCard from "../dashboard/ChartCard";
-import FacilityUsageTrend from "./component/FacilityUsageTrendChart";
 import { bookingClient } from "@/hooks/booking/booking-client";
 import { useMemberSiteId, useSiteId, useTpManagerSiteId } from "@/hooks/use-site-id";
 import { addDays } from "date-fns";
@@ -91,7 +88,7 @@ export const BookingManagementDetail = () => {
 
     const { data: tpsSites, isLoading: isTpsSitesLoading } = useTpsSites(tpAdminOrganizationId);
     const tpsSiteIds = tpsSites?.map(tp => tp.id) ?? [];
-    console.log("tps sites", tpsSites)
+    console.log("tps sites ids", tpsSiteIds)
 
     // Member or TP Site Site ID
     const siteId = memberSiteId ? Number(memberSiteId) : tpManagerSiteId ? Number(tpManagerSiteId) : undefined;
@@ -466,7 +463,7 @@ export const PcMainContent = ({
     const recentBookings = bookingsData?.map((booking: Booking) => {
         return {
             userName: booking.profiles?.full_name,
-            bookingAssetTypeName: booking.nd_asset.name,
+            bookingAssetTypeName: booking?.nd_asset?.name,
             startTime: toTwentyFourFormat(new Date(booking.booking_start)),
             endTime: toTwentyFourFormat(new Date(booking.booking_end)),
             duration: getDuration(booking.booking_start, booking.booking_end),

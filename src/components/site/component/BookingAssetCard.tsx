@@ -23,7 +23,7 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet"
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter, CardDescription } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { Bell, Building, CalendarIcon, CircleDot, Clock, FolderX, LockIcon, Plus, PowerOff, RefreshCcw, Server, SquarePen, Unlock, User } from "lucide-react";
@@ -37,6 +37,10 @@ import { format } from "date-fns";
 import { NoBookingFound } from "./NoBookingFound";
 import { useAssetQueries } from "@/hooks/assets/use-asset-queries";
 import { toast } from "@/hooks/use-toast";
+import { useBookingQueries } from "@/hooks/booking/use-booking-queries";
+import { supabase } from "@/lib/supabase";
+import { RealtimeChannel } from "@supabase/supabase-js";
+import RemotePcStream from "./RemotePcStream";
 
 interface DataCardProps {
     id: string;
@@ -148,20 +152,70 @@ const BookingPcCardDetails = ({
     id,
     duration
 }: BookingPcCardDetailsProps) => {
-    const { useToggleAssetStatus } = useAssetQueries();
-    const toggleAsset = useToggleAssetStatus(id, status === "Available" ? true : false);
 
-    const handlePcStatus = async () => {
-        try {
-            await toggleAsset.mutateAsync();
-            toast({
-                title: `PC ${name} shut down`
+    const [channel, setChannel] = useState<RealtimeChannel | null>(null);
+    console.log("channel", channel);
+
+    useEffect(() => {
+        async function setUpChannel() {
+            const supabaseChannel = supabase.channel(`remote-${name}`);
+            supabaseChannel.on("broadcast", { event: "answer" }, async (msg) => {
+                console.log("PC message: ", msg);
             })
-        } catch (error) {
-            toast({
-                title: `Failed to shut down the ${name}`
-            })
+            supabaseChannel.subscribe();
+            setChannel(supabaseChannel);
         }
+        setUpChannel();
+
+        return () => {
+            if (channel) {
+                channel.unsubscribe();
+            }
+        };
+    }, [])
+
+    async function handleShutDown() {
+        await channel.send({
+            type: "broadcast",
+            event: "answer",
+            payload: { command: "shutdown" }
+        })
+        toast({
+            description: `${name} shutdown`
+        })
+    }
+
+    async function handleLock() {
+        await channel.send({
+            type: "broadcast",
+            event: "answer",
+            payload: { command: "lock" }
+        })
+        toast({
+            description: `${name} lock`
+        })
+    }
+
+    async function handleUnlock() {
+        await channel.send({
+            type: "broadcast",
+            event: "answer",
+            payload: { command: "unlock" }
+        })
+        toast({
+            description: `${name} unlock`
+        })
+    }
+
+    async function handleRestart() {
+        await channel.send({
+            type: "broadcast",
+            event: "answer",
+            payload: { command: "restart" }
+        })
+        toast({
+            description: `${name} restart`
+        })
     }
 
     const aboutPc = [
@@ -188,53 +242,110 @@ const BookingPcCardDetails = ({
             icon: <PowerOff />,
             value: "Power Off PC",
             customClass: "bg-red-500 hover:bg-red-400",
-            action: handlePcStatus
+            action: handleShutDown
         },
         {
             name: "Restart PC",
             icon: <RefreshCcw />,
             value: "Restart PC",
             customClass: "bg-white text-black hover:bg-slate-100 border border-gray-200",
-            Action: () => console.log("Clicked")
+            action: handleRestart
         },
         {
             name: "Lock PC",
             icon: <LockIcon />,
             value: "Lock PC",
             customClass: "bg-white text-black hover:bg-slate-100 border border-gray-200",
-            Action: () => console.log("Clicked")
+            action: handleLock
         },
         {
             name: "Unlock PC",
             icon: <Unlock />,
             value: "Unlock PC",
             customClass: "bg-white text-black hover:bg-slate-100 border border-gray-200",
-            Action: () => console.log("Clicked")
+            action: handleUnlock
         },
     ]
 
     return (
-        <DialogContent>
+        <DialogContent className="overflow-x-auto max-w-5xl h-screen max-h-screen overflow-y-auto flex flex-col gap-0 p-4">
             <DialogHeader>
                 <DialogTitle className="flex items-center gap-2 text-xl font-bold justify-start">
                     <Server />
                     {name}
                 </DialogTitle>
             </DialogHeader>
+            <Tabs defaultValue="details" className="w-full grid place-items-center mt-7">
+                <TabsList className="w-full bg-white inline-flex h-11 flex-wrap justify-between gap-2 items-center">
+                    <TabsTrigger
+                        className="flex-grow text-md px-2 py-1 min-w-max data-[state=active]:bg-muted rounded whitespace-nowrap"
+                        key="details"
+                        value="details">Details</TabsTrigger>
+                    <TabsTrigger
+                        className="flex-grow text-md px-2 py-1 min-w-max data-[state=active]:bg-muted rounded whitespace-nowrap"
+                        key="remote-pc"
+                        value="remote-pc">Remote PC</TabsTrigger>
+                </TabsList>
+                <DetailsPc
+                    aboutPc={aboutPc}
+                    pcActionButtons={pcActionButtons}
+                    value="details"
+                />
+                <RemotePc
+                    value="remote-pc"
+                />
+            </Tabs>
+        </DialogContent>
+    )
+}
+
+interface DetailsPcProps {
+    value: string,
+    pcActionButtons: {
+        name: string,
+        icon: React.ReactNode,
+        value: string,
+        customClass?: string,
+        action?: () => void
+    }[],
+    aboutPc: {
+        title: string,
+        description: string
+    }[]
+}
+
+const DetailsPc = ({
+    value,
+    pcActionButtons,
+    aboutPc
+}: DetailsPcProps) => {
+    return (
+        <TabsContent className="w-full space-y-8" value={value}>
             <BulkActionButtons
                 buttonsData={pcActionButtons}
-                className="grid grid-cols-2 mt-0"
-                useHeader={false}
+                className="flex items-center justify-center mt-3"
+                classNameForHeader="font-semibold text-base"
+                useHeader={true}
             />
-            <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-2 gap-3">
                 {aboutPc.map((pc) => (
-                    <div className="flex flex-col items-start">
+                    <div className="w-full flex flex-col items-start">
                         <h5 className="font-semibold text-base">{pc.title}:</h5>
-                        <small className="text-gray-600">{pc.description}</small>
+                            <Card className={`${pc.description === "in-use" ? "bg-blue-50" : pc.description === "Available" ? "bg-green-50" : ""} w-full min-h-36 flex items-center justify-center px-4 py-3`}>
+                                <small className="text-gray-600">{pc.description}</small>
+                            </Card>
                     </div>
                 ))}
             </div>
-        </DialogContent>
+        </TabsContent>
+    )
+}
+
+const RemotePc = ({ value }) => {
+    return (
+        <TabsContent className="w-full" value={value}>
+            <RemotePcStream />
+        </TabsContent>
     )
 }
 
@@ -249,7 +360,7 @@ const BookingFacilityCardDetails = ({
 }: BookingFacilityCardDetailsProps) => {
 
     return (
-        <DialogContent className="max-w-5xl max-h-screen overflow-y-scroll">
+        <DialogContent className="max-w-5xl h-screen max-h-screen overflow-y-auto flex flex-col gap-0 p-4">
             <header className="space-y-3">
                 <h1 className="w-full flex items-center gap-3 justify-start text-2xl font-bold">
                     <Building />
@@ -442,14 +553,67 @@ const Details = ({
 }
 
 const Bookings = ({ value }) => {
+    const [date, setDate] = useState<Date>();
     return (
         <TabsContent className="w-full space-y-4" value={value}>
             <header className="flex items-center justify-between">
                 <h1 className="text-xl font-semibold">Manage Booking</h1>
-                <Button className="flex items-center gap-3">
-                    <Plus />
-                    Add Booking
-                </Button>
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button className="flex items-center gap-3">
+                            <Plus />
+                            Add Booking
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent>
+                        <SheetHeader>
+                            <SheetTitle>Booking Scheduled</SheetTitle>
+                            <SheetDescription>
+                                Set a notes and date for scheduled booking of this facility.
+                            </SheetDescription>
+                        </SheetHeader>
+                        <div className="flex flex-col space-y-6 py-4">
+                            <div className="flex flex-col items-start gap-4">
+                                <Label htmlFor="name" className="text-right">
+                                    Booking Date
+                                </Label>
+                                <Popover>
+                                    <PopoverTrigger asChild>
+                                        <Button
+                                            variant={"outline"}
+                                            className={cn(
+                                                "w-[240px] justify-start text-left font-normal",
+                                                !date && "text-muted-foreground"
+                                            )}
+                                        >
+                                            <CalendarIcon />
+                                            {date ? format(date, "PPP") : <span>Pick a date</span>}
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-0" align="start">
+                                        <Calendar
+                                            mode="single"
+                                            selected={date}
+                                            onSelect={setDate}
+                                            initialFocus
+                                        />
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                            <div className="flex flex-col items-start gap-4">
+                                <Label htmlFor="maintenance" className="text-right">
+                                    Notes
+                                </Label>
+                                <Input id="maintenance" className="col-span-3" placeholder="Enter maintenance details" />
+                            </div>
+                        </div>
+                        <SheetFooter>
+                            <SheetClose asChild>
+                                <Button className="w-full" type="submit">Schedule</Button>
+                            </SheetClose>
+                        </SheetFooter>
+                    </SheetContent>
+                </Sheet>
             </header>
             <Card className="px-5 py-4">
                 <div className="flex justify-between">

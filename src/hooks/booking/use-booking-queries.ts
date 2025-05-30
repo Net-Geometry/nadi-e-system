@@ -57,7 +57,7 @@ export const useBookingQueries = () => {
 
     const useBookingAssetInTpsSites = (tps_site_ids: number[]) => 
         useQuery({
-            queryKey: ["bookingInTpsSites", tps_site_ids],
+            queryKey: ["bookingInTpsSites", ...tps_site_ids],
             queryFn: () => bookingClient.getAllPcBookingInTpsSites(tps_site_ids),
             enabled: tps_site_ids.length > 0
         })
@@ -105,8 +105,8 @@ export const useBookingQueries = () => {
 
     const useBookingSpacesInTpsSites = (siteIds: number[]) =>
         useQuery({
-            queryKey: ["BookingSpaceInTpsSites", siteIds],
-            queryFn: () => bookingClient.getAllPcBookingInTpsSites(siteIds),
+            queryKey: ["BookingSpaceInTpsSites", ...siteIds],
+            queryFn: () => bookingClient.getAllSpaceBookingsInTpsSites(siteIds),
             enabled: siteIds.length > 0
         })
 
@@ -136,6 +136,13 @@ export const useBookingQueries = () => {
             enabled: full_name.trim().length > 0
         })
 
+    const useTriggerPcCommands = (asset_id: string, command: string) =>
+        useQuery({
+            queryKey: ["triggerCmd", asset_id, command],
+            queryFn: () => bookingClient.triggerPcCommands(asset_id, command),
+            enabled: asset_id !== null && command !== null
+        })
+
     return {
         useBookingQuery,
         useBookingAssetBrandQuery,
@@ -151,6 +158,7 @@ export const useBookingQueries = () => {
         useAllRegion,
         useTpsSitesWithPagination,
         useAllState,
-        useUserProfileByName
+        useUserProfileByName,
+        useTriggerPcCommands
     };
 };
