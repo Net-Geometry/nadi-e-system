@@ -128,7 +128,8 @@ const POSSales = () => {
         .select(`
           *,
           nd_inventory_attachment!left(file_path)
-        `);
+        `)
+        .is('deleted_at', null);
 
       // If not super admin, filter by site_id
       if (!isSuperAdmin) {
@@ -156,7 +157,7 @@ const POSSales = () => {
       }
 
       if (selectedSearchFilter === 'items') {
-        query = query.in('category_id', [2, 3, 4, 5]);
+        query = query.or('category_id.neq.1,category_id.is.null');
       }
 
       if (searchItem && searchItem.length > 0) {

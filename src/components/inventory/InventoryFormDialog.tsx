@@ -625,14 +625,14 @@ export const InventoryFormDialog = ({
                     required
                     value={siteId}
                     onValueChange={setSiteId}
-                    disabled={!tpId || sites.length === 0}
+                    disabled={(isSuperAdmin || isDUSPUser) && !tpId || sites.length === 0}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select site" />
                     </SelectTrigger>
                     <SelectContent>
                       {sites
-                        .filter((site) => !tpId || site?.dusp_tp_id?.toString() === tpId)
+                        .filter((site) => (isSuperAdmin || isDUSPUser) ? (!tpId || site?.dusp_tp_id?.toString() === tpId) : true)
                         .map((site, index) => (
                           <SelectItem
                             key={index}
