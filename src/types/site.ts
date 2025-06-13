@@ -30,14 +30,15 @@ export interface Site {
     parent?: {
       id: string;
       name: string;
+      logo_url?: string;
     };
   }; // Add dusp_tp field for organization details
   nd_site_status: {
     eng: string;
   };
   nd_site_profile: {
-    sitename: string
-    state_id: number
+    sitename: string;
+    state_id: number;
   };
   nd_site: {
     id: string;
@@ -87,7 +88,7 @@ export interface Site {
     close_time: string;
     is_closed: boolean;
   }[];
-  nd_asset?: Asset[]
+  nd_asset?: Asset[];
 }
 
 export interface SiteStatus {
@@ -175,34 +176,39 @@ export interface Space {
 }
 
 export interface SiteSpace {
-  id: number
-  nd_space?: Space
-  nd_site_profile?: SiteProfile
-  created_at?: string | Date,
-  updated_at?: string | Date,
-  created_by?: string,
-  updated_by?: string
+  id: number;
+  nd_space?: Space;
+  nd_site_profile?: SiteProfile;
+  created_at?: string | Date;
+  updated_at?: string | Date;
+  created_by?: string;
+  updated_by?: string;
 }
 
 export interface SiteProfile {
-  id: number,
-  refid_tp?: string,
-  dusp_tp_id?: string,
-  region_id?: number,
-  phase_id?: number,
-  state_id?: number,
-  parliament_rfid?: number,
-  dun_rfid?: number,
-  mukim_id?: number,
-  ust_id?: number,
-  active_status?: number,
-  sitename?: string,
-  fullname?: string,
-  latitude?: string,
-  longtitude?: string,
-  website?: string,
-  operate_date?: string, 
-  nd_site?: Site[],
-  nd_state?: State,
-  nd_region?: Region
+  id: number;
+  refid_tp?: string;
+  dusp_tp_id?: string;
+  region_id?: number;
+  phase_id?: number;
+  state_id?: number;
+  parliament_rfid?: number;
+  dun_rfid?: number;
+  mukim_id?: number;
+  ust_id?: number;
+  active_status?: number;
+  sitename?: string;
+  fullname?: string;
+  latitude?: string;
+  longtitude?: string;
+  website?: string;
+  operate_date?: string;
+  nd_site?: Site[];
+  nd_state?: State;
+  nd_region?: Region;
+}
+
+export interface SiteOption {
+  id: string;
+  label: string;
 }

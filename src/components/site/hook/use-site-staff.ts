@@ -1,5 +1,9 @@
-import { useState, useEffect } from "react";
-import { BUCKET_NAME_PROFILEIMAGE, supabase, SUPABASE_URL } from "@/integrations/supabase/client";
+import {
+  BUCKET_NAME_PROFILEIMAGE,
+  supabase,
+  SUPABASE_URL,
+} from "@/integrations/supabase/client";
+import { useEffect, useState } from "react";
 
 export const useSiteStaff = (siteId: string) => {
   const [staffData, setStaffData] = useState<any[]>([]);
@@ -82,4 +86,32 @@ export const useSiteStaff = (siteId: string) => {
   }, [siteId]);
 
   return { staffData, loading, error };
+};
+export const useSiteManager = (siteId: number) => {
+  const [data, setData] = useState(null);
+
+  useEffect(() => {
+    if (!siteId) return;
+
+    const fetchSiteManager = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("nd_staff_contract")
+          .select("user_id, staff_id, site_id, nd_staff_profile:staff_id(*)")
+          .eq("site_profile_id", siteId)
+          .eq("nd_staff_profile.position_id", 1) // Manager position
+          .single();
+
+        if (error) throw error;
+
+        setData(data);
+      } catch (error) {
+        console.error("Error fetching site manager:", error);
+      }
+    };
+
+    fetchSiteManager();
+  }, [siteId]);
+
+  return data;
 };

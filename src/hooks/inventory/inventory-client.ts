@@ -1,19 +1,12 @@
-import {
-  fetchSiteBySiteId,
-  fetchSites,
-} from "@/components/site/hook/site-utils";
 import { supabase } from "@/integrations/supabase/client";
 import { AssetType } from "@/types/asset";
 import { Inventory } from "@/types/inventory";
-import { Site } from "@/types/site";
 
 export const inventoryClient = {
   fetchInventories: async (
     organizationId: string | null,
     siteId: string | null
   ): Promise<Inventory[]> => {
-    const allSites = await fetchSites(organizationId);
-
     let query = supabase
       .from("nd_inventory")
       .select(
@@ -23,16 +16,14 @@ export const inventoryClient = {
           created_at
         ),
         nd_inventory_type ( id, name ),
-        site:nd_site (
-          id,
-          standard_code,
-          site_profile_id
+        site:nd_site_profile (
+          *
         )`
       )
       .is("deleted_at", null);
 
     if (siteId) {
-      query = query.eq("site_id", siteId);
+      query = query.eq("site_id", Number(siteId));
     }
 
     query = query.order("id");
@@ -44,7 +35,7 @@ export const inventoryClient = {
       throw error;
     }
 
-    const formatProfile = (profile: Site) => ({
+    const formatProfile = (profile) => ({
       ...profile,
       dusp_tp_id_display: profile?.dusp_tp?.parent
         ? `${profile.dusp_tp.name} (${profile.dusp_tp.parent.name})`
@@ -53,14 +44,7 @@ export const inventoryClient = {
 
     const filteredData = await Promise.all(
       data.map(async (item) => {
-        let profile = null;
-
-        if (siteId) {
-          profile = await fetchSiteBySiteId(siteId);
-        } else {
-          profile = allSites.find((s) => s.id === item.site?.site_profile_id);
-          profile = formatProfile(profile);
-        }
+        const profile = formatProfile(item.site);
 
         return {
           ...item,
@@ -82,9 +66,8 @@ export const inventoryClient = {
           created_at
         ),
         nd_inventory_type ( id, name ),
-        site:nd_site (
-          id,
-          standard_code
+        site:nd_site_profile (
+          *
         )`
       )
       .eq("id", id)
@@ -97,7 +80,6 @@ export const inventoryClient = {
     return {
       ...data,
       type: data.nd_inventory_type,
-      site: data.site,
     };
   },
 

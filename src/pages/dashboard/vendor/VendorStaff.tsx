@@ -1,9 +1,14 @@
-import React, { useState, useEffect } from "react";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { PageHeader } from "@/components/ui/dashboard/PageHeader";
-import { PageContainer } from "@/components/ui/dashboard/PageContainer";
-import { Card, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { PageContainer } from "@/components/ui/dashboard/PageContainer";
+import { PageHeader } from "@/components/ui/dashboard/PageHeader";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -13,51 +18,24 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
+import VendorStaffDeleteDialog from "@/components/vendor/VendorStaffDeleteDialog";
+import VendorStaffEditDialog from "@/components/vendor/VendorStaffEditDialog";
+import VendorStaffViewDialog from "@/components/vendor/VendorStaffViewDialog";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { VendorStaffMember } from "@/types/vendor";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
+  Edit,
+  Eye,
+  MoreVertical,
   Plus,
   Search,
-  Eye,
-  Edit,
-  Trash2,
-  MoreVertical,
   ToggleLeft,
   ToggleRight,
+  Trash2,
 } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/hooks/use-toast";
-import VendorStaffViewDialog from "@/components/vendor/VendorStaffViewDialog";
-import VendorStaffEditDialog from "@/components/vendor/VendorStaffEditDialog";
-import VendorStaffDeleteDialog from "@/components/vendor/VendorStaffDeleteDialog";
-
-interface VendorStaffMember {
-  id: number;
-  fullname: string;
-  ic_no: string;
-  mobile_no: string;
-  work_email: string;
-  position_id: number;
-  is_active: boolean;
-  registration_number: number;
-  user_id: string;
-  vendor_company?: {
-    business_name: string;
-    registration_number: string;
-    business_type: string;
-  };
-  contract_status?: {
-    is_active: boolean;
-    contract_start?: string;
-    contract_end?: string;
-  };
-}
 
 const VendorStaff = () => {
   const [staff, setStaff] = useState<VendorStaffMember[]>([]);

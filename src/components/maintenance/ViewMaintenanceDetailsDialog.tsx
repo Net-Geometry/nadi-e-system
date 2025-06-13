@@ -34,7 +34,7 @@ import {
   humanizeMaintenanceStatus,
   MaintenanceRequest,
   MaintenanceStatus,
-  MaintenanceUpdate
+  MaintenanceUpdate,
 } from "@/types/maintenance";
 import { format } from "date-fns";
 

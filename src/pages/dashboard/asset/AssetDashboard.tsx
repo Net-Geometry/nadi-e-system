@@ -1,7 +1,6 @@
 import { AssetFormDialog } from "@/components/assets/AssetFormDialog";
 import { AssetList } from "@/components/assets/AssetList";
 import { AssetStatsCard } from "@/components/dashboard/asset/AssetStatsCard";
-import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { useAssets } from "@/hooks/use-assets";
 import { useSiteId, useTpManagerSiteId } from "@/hooks/use-site-id";
@@ -20,14 +19,14 @@ const AssetDashboard = () => {
   const isTpSiteUser = parsedMetadata?.user_group_name === "Site";
 
   const siteIdStaff = useSiteId(isStaffUser);
-  const { siteId: siteIdTpManager, isLoading: siteIdTpManagerLoading } =
+  const { siteId: siteProfileIdTpManager, isLoading: siteIdTpManagerLoading } =
     useTpManagerSiteId(isTpSiteUser);
 
   let site_id: string | null = null;
   if (isStaffUser) {
     site_id = siteIdStaff;
   } else if (isTpSiteUser) {
-    site_id = siteIdTpManager;
+    site_id = siteProfileIdTpManager;
   }
 
   let assetStats: AssetStatsData = {

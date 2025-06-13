@@ -4,7 +4,6 @@ import { assetClient } from "./asset-client";
 
 import { useSiteId, useTpManagerSiteId } from "@/hooks/use-site-id";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
-import { useSiteIdFromSiteProfile } from "../use-site-profile-site-id";
 
 export const useAssetQueries = () => {
   const userMetadata = useUserMetadata();
@@ -22,14 +21,12 @@ export const useAssetQueries = () => {
     siteId: siteProfileIdTpManager,
     isLoading: siteProfileIdTpManagerLoading,
   } = useTpManagerSiteId(isTpSite);
-  const siteIdTpManager = useSiteIdFromSiteProfile(
-    siteProfileIdTpManagerLoading ? null : siteProfileIdTpManager
-  );
+
   let site_id: string | null = null;
   if (isStaffUser) {
     site_id = siteIdStaff;
   } else if (isTpSite) {
-    site_id = siteIdTpManager;
+    site_id = siteProfileIdTpManager;
   }
 
   const useAssetsQuery = () =>
@@ -78,21 +75,22 @@ export const useAssetQueries = () => {
     useQuery({
       queryKey: ["tpsAssets", tps_sites_id],
       queryFn: () => assetClient.fetchAssetsBySiteId(tps_sites_id),
-      enabled: !!tps_sites_id
+      enabled: !!tps_sites_id,
     });
 
   const useAssetsInTpsSites = (tpOrgId: string) =>
     useQuery({
       queryKey: ["tpsAssets", tpOrgId],
       queryFn: () => assetClient.fetchAssetsInTpsSites(tpOrgId),
-      enabled: !!tpOrgId
+      enabled: !!tpOrgId,
     });
 
   const useToggleAssetStatus = (assetId: string, currentStatus: boolean) =>
     useMutation({
       mutationKey: ["toggleStatus"],
-      mutationFn: () => assetClient.toggleAssetActiveStatus(assetId, currentStatus)
-    })
+      mutationFn: () =>
+        assetClient.toggleAssetActiveStatus(assetId, currentStatus),
+    });
 
   return {
     useAssetsQuery,
@@ -102,6 +100,6 @@ export const useAssetQueries = () => {
     useAssetBySite,
     useAllAssets,
     useAssetsInTpsSites,
-    useToggleAssetStatus
+    useToggleAssetStatus,
   };
 };
