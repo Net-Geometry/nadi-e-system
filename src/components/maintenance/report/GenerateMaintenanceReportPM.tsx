@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { getQuarter, getYear } from "date-fns";
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 
@@ -23,7 +23,10 @@ const GenerateMaintenanceReportPM = ({
 
     const doc = new jsPDF();
 
-    await headerNadiDocs(doc);
+    await headerNadiDocs(
+      doc,
+      maintenanceRequest.asset?.site?.dusp_tp?.parent?.logo_url
+    );
     footerNadiDocs(doc, CURRENT_DATE);
 
     const rows1 = [
@@ -41,7 +44,7 @@ const GenerateMaintenanceReportPM = ({
       ],
       [
         {
-          content: "SITE DETAILS",
+          content: "ATTENDANCE FORM",
           colSpan: 4,
           styles: {
             halign: "center",
@@ -109,7 +112,7 @@ const GenerateMaintenanceReportPM = ({
           },
         },
         {
-          content: "DOCKET DATE/TIME",
+          content: "QUARTER/YEAR",
           colSpan: 1,
           styles: {
             fontStyle: "bold",
@@ -118,10 +121,9 @@ const GenerateMaintenanceReportPM = ({
           },
         },
         {
-          content: format(
-            maintenanceRequest?.created_at,
-            "dd/MM/yyyy hh:mm:ss a"
-          ),
+          content: `Q${getQuarter(maintenanceRequest?.created_at)} / ${getYear(
+            maintenanceRequest?.created_at
+          )}`,
           colSpan: 1,
           styles: {
             fontStyle: "normal",
@@ -132,7 +134,8 @@ const GenerateMaintenanceReportPM = ({
       ],
       [
         {
-          content: "FAULTY CATEGORY",
+          content: "STATE",
+          colSpan: 1,
           styles: {
             fontStyle: "bold",
             halign: "left",
@@ -140,18 +143,17 @@ const GenerateMaintenanceReportPM = ({
           },
         },
         {
-          content: "CEILING SURFING AREA MELENGKUNG & REPAINT DINDING (MERAH)",
-          colSpan: 3,
+          content: maintenanceRequest?.asset?.site?.nd_region?.eng,
+          colSpan: 1,
           styles: {
             fontStyle: "normal",
             halign: "left",
             font: "Verdana",
           },
         },
-      ],
-      [
         {
-          content: "FAULTY DESCRIPTION",
+          content: "VENDOR",
+          colSpan: 1,
           styles: {
             fontStyle: "bold",
             halign: "left",
@@ -159,8 +161,8 @@ const GenerateMaintenanceReportPM = ({
           },
         },
         {
-          content: "CEILING SURFING AREA MELENGKUNG & REPAINT DINDING (MERAH)",
-          colSpan: 3,
+          content: maintenanceRequest?.vendor?.business_name,
+          colSpan: 1,
           styles: {
             fontStyle: "normal",
             halign: "left",
@@ -184,6 +186,18 @@ const GenerateMaintenanceReportPM = ({
       },
       margin: { left: 15, right: 15 },
     });
+
+    // Notes
+    doc.setTextColor(0, 0, 0);
+    doc.setFont("Verdana", "normal");
+    doc.setFontSize(FONT_SIZE - 1);
+    doc.text("Notes:", 15, 91);
+    doc.text("Please noted (OK) if everything is in good condition.", 15, 94);
+    doc.text(
+      "Please comment if not satisfied or not in good condition.",
+      15,
+      97
+    );
 
     const rows2 = [
       [

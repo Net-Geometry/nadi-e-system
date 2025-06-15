@@ -1,39 +1,39 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { Button } from "@/components/ui/button";
+import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { FileUpload } from "@/components/ui/file-upload";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { FileUpload } from "@/components/ui/file-upload";
-import { useSiteCode } from "../hook/use-site-code";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { SelectMany } from "@/components/ui/SelectMany";
 import { SelectOne } from "@/components/ui/SelectOne";
-import {
-  fetchClosureCategories,
-  fetchClosureSubCategories,
-  fetchClosureAffectAreas,
-  fetchClosureSession,
-} from "../hook/use-siteclosure";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { DateInput } from "../../ui/date-input";
-import { useDateRangeValidation } from "@/hooks/useDateRangeValidation";
-import { useSessionVisibility } from "../hook/use-session-visibility";
-import TimeInput from "../../ui/TimePicker";
-import { useUserGroup } from "@/hooks/use-user-group";
-import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import { SUPABASE_URL } from "@/integrations/supabase/client";
-import { useSiteClosureForm } from "../hook/use-site-closure-form";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { useUserGroup } from "@/hooks/use-user-group";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
+import { useDateRangeValidation } from "@/hooks/useDateRangeValidation";
+import { SUPABASE_URL } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { DateInput } from "../../ui/date-input";
+import TimeInput from "../../ui/TimePicker";
+import { fetchAllSites, fetchTPSites } from "../hook/site-utils";
+import { useSessionVisibility } from "../hook/use-session-visibility";
+import { useSiteClosureForm } from "../hook/use-site-closure-form";
+import { useSiteCode } from "../hook/use-site-code";
+import {
+  fetchClosureAffectAreas,
+  fetchClosureCategories,
+  fetchClosureSession,
+  fetchClosureSubCategories,
+} from "../hook/use-siteclosure";
 
 interface SiteClosureFormProps {
   open: boolean;
@@ -43,74 +43,6 @@ interface SiteClosureFormProps {
   editData?: any;
   clearEditData?: () => void;
 }
-
-interface SiteOption {
-  id: string;
-  label: string;
-}
-
-// Function to fetch sites for a specific TP organization
-const fetchTPSites = async (organizationId: string): Promise<SiteOption[]> => {
-  if (!organizationId) return [];
-
-  try {
-    const { data, error } = await supabase
-      .from("nd_site_profile")
-      .select(
-        `
-        id,
-        sitename,
-        nd_site:nd_site(standard_code)
-      `
-      )
-      .eq("dusp_tp_id", organizationId)
-      .order("sitename", { ascending: true });
-
-    if (error) throw error;
-
-    return (data || []).map((site) => ({
-      id: site.id,
-      label: `${site.sitename} (${
-        site.nd_site?.[0]?.standard_code || "No Code"
-      })`,
-    }));
-  } catch (error) {
-    console.error("Error fetching TP sites:", error);
-    return [];
-  }
-};
-
-// Function to fetch all sites for SuperAdmin
-const fetchAllSites = async (): Promise<SiteOption[]> => {
-  try {
-    const { data, error } = await supabase
-      .from("nd_site_profile")
-      .select(
-        `
-        id,
-        sitename,
-        nd_site:nd_site(standard_code),
-        organizations:dusp_tp_id(
-          id, name, type,
-          parent:parent_id(name)
-        )
-      `
-      )
-      .order("sitename", { ascending: true });
-
-    if (error) throw error;
-
-    return (data || []).map((site) => ({
-      id: site.id,
-      label: `${site.sitename} (${
-        site.nd_site?.[0]?.standard_code || "No Code"
-      }) - ${site.organizations?.name || "N/A"}`,
-    }));
-  } catch (error) {
-    console.error("Error fetching all sites:", error);
-    return [];
-  }
-};
 
 const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
   open,
@@ -123,7 +55,9 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
   // Get user metadata to check if user is TP
   const userMetadata = useUserMetadata();
   const parsedMetadata = userMetadata ? JSON.parse(userMetadata) : null;
-  const isTPUser = parsedMetadata?.user_group_name === "TP" && !!parsedMetadata?.organization_id;
+  const isTPUser =
+    parsedMetadata?.user_group_name === "TP" &&
+    !!parsedMetadata?.organization_id;
   const organizationId = isTPUser ? parsedMetadata?.organization_id : null;
 
   // Get user group information FIRST before using it
@@ -150,14 +84,16 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
 
   // Define formState without useSiteClosureForm first to avoid circular dependency
   const [initialFormState, setInitialFormState] = useState({
-    selectedSiteId: ""
+    selectedSiteId: "",
   });
-    // Get the effective site ID before initializing useSiteClosureForm
+  // Get the effective site ID before initializing useSiteClosureForm
   // This is what we'll use for siteCode lookup and form submission
-  const effectiveSiteId = isTPUser || isSuperAdmin ? initialFormState?.selectedSiteId || "" : siteId;
+  const effectiveSiteId =
+    isTPUser || isSuperAdmin ? initialFormState?.selectedSiteId || "" : siteId;
 
   // Get site code for the effective site ID
-  const { siteCodeData, loading: loadingSiteCode } = useSiteCode(effectiveSiteId);
+  const { siteCodeData, loading: loadingSiteCode } =
+    useSiteCode(effectiveSiteId);
   const siteCode = siteCodeData?.standard_code || "";
 
   // Now we can initialize the form hook with the site code
@@ -193,7 +129,7 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
 
   // Update useSiteClosureForm when siteCode changes
   const [currentSiteCode, setCurrentSiteCode] = useState(siteCode);
-  
+
   useEffect(() => {
     if (siteCode !== currentSiteCode) {
       console.log("Site code changed from", currentSiteCode, "to", siteCode);
@@ -236,7 +172,10 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
       hasSetInitialSite.current = false;
     } else if (open && editData?.selectedSiteId) {
       // When opening in edit mode with selectedSiteId, update initialFormState
-      setInitialFormState(prev => ({...prev, selectedSiteId: editData.selectedSiteId}));
+      setInitialFormState((prev) => ({
+        ...prev,
+        selectedSiteId: editData.selectedSiteId,
+      }));
     }
     // Auto-selection code has been removed as per requirements
   }, [open, editData]);
@@ -274,7 +213,7 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
     if (isTPUser || isSuperAdmin) {
       setField("selectedSiteId", "");
       // Also update initialFormState
-      setInitialFormState(prev => ({...prev, selectedSiteId: ""}));
+      setInitialFormState((prev) => ({ ...prev, selectedSiteId: "" }));
       // Prevent auto-selection after clearing
       hasSetInitialSite.current = false;
     }
@@ -305,7 +244,7 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
   // Update time fields based on session selection
   useEffect(() => {
     if (formState.session) {
-      let updatedState = {
+      const updatedState = {
         ...formState,
         start_time: "",
         end_time: "",
@@ -411,7 +350,8 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
   return (
     <>
       <Dialog
-        open={open}        onOpenChange={(isOpen) => {
+        open={open}
+        onOpenChange={(isOpen) => {
           if (!isOpen) {
             console.log("Dialog closing - cleaning up state");
             resetCleanupFlags();
@@ -426,7 +366,7 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
             if (isTPUser || isSuperAdmin) {
               setField("selectedSiteId", "");
               // Also update initialFormState
-              setInitialFormState(prev => ({...prev, selectedSiteId: ""}));
+              setInitialFormState((prev) => ({ ...prev, selectedSiteId: "" }));
               hasSetInitialSite.current = false;
             }
           }
@@ -455,7 +395,8 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
               <div className="space-y-2">
                 <Label htmlFor="siteSelection">
                   Select Site <span className="text-red-500">*</span>
-                </Label>                <SelectOne
+                </Label>{" "}
+                <SelectOne
                   options={isTPUser ? tpSites : allSites}
                   value={formState.selectedSiteId}
                   onChange={(value) => {
@@ -463,7 +404,10 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                     const newSiteId = value as string;
                     setField("selectedSiteId", newSiteId);
                     // Update the initial state too to keep them in sync
-                    setInitialFormState(prev => ({...prev, selectedSiteId: newSiteId}));
+                    setInitialFormState((prev) => ({
+                      ...prev,
+                      selectedSiteId: newSiteId,
+                    }));
                     console.log("Site selection changed to:", newSiteId);
                   }}
                   placeholder="Select a site"
@@ -481,14 +425,14 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                   </p>
                 )}
               </div>
-            )}            {/* Site Code - only show for users who are not TP or SuperAdmin */}
+            )}{" "}
+            {/* Site Code - only show for users who are not TP or SuperAdmin */}
             {!(isTPUser || isSuperAdmin) && (
               <div className="space-y-2">
                 <Label htmlFor="siteId">Site Code</Label>
                 <Input id="siteId" value={siteCode} readOnly />
               </div>
             )}
-
             {/* Date Range Fields */}
             <div className="flex space-x-4">
               <div className="w-1/2 space-y-2">
@@ -543,7 +487,6 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 )}
               </div>
             </div>
-
             {/* Session Selection */}
             {isDateRangeValid && (
               <div className="space-y-2">
@@ -580,7 +523,6 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 )}
               </div>
             )}
-
             {/* Time Selection Fields */}
             {showTimeInputs && (
               <div className="flex space-x-4">
@@ -648,7 +590,6 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 </div>
               </div>
             )}
-
             {/* Category Selection - replaced with SelectOne */}
             <div className="space-y-2">
               <Label htmlFor="category">
@@ -671,7 +612,6 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 </p>
               )}
             </div>
-
             {/* Subcategory Selection (conditional) - replaced with SelectOne */}
             {showSubcategory && (
               <div className="space-y-2">
@@ -700,7 +640,6 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 )}
               </div>
             )}
-
             {/* Affected Areas - keeping SelectMany since this needs multiple selection */}
             <div className="space-y-2">
               <Label htmlFor="affectArea">
@@ -723,7 +662,6 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 </p>
               )}
             </div>
-
             {/* Reason */}
             <div className="space-y-2">
               <Label htmlFor="reason">
@@ -741,7 +679,6 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 </p>
               )}
             </div>
-
             {/* File Upload */}
             <div className="space-y-2">
               <Label htmlFor="attachment">
@@ -767,7 +704,6 @@ const SiteClosureForm: React.FC<SiteClosureFormProps> = ({
                 </p>
               )}
             </div>
-
             {/* Form Buttons */}
             <DialogFooter className="flex justify-between sm:justify-end gap-2">
               <Button

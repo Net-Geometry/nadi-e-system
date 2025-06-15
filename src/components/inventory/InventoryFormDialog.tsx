@@ -6,10 +6,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { SelectOne } from '@/components/ui/SelectOne';
-import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/ui/file-upload";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
@@ -19,19 +18,20 @@ import {
 } from "@/components/ui/select";
 import { useInventories } from "@/hooks/use-inventories";
 import { useOrganizations } from "@/hooks/use-organizations";
+import { useTpManagerSiteId } from "@/hooks/use-site-id";
 import { useToast } from "@/hooks/use-toast";
 import { useUserMetadata } from "@/hooks/use-user-metadata";
-import { useInventoryImage  } from "./hooks/use-inventory-image";
 import { supabase } from "@/integrations/supabase/client";
 import { Inventory } from "@/types/inventory";
 import { Site } from "@/types/site";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState, useMemo } from "react";
+import { Loader2, X } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { LoadingSpinner } from "../shared/LoadingSpinner";
-import { fetchSiteBySiteId, fetchSites } from "../site/hook/site-utils";
-import { useTpManagerSiteId } from "@/hooks/use-site-id";
+import { fetchSiteBySiteProfileId, fetchSites } from "../site/hook/site-utils";
+import { SelectOne } from "../ui/SelectOne";
 import { Textarea } from "../ui/textarea";
-import { X, Upload, Loader2 } from "lucide-react";
+import { useInventoryImage } from "./hooks/use-inventory-image";
 
 export interface InventoryFormDialogProps {
   open: boolean;
@@ -56,7 +56,7 @@ export const InventoryFormDialog = ({
     isUploading,
     handleImageChange,
     handleRemoveImage,
-    uploadImage
+    uploadImage,
   } = useInventoryImage();
 
   const userMetadata = useUserMetadata();
@@ -93,7 +93,8 @@ export const InventoryFormDialog = ({
   const { data: sites = [], isLoading: sitesIsLoading } = useQuery({
     queryKey: ["sites", organizationId],
     queryFn: () => fetchSites(organizationId, isTPUser, isDUSPUser),
-    enabled: !!organizationId || isSuperAdmin || isDUSPUser || isTPUser || isStaffUser,
+    enabled:
+      !!organizationId || isSuperAdmin || isDUSPUser || isTPUser || isStaffUser,
   });
 
   // TODO: use real data
@@ -144,13 +145,17 @@ export const InventoryFormDialog = ({
   } = useInventoryTypesQuery();
 
   const siteOptions = useMemo(() => {
-    if(!sites || sites.length === 0) return [];
+    if (!sites || sites.length === 0) return [];
 
     return sites
-      .filter((site) => (isSuperAdmin || isDUSPUser) ? (!tpId || site?.dusp_tp_id?.toString() === tpId) : true)
+      .filter((site) =>
+        isSuperAdmin || isDUSPUser
+          ? !tpId || site?.dusp_tp_id?.toString() === tpId
+          : true
+      )
       .map((site) => ({
         id: site.nd_site[0].id.toString(),
-        label: site.sitename
+        label: site.sitename,
       }));
   }, [sites, isSuperAdmin, isDUSPUser, tpId]);
 
@@ -163,66 +168,79 @@ export const InventoryFormDialog = ({
       setInventoryQuantity(String(inventory.quantity || ""));
       setInventoryDescription(String(inventory.description || ""));
       setInventoryBarcode(String(inventory.barcode || ""));
-      
+
       if (!isLoadingInventoryType) {
         setInventoryType(String(inventory.type_id || ""));
       }
-      
+
       // Set site-related data for editing
-      if (!duspsIsLoading && !tpsIsLoading && !sitesIsLoading && sites.length > 0) {
-        
+      if (
+        !duspsIsLoading &&
+        !tpsIsLoading &&
+        !sitesIsLoading &&
+        sites.length > 0
+      ) {
         let duspIdToSet = "";
         let tpIdToSet = "";
-        
+
         if (inventory.site?.dusp_tp_id_display) {
           // Find matching TP by name from dusp_tp_id_display
-          const matchingTP = tps.find(tp => tp.name === inventory.site.dusp_tp_id_display);
+          const matchingTP = tps.find(
+            (tp) => tp.name === inventory.site.dusp_tp_id_display
+          );
           if (matchingTP) {
             tpIdToSet = String(matchingTP.id);
             // Find the parent DUSP
-            const matchingDUSP = dusps.find(dusp => dusp.id === matchingTP.parent_id);
+            const matchingDUSP = dusps.find(
+              (dusp) => dusp.id === matchingTP.parent_id
+            );
             if (matchingDUSP) {
               duspIdToSet = String(matchingDUSP.id);
             }
           }
         }
-        
+
         if (!duspIdToSet && inventory.site?.dusp_tp_id) {
           tpIdToSet = String(inventory.site.dusp_tp_id);
           // Find the TP and its parent DUSP
-          const matchingTP = tps.find(tp => tp.id.toString() === tpIdToSet);
+          const matchingTP = tps.find((tp) => tp.id.toString() === tpIdToSet);
           if (matchingTP && matchingTP.parent_id) {
             duspIdToSet = String(matchingTP.parent_id);
           }
         }
-        
+
         if (!duspIdToSet && !tpIdToSet && inventory.site_id) {
           // Find the site and get its TP relationship
-          const siteData = sites?.find(site => site.nd_site[0].id.toString() === String(inventory.site_id));
+          const siteData = sites?.find(
+            (site) =>
+              site.nd_site[0].id.toString() === String(inventory.site_id)
+          );
           if (siteData?.dusp_tp_id) {
             tpIdToSet = String(siteData.dusp_tp_id);
             // Find the TP and its parent DUSP
-            const matchingTP = tps.find(tp => tp.id.toString() === tpIdToSet);
+            const matchingTP = tps.find((tp) => tp.id.toString() === tpIdToSet);
             if (matchingTP && matchingTP.parent_id) {
               duspIdToSet = String(matchingTP.parent_id);
             }
           }
         }
-                
+
         if (duspIdToSet) {
           setDuspId(duspIdToSet);
         }
-        
+
         if (tpIdToSet) {
           setTpId(tpIdToSet);
         }
-        
+
         if (inventory.site_id) {
           const siteIdStr = String(inventory.site_id);
           setSiteId(siteIdStr);
-          
+
           // Find and set the selected site
-          const siteData = sites?.find(site => site.nd_site[0].id.toString() === siteIdStr);
+          const siteData = sites?.find(
+            (site) => site.nd_site[0].id.toString() === siteIdStr
+          );
           if (siteData) {
             setSelectedSite(siteData);
           }
@@ -237,15 +255,17 @@ export const InventoryFormDialog = ({
     sitesIsLoading,
     sites,
     dusps,
-    tps
+    tps,
   ]);
 
   useEffect(() => {
     if (duspId) {
       // Filter TPs based on selected DUSP
-      const filteredTPs = tps?.filter((tp) => tp?.parent_id?.toString() === duspId);
+      const filteredTPs = tps?.filter(
+        (tp) => tp?.parent_id?.toString() === duspId
+      );
       // Reset TP and Site if DUSP changes
-      if (tpId && !filteredTPs?.find(tp => tp.id.toString() === tpId)) {
+      if (tpId && !filteredTPs?.find((tp) => tp.id.toString() === tpId)) {
         setTpId("");
         setSiteId("");
         setSelectedSite(null);
@@ -254,9 +274,14 @@ export const InventoryFormDialog = ({
 
     if (tpId) {
       // Filter sites based on selected TP
-      const filteredSites = sites?.filter((site) => site?.dusp_tp_id?.toString() === tpId);
+      const filteredSites = sites?.filter(
+        (site) => site?.dusp_tp_id?.toString() === tpId
+      );
       // Reset Site if TP changes
-      if (siteId && !filteredSites?.find(site => site.nd_site[0].id.toString() === siteId)) {
+      if (
+        siteId &&
+        !filteredSites?.find((site) => site.nd_site[0].id.toString() === siteId)
+      ) {
         setSiteId("");
         setSelectedSite(null);
       }
@@ -266,7 +291,9 @@ export const InventoryFormDialog = ({
   useEffect(() => {
     // Handle site selection for non-tp_site users
     if (siteId && !isTpSiteUser) {
-      const selectedSiteData = sites?.find(site => site.nd_site[0].id.toString() === siteId);
+      const selectedSiteData = sites?.find(
+        (site) => site.nd_site[0].id.toString() === siteId
+      );
       if (selectedSiteData) {
         setSelectedSite(selectedSiteData);
       }
@@ -295,27 +322,15 @@ export const InventoryFormDialog = ({
   useEffect(() => {
     const fetchSite = async () => {
       if (!siteId) return;
-      
+
       try {
-        // For tp_site users, fetch site info using nd_site.id
-        const { data: siteData, error } = await supabase
-          .from('nd_site')
-          .select(`
-            id,
-            nd_site_profile!site_profile_id(
-              id,
-              sitename
-            )
-          `)
-          .eq('id', siteId)
-          .single();
-        
-        if (!error && siteData) {
+        const site = await fetchSiteBySiteProfileId(siteId!);
+
+        if (site) {
           setSelectedSite({
-            sitename: siteData.nd_site_profile?.sitename || 'Unknown Site',
-            nd_site: [{ id: siteData.id }]
+            sitename: site.nd_site_profile?.sitename || "Unknown Site",
+            nd_site: [{ id: site.id }],
           } as unknown as Site);
-          console.log("Fetched site for TP site user:", siteData.nd_site_profile?.sitename);
         } else {
           console.warn("No site found for siteId:", siteId);
         }
@@ -332,38 +347,49 @@ export const InventoryFormDialog = ({
   useEffect(() => {
     // Initialize siteId based on context - only run when dialog opens and inventory data is set
     if (!open) return;
-    
+
     if (inventory?.site_id) {
       // If editing existing inventory, use its site_id
       setSiteId(String(inventory.site_id));
-    } else if (isTpSiteUser && parsedMetadata?.group_profile?.site_profile_id && !inventory) {
+    } else if (
+      isTpSiteUser &&
+      parsedMetadata?.group_profile?.site_profile_id &&
+      !inventory
+    ) {
       // For tp_site users creating new inventory
       const fetchUserSite = async () => {
         try {
           const { data: siteData, error } = await supabase
-            .from('nd_site')
-            .select('id, nd_site_profile!site_profile_id(sitename)')
-            .eq('site_profile_id', parsedMetadata.group_profile.site_profile_id)
+            .from("nd_site")
+            .select("id, nd_site_profile!site_profile_id(sitename)")
+            .eq("site_profile_id", parsedMetadata.group_profile.site_profile_id)
             .single();
-          
+
           if (!error && siteData) {
             setSiteId(String(siteData.id));
             setSelectedSite({
-              sitename: siteData.nd_site_profile?.sitename || 'Unknown Site',
-              nd_site: [{ id: siteData.id }]
+              sitename: siteData.nd_site_profile?.sitename || "Unknown Site",
+              nd_site: [{ id: siteData.id }],
             } as unknown as Site);
           }
         } catch (error) {
           console.error("Error fetching user's site:", error);
         }
       };
-      
+
       fetchUserSite();
     } else if (defaultSiteId && !inventory) {
       // For other users with default site (creating new inventory)
       setSiteId(String(defaultSiteId));
     }
-  }, [open, isTpSiteUser, parsedMetadata?.group_profile?.site_profile_id, defaultSiteId, inventory?.site_id, inventory]);
+  }, [
+    open,
+    isTpSiteUser,
+    parsedMetadata?.group_profile?.site_profile_id,
+    defaultSiteId,
+    inventory?.site_id,
+    inventory,
+  ]);
 
   useEffect(() => {
     if (inventory && open) {
@@ -401,7 +427,7 @@ export const InventoryFormDialog = ({
 
     if (isTpSiteUser && !selectedSite && siteId) {
       try {
-        const site = await fetchSiteBySiteId(siteId);
+        const site = await fetchSiteBySiteProfileId(siteId);
         if (site) {
           setSelectedSite(site);
         }
@@ -434,15 +460,21 @@ export const InventoryFormDialog = ({
       type_id: inventoryType ? parseInt(inventoryType) : null,
       description: String(formData.get("description") || ""),
       retail_type: retailType ? parseInt(retailType) : null,
-      price: formData.get("price") ? parseFloat(String(formData.get("price"))) : null,
-      quantity: formData.get("quantity") ? parseInt(String(formData.get("quantity"))) : null,
-      site_id: selectedSite?.nd_site?.[0]?.id ? parseInt(String(selectedSite.nd_site[0].id)) : null,
+      price: formData.get("price")
+        ? parseFloat(String(formData.get("price")))
+        : null,
+      quantity: formData.get("quantity")
+        ? parseInt(String(formData.get("quantity")))
+        : null,
+      site_id: selectedSite?.nd_site?.[0]?.id
+        ? parseInt(String(selectedSite.nd_site[0].id))
+        : null,
       barcode: String(formData.get("barcode") || ""),
     };
 
     try {
       let inventoryRecordId: string | null = inventoryId;
-      
+
       if (inventoryId) {
         console.log("Updating existing inventory:", inventoryData);
         const { error: updateError } = await supabase
@@ -467,7 +499,7 @@ export const InventoryFormDialog = ({
       if (imageFile && inventoryRecordId) {
         console.log("Uploading new image...");
         const imageUrl = await uploadImage();
-        
+
         if (imageUrl) {
           const { data: userData } = await supabase.auth.getUser();
           const userId = userData.user?.id;
@@ -483,12 +515,14 @@ export const InventoryFormDialog = ({
           // Insert new attachment record
           const { error: attachmentError } = await supabase
             .from("nd_inventory_attachment")
-            .insert([{
-              inventory_id: inventoryRecordId,
-              file_path: imageUrl,
-              created_by: userId,
-              created_at: new Date().toISOString()
-            }]);
+            .insert([
+              {
+                inventory_id: inventoryRecordId,
+                file_path: imageUrl,
+                created_by: userId,
+                created_at: new Date().toISOString(),
+              },
+            ]);
 
           if (attachmentError) {
             console.error("Error saving attachment:", attachmentError);
@@ -507,9 +541,11 @@ export const InventoryFormDialog = ({
       }
 
       toast({
-        title: inventoryId ? "Inventory updated successfully" : "Inventory added successfully",
-        description: inventoryId 
-          ? "The inventory has been updated in the system." 
+        title: inventoryId
+          ? "Inventory updated successfully"
+          : "Inventory added successfully",
+        description: inventoryId
+          ? "The inventory has been updated in the system."
           : "The new inventory has been added to the system.",
       });
 
@@ -618,7 +654,10 @@ export const InventoryFormDialog = ({
                     </SelectTrigger>
                     <SelectContent>
                       {tps
-                        .filter((tp) => !duspId || tp?.parent_id?.toString() === duspId)
+                        .filter(
+                          (tp) =>
+                            !duspId || tp?.parent_id?.toString() === duspId
+                        )
                         .map((tp, index) => (
                           <SelectItem key={index} value={tp.id.toString()}>
                             {tp.name}
@@ -629,18 +668,22 @@ export const InventoryFormDialog = ({
                 </div>
               )}
 
-              {(isSuperAdmin || isDUSPUser || isTPUser || isStaffUser) && !isTpSiteUser && (
-                <div className="space-y-2">
-                  <Label htmlFor="type">Site</Label>
-                  <SelectOne
-                    options={siteOptions}
-                    value={siteId}
-                    onChange={(value) => setSiteId(value as string)}
-                    placeholder="Select site"
-                    disabled={(isSuperAdmin || isDUSPUser) && !tpId || sites.length === 0}
-                  />
-                </div>
-              )}
+              {(isSuperAdmin || isDUSPUser || isTPUser || isStaffUser) &&
+                !isTpSiteUser && (
+                  <div className="space-y-2">
+                    <Label htmlFor="type">Site</Label>
+                    <SelectOne
+                      options={siteOptions}
+                      value={siteId}
+                      onChange={(value) => setSiteId(value as string)}
+                      placeholder="Select site"
+                      disabled={
+                        ((isSuperAdmin || isDUSPUser) && !tpId) ||
+                        sites.length === 0
+                      }
+                    />
+                  </div>
+                )}
 
               {isTpSiteUser && selectedSite && (
                 <div className="space-y-2">
@@ -706,8 +749,8 @@ export const InventoryFormDialog = ({
 
               <div className="space-y-2">
                 <Label htmlFor="type">Inventory Type</Label>
-                <Select 
-                  name="type" 
+                <Select
+                  name="type"
                   required
                   value={inventoryType}
                   onValueChange={setInventoryType}
@@ -747,10 +790,10 @@ export const InventoryFormDialog = ({
 
               <div className="space-y-2">
                 <Label>Inventory Image</Label>
-                {(previewUrl || existingImageUrl) ? (
+                {previewUrl || existingImageUrl ? (
                   <div className="relative w-40 h-40 border rounded-md overflow-hidden bg-muted/30 flex items-center justify-center group">
                     <img
-                      src={previewUrl || existingImageUrl || ''}
+                      src={previewUrl || existingImageUrl || ""}
                       alt="Inventory preview"
                       className="object-contain w-full h-full p-2"
                     />

@@ -21,26 +21,59 @@ export function footerNadiDocs(doc: jsPDF, date: Date) {
   doc.text(rightText, rightTextX, pageHeight - 15);
 }
 
-export async function headerNadiDocs(doc: jsPDF) {
-  const getBase64Image = async (url: string): Promise<string> => {
-    const res = await fetch(url);
-    const blob = await res.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(blob);
-    });
-  };
+export const getBase64ImageWithSize = async (
+  url: string
+): Promise<{ dataUrl: string; width: number; height: number }> => {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const img = new Image();
+      img.onload = () => {
+        resolve({
+          dataUrl: reader.result as string,
+          width: img.width,
+          height: img.height,
+        });
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(blob);
+  });
+};
 
-  const [mcmcLogo, imageB] = await Promise.all([
-    getBase64Image(
+export async function headerNadiDocs(doc: jsPDF, duspLogoUrl: string) {
+  const [mcmcLogoData, duspLogoData] = await Promise.all([
+    getBase64ImageWithSize(
       "https://upload.wikimedia.org/wikipedia/commons/thumb/8/85/MCMC_Logo.png/1088px-MCMC_Logo.png"
     ),
-    getBase64Image("https://picsum.photos/200?random=2"),
+    getBase64ImageWithSize(duspLogoUrl),
   ]);
 
-  doc.addImage(mcmcLogo, "JPEG", 15, 10, 30, 30);
-  doc.addImage(imageB, "JPEG", 165, 10, 30, 30);
+  // MCMC logo
+  const mcmcX = 15;
+  const mcmcY = 10;
+  const mcmcSize = 30;
+  doc.addImage(mcmcLogoData.dataUrl, "JPEG", mcmcX, mcmcY, mcmcSize, mcmcSize);
+
+  // DUSP logo with fixed width, preserve aspect ratio
+  const fixedWidth = 30;
+  const aspectRatio = duspLogoData.height / duspLogoData.width;
+  const duspHeight = fixedWidth * aspectRatio;
+
+  // Vertically align DUSP logo with MCMC by centering them on same baseline or middle
+  const alignedY = mcmcY + (mcmcSize - duspHeight) / 2;
+  const duspX = 165;
+
+  doc.addImage(
+    duspLogoData.dataUrl,
+    "JPEG",
+    duspX,
+    alignedY,
+    fixedWidth,
+    duspHeight
+  );
 
   doc.setFont("VerdanaBd", "bold");
   doc.setFontSize(12);

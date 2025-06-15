@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Vendor } from "@/types/vendor";
+import { Vendor, VendorStaffMember } from "@/types/vendor";
 import { useEffect, useState } from "react";
 
 export const useVendors = () => {
@@ -65,4 +65,46 @@ export const useVendorProfileId = (isVendorUser?: boolean) => {
   }, [isVendorUser]);
 
   return isVendorUser ? vendorId : null;
+};
+
+export const useVendorManager = (vendorId: number) => {
+  const [data, setData] = useState<VendorStaffMember>();
+
+  useEffect(() => {
+    if (!vendorId) return;
+
+    const fetchStaff = async () => {
+      try {
+        const position_id = 1; // Manager position
+
+        const { data: staffData, error } = await supabase
+          .from("nd_vendor_staff")
+          .select(
+            `
+              id,
+              fullname,
+              ic_no,
+              mobile_no,
+              work_email,
+              position_id,
+              is_active,
+              registration_number,
+              user_id
+            `
+          )
+          .eq("registration_number", vendorId)
+          .eq("position_id", position_id)
+          .single();
+
+        if (error) throw error;
+
+        setData(staffData);
+      } catch (error) {
+        console.error("Error fetching vendors:", error);
+      }
+    };
+    fetchStaff();
+  }, [vendorId]);
+
+  return data;
 };

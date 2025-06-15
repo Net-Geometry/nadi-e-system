@@ -1,4 +1,3 @@
-import { fetchSiteBySiteId } from "@/components/site/hook/site-utils";
 import { supabase } from "@/lib/supabase";
 import {
   MaintenanceRequest,
@@ -22,9 +21,8 @@ export const maintenanceClient = {
         nd_type_maintenance ( id, name ),
         sla:nd_sla_categories ( id, name, min_day, max_day ),
         asset:nd_asset (
-          id,
-          name,
-          site_id
+          *,
+          site:nd_site_profile (*)
         ),
         vendor:nd_vendor_profile ( id, business_name, registration_number, business_type, phone_number )`
       )
@@ -64,9 +62,6 @@ export const maintenanceClient = {
       data
         .filter((item) => item.asset && item.asset.site_id)
         .map(async (item) => {
-          const profile = await fetchSiteBySiteId(item.asset.site_id);
-          item.asset.site = profile;
-
           if (item.no_docket && item.no_docket.startsWith("1")) {
             item.docket_type = "cm";
           } else if (item.no_docket && item.no_docket.startsWith("2")) {
@@ -94,9 +89,8 @@ export const maintenanceClient = {
         nd_type_maintenance ( id, name ),
         sla:nd_sla_categories ( id, name ),
         asset:nd_asset (
-          id,
-          name,
-          site_id
+          *,
+          site:nd_site_profile (*)
         ),
         vendor:nd_vendor_profile ( id, business_name, registration_number, business_type, phone_number )`
       )
@@ -108,8 +102,6 @@ export const maintenanceClient = {
       throw error;
     }
 
-    const profile = await fetchSiteBySiteId(data.asset.site_id);
-    data.asset.site = profile;
     return {
       ...data,
       type: data.nd_type_maintenance,

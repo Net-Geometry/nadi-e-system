@@ -2,7 +2,6 @@ import { useQuery } from "@tanstack/react-query";
 
 import { MaintenanceStatus } from "@/types/maintenance";
 import { useSiteId, useTpManagerSiteId } from "../use-site-id";
-import { useSiteIdFromSiteProfile } from "../use-site-profile-site-id";
 import { useUserMetadata } from "../use-user-metadata";
 import { useVendorProfileId } from "../use-vendor";
 import { maintenanceClient } from "./maintenance-client";
@@ -24,15 +23,12 @@ export const useMaintenanceQueries = () => {
     siteId: siteProfileIdTpManager,
     isLoading: siteProfileIdTpManagerLoading,
   } = useTpManagerSiteId(isTpSite);
-  const siteIdTpManager = useSiteIdFromSiteProfile(
-    siteProfileIdTpManagerLoading ? null : siteProfileIdTpManager
-  );
 
   let site_id: string | null = null;
   if (isStaffUser) {
     site_id = siteIdStaff;
   } else if (isTpSite) {
-    site_id = siteIdTpManager;
+    site_id = siteProfileIdTpManager;
   }
 
   const vendorId = useVendorProfileId(isVendor);
