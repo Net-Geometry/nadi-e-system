@@ -13,7 +13,17 @@ export const useUserId = () => {
     return data;
   };
 
-  return { fetchUserByName };
+  const fetchUserBySupabaseAuth = async () => {
+    const { data: { user }, error: userError } = await supabase.auth.getUser();
+
+    if (userError) {
+      throw userError;
+    }
+
+    return user.id
+  };
+
+  return { fetchUserByName, fetchUserBySupabaseAuth };
 };
 
 export const useUserName = () => {

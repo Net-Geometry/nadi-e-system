@@ -2,8 +2,8 @@ import { Asset } from "@/types/asset";
 import { Vendor } from "./vendor";
 
 export interface MaintenanceRequest {
-  id: number;
-  no_docket: string;
+  id?: number;
+  no_docket?: string;
   description: string;
   asset_id?: number;
   asset?: Asset;
@@ -11,10 +11,11 @@ export interface MaintenanceRequest {
   type?: TypeMaintenance;
   docket_type?: "cm" | "pm";
   sla_id?: number;
-  sla: SLACategories;
+  sla?: SLACategories;
   status: MaintenanceStatus;
   requester_by: string;
   attachment?: string;
+  space_id: number;
   updates?: MaintenanceUpdate[];
   maintenance_date?: string;
   priority_type_id?: number;

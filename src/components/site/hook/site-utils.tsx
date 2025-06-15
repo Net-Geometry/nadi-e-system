@@ -34,7 +34,7 @@ export const fetchSites = async (
         `
         *,
         nd_site_status:nd_site_status(eng),
-        nd_site:nd_site(id,standard_code,refid_tp,refid_mcmc),
+        nd_site:nd_site(id,standard_code,refid_tp,refid_mcmc, nd_site_profile(nd_asset(*))),
         nd_site_socioeconomic:nd_site_socioeconomic(nd_socioeconomics:nd_socioeconomics(id,eng)),
         nd_site_space:nd_site_space(nd_space:nd_space(id,eng)),
         nd_phases:nd_phases(name),

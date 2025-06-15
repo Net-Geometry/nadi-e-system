@@ -67,7 +67,7 @@ export const TpAdminDashBoard = ({
     const initialTotalSites = useRef(tpsSites?.length);
     const { totalPc, pcInUse, pcsInMaintenance } = useMemo(() => {
         const totalPc = pcsInTpsAdminSite.length;
-        const pcInUse = pcsInTpsAdminSite.filter(pc => pc?.nd_booking?.some(b => b?.is_using)).length;
+        const pcInUse = pcsInTpsAdminSite.filter(pc => pc.is_using === true).length;
         const maintenancePcIds = maintenancePc?.map(pc => pc.asset_id) || [];
         const pcsInMaintenance = pcsInTpsAdminSite.filter(pc => maintenancePcIds.includes(pc.id)).length;
 
@@ -115,10 +115,8 @@ export const TpAdminDashBoard = ({
 
             for (const repSite of site?.nd_site || []) {
                 for (const asset of repSite.nd_asset || []) {
-                    const bookings = asset.nd_booking || [];
-
-                    const isInUse = bookings.length > 0 && bookings.some(b => b.is_using === true);
-                    const isAvailable = bookings.length === 0 || bookings.every(b => b.is_using === false);
+                    const isInUse = asset.is_using === true;
+                    const isAvailable = asset.is_using === false;
                     const isMaintenance = maintenancePc?.some(pc => pc.asset_id === asset.id);
 
                     if (isInUse) {
@@ -167,7 +165,7 @@ export const TpAdminDashBoard = ({
         {
             title: "Pcs available",
             value: pcsInTpsAdminSite.filter(pc =>
-                !pc?.nd_booking?.some(b => b?.is_using)
+                pc.is_using === false
             ).length.toString(),
             description: "",
             customValueColorClass: "text-green-500"

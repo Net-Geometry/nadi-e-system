@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Calendar as CalendarIcon, Search } from 'lucide-react';
@@ -19,6 +18,7 @@ import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Space } from '@/types/site';
 
 interface FilterBarProps {
   showDateRange?: boolean;
@@ -30,6 +30,7 @@ interface FilterBarProps {
   onFilterChange?: (filters: any) => void;
   children?: React.ReactNode;
   className?: string;
+  allSpaces?: Space[];
 }
 
 export function FilterBar({
@@ -42,6 +43,7 @@ export function FilterBar({
   onFilterChange,
   children,
   className,
+  allSpaces
 }: FilterBarProps) {
   const [startDate, setStartDate] = React.useState<Date>();
   const [endDate, setEndDate] = React.useState<Date>();
@@ -50,13 +52,15 @@ export function FilterBar({
   const [searchQuery, setSearchQuery] = React.useState<string>('');
   const [availability, setAvailability] = React.useState<string>('all');
   const [typeTabs, setTypeTabs] = React.useState<string>('all');
+  const [spaceName, setSpaceName] = React.useState<string>('');
 
   const handleFilterChange = () => {
     if (showPcBookingFilter && onFilterChange) {
       onFilterChange({
         availability,
         typeTabs,
-        searchQuery
+        searchQuery,
+        spaceName
       });
       return;
     }
@@ -73,7 +77,7 @@ export function FilterBar({
 
   React.useEffect(() => {
     handleFilterChange();
-  }, [startDate, endDate, region, centerType, searchQuery, availability, typeTabs]);
+  }, [startDate, endDate, region, centerType, searchQuery, availability, typeTabs, spaceName]);
 
   return (
     <div className={cn("flex flex-wrap gap-2 items-center", className)}>
@@ -145,20 +149,39 @@ export function FilterBar({
       )}
 
       {showSearch && (
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search..."
-            className="pl-8 w-[200px]"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
+        <div className='flex items-center gap-2'>
+          <div className="relative">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Search..."
+              className="pl-8 w-[200px] bg-white"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          {!isFacility && (
+            <Select value={spaceName} onValueChange={setSpaceName}>
+              <SelectTrigger className="w-[180px] bg-white text-black border border-gray-300 hover:bg-gray-50">
+                <SelectValue placeholder="Select Space" />
+              </SelectTrigger>
+              <SelectContent className="bg-white text-black border border-gray-300">
+                {allSpaces.map((space, index) => (
+                  <SelectItem
+                    key={index}
+                    value={space.eng}
+                    className="bg-white text-black hover:bg-gray-100 focus:bg-gray-100"
+                  >
+                    {space.eng}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
       )}
 
       {showPcBookingFilter && (
-
         <section className='flex gap-2' id="filterPcBooking">
           <Tabs value={availability} defaultValue='all' onValueChange={(value: string) => { setAvailability(value) }}>
             <TabsList className='bg-white' defaultValue={'all'}>
@@ -168,17 +191,11 @@ export function FilterBar({
             </TabsList>
           </Tabs>
           <Tabs value={typeTabs} defaultValue='all' onValueChange={(value: string) => { setTypeTabs(value) }}>
-            {!isFacility ? (
+            {!isFacility && (
               <TabsList className='bg-white' defaultValue={'all'}>
                 <TabsTrigger value='all'>All</TabsTrigger>
+                <TabsTrigger value='Standard'>Standard</TabsTrigger>
                 <TabsTrigger value='Gaming'>Gaming</TabsTrigger>
-                <TabsTrigger value='Printer'>Printer</TabsTrigger>
-              </TabsList>
-            ) : (
-              <TabsList className='bg-white' defaultValue={'all'}>
-                <TabsTrigger value='all'>All</TabsTrigger>
-                <TabsTrigger value='Meeting'>Meeting</TabsTrigger>
-                <TabsTrigger value='Lab'>Lab</TabsTrigger>
               </TabsList>
             )}
           </Tabs>

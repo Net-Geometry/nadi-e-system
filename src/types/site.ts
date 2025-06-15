@@ -1,4 +1,5 @@
 import { Asset } from "./asset";
+import { Booking } from "./booking";
 
 export interface Site {
   id: number;
@@ -44,6 +45,7 @@ export interface Site {
     standard_code: string;
     refid_tp: string;
     refid_mcmc: string;
+    nd_asset: Asset[];
   }[];
   nd_phases: {
     name: string;
@@ -166,8 +168,9 @@ export interface Socioeconomic {
   eng: string;
 }
 export interface Space {
-  id: string;
+  id: number;
   eng: string;
+  is_enable_book?: boolean;
   created_by?: string;
   created_at?: string | Date;
   updated_by?: string;
@@ -178,8 +181,9 @@ export interface SiteSpace {
   id: number
   nd_space?: Space
   nd_site_profile?: SiteProfile
-  created_at?: string | Date,
-  updated_at?: string | Date,
+  nd_booking?: Booking[]
+  created_at?: string | Date
+  updated_at?: string | Date
   created_by?: string,
   updated_by?: string
 }

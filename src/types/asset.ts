@@ -1,5 +1,5 @@
 import { Brand } from "./brand";
-import { Site } from "./site";
+import { Site, Space } from "./site";
 import { Booking } from "./booking";
 
 export interface Asset {
@@ -10,12 +10,14 @@ export interface Asset {
   brand_id?: number;
   nd_brand?: Brand;
   is_active?: boolean;
+  is_using?: boolean;
   nd_booking?: Booking[];
   remark?: string;
   asset_group?: string;
   type_id?: number;
   type?: AssetType;
   nd_site?: Site[];
+  nd_space?: Space;
   retail_type?: number;
   subtype_id?: number;
   serial_number?: string;

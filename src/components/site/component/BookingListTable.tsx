@@ -1,13 +1,3 @@
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/components/ui/table";
-import { NoBookingFound } from "./NoBookingFound";
-import { FolderXIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { PaginationTable } from "./PaginationTable";
 

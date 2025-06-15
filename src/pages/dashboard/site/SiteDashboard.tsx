@@ -87,12 +87,12 @@ import { TableSkeleton } from "@/components/site/TableSkeleton";
 
 interface SiteDashboardProps {
   isBookingsEnabled?: boolean;
-  setSelectedSite?: React.Dispatch<React.SetStateAction<Site | null>>;
+  setSelectedSiteId?: React.Dispatch<React.SetStateAction<number | null>>;
 }
 
 export const SiteDashboard = ({
   isBookingsEnabled = false,
-  setSelectedSite
+  setSelectedSiteId
 }: SiteDashboardProps) => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -109,8 +109,8 @@ export const SiteDashboard = ({
   const isSuperAdmin = parsedMetadata?.user_type === "super_admin";
   const organizationId =
     parsedMetadata?.user_type !== "super_admin" &&
-    (isTPUser || isDUSPUser) &&
-    parsedMetadata?.organization_id
+      (isTPUser || isDUSPUser) &&
+      parsedMetadata?.organization_id
       ? parsedMetadata.organization_id
       : null;
   // MCMC users don't need an organization_id for access
@@ -204,11 +204,11 @@ export const SiteDashboard = ({
             : true) &&
           (stateFilters.length > 0
             ? site.nd_site_address &&
-              site.nd_site_address.length > 0 &&
-              stateFilters.includes(
-                states.find((s) => s.id === site.nd_site_address[0]?.state_id)
-                  ?.name || ""
-              )
+            site.nd_site_address.length > 0 &&
+            stateFilters.includes(
+              states.find((s) => s.id === site.nd_site_address[0]?.state_id)
+                ?.name || ""
+            )
             : true) &&
           (statusFilters.length > 0
             ? statusFilters.includes(site.nd_site_status?.eng || "")
@@ -252,7 +252,7 @@ export const SiteDashboard = ({
                   ?.name || "";
               valueB = b.nd_site_address[0]?.state_id
                 ? states.find((s) => s.id === b.nd_site_address[0]?.state_id)
-                    ?.name || ""
+                  ?.name || ""
                 : "";
               break;
             case "dusp_tp":
@@ -414,11 +414,11 @@ export const SiteDashboard = ({
             : true) &&
           (stateFilters.length > 0
             ? site.nd_site_address &&
-              site.nd_site_address.length > 0 &&
-              stateFilters.includes(
-                states.find((s) => s.id === site.nd_site_address[0]?.state_id)
-                  ?.name || ""
-              )
+            site.nd_site_address.length > 0 &&
+            stateFilters.includes(
+              states.find((s) => s.id === site.nd_site_address[0]?.state_id)
+                ?.name || ""
+            )
             : true) &&
           (statusFilters.length > 0
             ? statusFilters.includes(site.nd_site_status?.eng || "")
@@ -461,7 +461,7 @@ export const SiteDashboard = ({
                   ?.name || "";
               valueB = b.nd_site_address[0]?.state_id
                 ? states.find((s) => s.id === b.nd_site_address[0]?.state_id)
-                    ?.name || ""
+                  ?.name || ""
                 : "";
               break;
             case "dusp_tp":
@@ -534,6 +534,11 @@ export const SiteDashboard = ({
       default:
         return <Badge variant="outline">{status.replace("_", " ")}</Badge>;
     }
+  };
+
+  // Get total PC
+  const getTotalPC = (site: Site) => {
+    return site?.nd_site[0]?.nd_site_profile?.nd_asset?.filter(pc => pc?.type_id === 3).length || 0;
   };
 
   const hasActiveFilters =
@@ -630,7 +635,7 @@ export const SiteDashboard = ({
       </>
     );
   }
-  console.log("sitesData", sitesData);
+
   return (
     <>
       <div className="space-y-1">
@@ -694,7 +699,7 @@ export const SiteDashboard = ({
               <Download className="h-4 w-4" />
               Export
             </Button>
-            {!isRestrictedUser && (
+            {(!isRestrictedUser && !isBookingsEnabled) && (
               <Button
                 className="flex items-center gap-2"
                 onClick={() => setIsDialogOpen(true)}
@@ -734,8 +739,8 @@ export const SiteDashboard = ({
                             setSelectedPhaseFilters(
                               selectedPhaseFilters.includes(value)
                                 ? selectedPhaseFilters.filter(
-                                    (item) => item !== value
-                                  )
+                                  (item) => item !== value
+                                )
                                 : [...selectedPhaseFilters, value]
                             );
                           }}
@@ -786,8 +791,8 @@ export const SiteDashboard = ({
                             setSelectedRegionFilters(
                               selectedRegionFilters.includes(value)
                                 ? selectedRegionFilters.filter(
-                                    (item) => item !== value
-                                  )
+                                  (item) => item !== value
+                                )
                                 : [...selectedRegionFilters, value]
                             );
                           }}
@@ -838,8 +843,8 @@ export const SiteDashboard = ({
                             setSelectedStateFilters(
                               selectedStateFilters.includes(value)
                                 ? selectedStateFilters.filter(
-                                    (item) => item !== value
-                                  )
+                                  (item) => item !== value
+                                )
                                 : [...selectedStateFilters, value]
                             );
                           }}
@@ -910,8 +915,8 @@ export const SiteDashboard = ({
                                   setSelectedDuspFilters(
                                     selectedDuspFilters.includes(value)
                                       ? selectedDuspFilters.filter(
-                                          (item) => item !== value
-                                        )
+                                        (item) => item !== value
+                                      )
                                       : [...selectedDuspFilters, value]
                                   );
                                 }}
@@ -990,8 +995,8 @@ export const SiteDashboard = ({
                                   setSelectedTpFilters(
                                     selectedTpFilters.includes(value)
                                       ? selectedTpFilters.filter(
-                                          (item) => item !== value
-                                        )
+                                        (item) => item !== value
+                                      )
                                       : [...selectedTpFilters, value]
                                   );
                                 }}
@@ -1043,8 +1048,8 @@ export const SiteDashboard = ({
                             setSelectedStatusFilters(
                               selectedStatusFilters.includes(value)
                                 ? selectedStatusFilters.filter(
-                                    (item) => item !== value
-                                  )
+                                  (item) => item !== value
+                                )
                                 : [...selectedStatusFilters, value]
                             );
                           }}
@@ -1329,18 +1334,35 @@ export const SiteDashboard = ({
                   )}
                   <TableHead
                     className="cursor-pointer w-[100px]"
-                    onClick={() => handleSort("status")}
+                    onClick={() => isBookingsEnabled ? handleSort("Total PC") : handleSort("status")}
                   >
-                    <div className="flex items-center">
-                      Status
-                      {sortField === "status" ? (
-                        <span className="ml-2">
-                          {sortDirection === "asc" ? "↑" : "↓"}
-                        </span>
-                      ) : (
-                        <ChevronsUpDown className="ml-2 h-4 w-4 text-gray-400" />
-                      )}
-                    </div>
+                    {isBookingsEnabled ? (
+                      <div className="flex items-center">
+                        Total PC
+                        {
+                          sortField === "Total PC" ? (
+                            <span className="ml-2">
+                              {sortDirection === "asc" ? "↑" : "↓"}
+                            </span>
+                          ) : (
+                            <ChevronsUpDown className="ml-2 h-4 w-4 text-gray-400" />
+                          )
+                        }
+                      </div>
+                    ) : (
+                      <div className="flex items-center">
+                        Status
+                        {
+                          sortField === "status" ? (
+                            <span className="ml-2">
+                              {sortDirection === "asc" ? "↑" : "↓"}
+                            </span>
+                          ) : (
+                            <ChevronsUpDown className="ml-2 h-4 w-4 text-gray-400" />
+                          )
+                        }
+                      </div>
+                    )}
                   </TableHead>
                   <TableHead className="w-[160px]">Actions</TableHead>
                 </TableRow>
@@ -1428,7 +1450,7 @@ export const SiteDashboard = ({
                         </TableCell>
                       )}
                       <TableCell>
-                        {getStatusBadge(site?.nd_site_status?.eng)}
+                        {isBookingsEnabled ? getTotalPC(site) : getStatusBadge(site?.nd_site_status?.eng)}
                       </TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
@@ -1447,7 +1469,7 @@ export const SiteDashboard = ({
                             </Button>
                           )}
                           */}
-                          {!isRestrictedUser && (
+                          {(!isRestrictedUser && !isBookingsEnabled) && (
                             <Button
                               variant="outline"
                               size="icon"
@@ -1469,7 +1491,7 @@ export const SiteDashboard = ({
                           <Button
                             variant="outline"
                             size="icon"
-                            onClick={() => !isBookingsEnabled ? handleViewDetailsClick(site.id): setSelectedSite(site)}
+                            onClick={() => !isBookingsEnabled ? handleViewDetailsClick(site.id) : setSelectedSiteId(site.id)}
                           >
                             <Eye className="h-4 w-4" />
                           </Button>
@@ -1590,7 +1612,7 @@ export const SiteDashboard = ({
             site={siteToEdit}
           />
         )}
-      </div>
+      </div >
     </>
   );
 };

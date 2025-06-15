@@ -2,6 +2,8 @@ import { DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog
 import { Booking } from "@/types/booking";
 import { lazy, Suspense, useEffect, useState } from "react";
 import { LoadingFormSkeleton } from "./LoadingFormSkeleton";
+import { Asset } from "@/types/asset";
+import { SiteSpace } from "@/types/site";
 
 const BookingForm = lazy(() => import('./BookingForm'));
 
@@ -15,6 +17,8 @@ interface BookingFormDialogProps {
     setBookingCalendarData: React.Dispatch<React.SetStateAction<Booking[]>>,
     setBookingsData: React.Dispatch<React.SetStateAction<Booking[]>>,
     setOpen: React.Dispatch<React.SetStateAction<boolean>>
+    setSelectedFacilitiesData?: React.Dispatch<React.SetStateAction<SiteSpace[]>>
+    setSeletedPcsData?: React.Dispatch<React.SetStateAction<Asset[]>>
 }
 
 export const BookingFormDialog = ({
@@ -25,6 +29,8 @@ export const BookingFormDialog = ({
     isFacility,
     setBookingCalendarData,
     setBookingsData,
+    setSelectedFacilitiesData,
+    setSeletedPcsData,
     setOpen,
     open
 }: BookingFormDialogProps) => {
@@ -65,6 +71,8 @@ export const BookingFormDialog = ({
                                 assetsName={assetsName}
                                 setBookingsData={setBookingsData}
                                 setBookingCalendarData={setBookingCalendarData}
+                                setSelectedFacilitiesData={setSelectedFacilitiesData}
+                                setSeletedPcsData={setSeletedPcsData}
                             />
                         </Suspense>
                     )

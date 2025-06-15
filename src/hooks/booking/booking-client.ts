@@ -2,6 +2,7 @@ import { selectCode } from "@/components/ui-showcase/SelectExamples";
 import { supabase } from "@/lib/supabase";
 import type { Booking } from "@/types/booking";
 import { Brand } from "@/types/brand";
+import { MaintenanceRequest } from "@/types/maintenance";
 
 export const bookingClient = {
     postNewBooking: async (bookingData: Booking, isBookingAllowed: boolean): Promise<Booking> => {
@@ -12,12 +13,21 @@ export const bookingClient = {
         const { error, data } = await supabase
             .from("nd_booking")
             .insert(bookingData)
-            .select("*")
+            .select(`*,
+                nd_asset (*),
+                profiles (*),
+                nd_site_space (
+                    *,
+                    nd_space (*))`)
             .maybeSingle()
 
         if (error) {
             console.error("Failed add new booking", error);
             throw error;
+        }
+
+        if (!data) {
+            throw new Error("No booking data returned from Supabase.");
         }
 
         return data;
@@ -173,10 +183,7 @@ export const bookingClient = {
     getAllTpsSites: async (dusp_tp_id: string) => {
         const { data, error } = await supabase
             .from("nd_site_profile")
-            .select(`
-                *,
-                id
-            `)
+            .select("*")
             .eq("dusp_tp_id", dusp_tp_id)
 
         if (error) throw error;
@@ -311,10 +318,35 @@ export const bookingClient = {
 
         if (error) throw error;
 
+        const filtered = data.filter((space) => space?.nd_space?.is_enable_book === true);
+
+        return filtered;
+    },
+
+    getSpace: async () => {
+        const {data, error } = await supabase
+            .from("nd_space")
+            .select("id, eng");
+        if (error) {
+            console.error("Error fetching space", error);
+            throw error;
+        }
         return data;
     },
 
-    getSitesSpaces: async (siteId: string | number) => {
+    getSitesSpaces: async (siteProfileId: number | null, siteId?: number) => {
+        let selectedSiteId = siteProfileId;
+
+        if (siteId) {
+            const { data: siteProfile, error: errorSiteProfile } = await supabase
+                .from("nd_site")
+                .select("site_profile_id")
+                .eq("id", siteId)
+                .single()
+            if (errorSiteProfile) throw errorSiteProfile;
+            selectedSiteId = siteProfile?.site_profile_id
+        }
+
         const { data, error } = await supabase
             .from("nd_site_space")
             .select(`
@@ -324,13 +356,16 @@ export const bookingClient = {
                 ),
                 nd_site_profile (
                     *
-                )
+                ),
+                nd_booking (*)
             `)
-            .eq("site_id", siteId)
+            .eq("site_id", selectedSiteId)
 
         if (error) throw error;
 
-        return data;
+        const filtered = data.filter((space) => space?.nd_space?.is_enable_book === true);
+
+        return filtered;
     },
 
     getAllSpaceBookings: async (isSuperAdmin: boolean) => {
@@ -379,13 +414,13 @@ export const bookingClient = {
 
         if (error) throw error;
 
-        const filtered = data?.map((space) => space?.nd_site_space?.site_id === siteData?.id);
+        const filtered = data?.filter((space) => space?.nd_site_space?.site_id === siteData?.id);
 
         return filtered;
     },
 
     getAllSpaceBookingsInTpsSites: async (siteIds: number[]) => {
-        const {data, error} = await supabase
+        const { data, error } = await supabase
             .from("nd_booking")
             .select(`
                 *,
@@ -404,21 +439,24 @@ export const bookingClient = {
     getBookingBySiteSpaceId: async (id: number) => {
         const { data, error } = await supabase
             .from("nd_booking")
-            .select("*")
+            .select(`*,
+                profiles (*)`)
             .eq("site_space_id", id)
-            .maybeSingle()
+            .eq("is_active", true)
 
         if (error) {
             throw error;
         }
 
-        return data;
+        const selectedSpace = data?.find((book) => book?.is_active === true);
+
+        return selectedSpace ? selectedSpace : data;
     },
 
     getSpaceByName: async (spaceName: string, siteId: number) => {
         const { data: space, error: spaceError } = await supabase
             .from("nd_space")
-            .select("id")
+            .select("*")
             .eq("eng", spaceName)
             .single()
 
@@ -427,7 +465,7 @@ export const bookingClient = {
         const { data, error } = await supabase
             .from("nd_site_space")
             .select("*")
-            .eq("space_id", space?.id)
+            .eq("space_id", space.id)
             .eq("site_id", siteId)
             .single()
 
@@ -468,6 +506,36 @@ export const bookingClient = {
               asset_id  
             `)
             .eq("status", "submitted");
+
+        if (error) throw error;
+
+        return data;
+    },
+
+    postSpaceMaintenance: async (maintenanceData: MaintenanceRequest) => {
+        const { error, data } = await supabase
+            .from("nd_maintenance_request")
+            .insert(maintenanceData)
+            .select(`*`)
+            .maybeSingle()
+
+        if (error) {
+            console.error("Failed to add new maintenance request", error);
+            throw error;
+        }
+
+        if (!data) {
+            throw new Error("No maintenance data returned from Supabase.");
+        }
+
+        return data;
+    },
+
+    getMaintenanceBySpaceId: async (spaceId: number) => {
+        const { data, error } = await supabase
+            .from("nd_maintenance_request")
+            .select("*")
+            .eq("space_id", spaceId);
 
         if (error) throw error;
 
