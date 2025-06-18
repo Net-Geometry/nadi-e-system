@@ -8,6 +8,7 @@ export interface UserFormData {
   phone_number?: string;
   ic_number: string;
   position_id?: string;
+  tech_partner_id?: string;
   organization_id?: string;
   organization_role?: string;
   password?: string;

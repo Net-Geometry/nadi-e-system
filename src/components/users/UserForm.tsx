@@ -31,6 +31,7 @@ import {
   isDuspGroup,
   isSsoGroup,
   isVendorGroup,
+  isStaffGroup,
 } from "./hooks/use-user-groups";
 import { RequiredFieldNotice } from "./form-fields/RequiredFieldNotice";
 
@@ -54,6 +55,7 @@ const userFormSchema = z
       message: "Please enter a valid IC number in the format xxxxxx-xx-xxxx",
     }),
     position_id: z.string().optional(),
+    tech_partner_id: z.string().optional(),
     organization_id: z.string().optional(),
     organization_role: z.string().optional(),
     password: z
@@ -128,13 +130,14 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     defaultValues: {
       email: user?.email || "",
       full_name: user?.full_name || "",
-      user_type: user?.user_type || "member",
+      user_type: user?.user_type || "",
       user_group: user?.user_group?.toString() || "",
       phone_number: user?.phone_number || "",
       ic_number: user?.ic_number || "",
       password: "",
       confirm_password: "",
       position_id: "",
+      tech_partner_id: "",
       organization_id: "",
       organization_role: "member",
       // Initialize additional TP fields
@@ -287,12 +290,20 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
   useEffect(() => {
     const subscription = form.watch((value, { name }) => {
       if (name === "user_group") {
-        setSelectedUserGroup(value.user_group);
+        const newUserGroup = value.user_group;
+        const currentUserGroup = selectedUserGroup;
+
+        setSelectedUserGroup(newUserGroup);
+
+        // Clear user type when user group changes (but not on initial load)
+        if (currentUserGroup && newUserGroup !== currentUserGroup) {
+          form.setValue("user_type", "");
+        }
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [form]);
+  }, [form, selectedUserGroup]);
 
   // Determine if MCMC specific fields should be shown
   const shouldShowMcmcFields = () => {
@@ -320,6 +331,13 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
     if (!selectedUserGroup) return false;
     const group = getGroupById(userGroups, selectedUserGroup);
     return isSsoGroup(group);
+  };
+
+  // Determine if Staff specific fields should be shown
+  const shouldShowStaffFields = () => {
+    if (!selectedUserGroup) return false;
+    const group = getGroupById(userGroups, selectedUserGroup);
+    return isStaffGroup(group);
   };
 
   const handleAddUserToOrganization = async (
@@ -448,7 +466,11 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* User Group and Type - Moved to the top */}
               <UserGroupField form={form} isLoading={isLoading} />
-              <UserTypeField form={form} isLoading={isLoading} />
+              <UserTypeField
+                form={form}
+                isLoading={isLoading}
+                userGroups={userGroups}
+              />
 
               {/* Required fields with asterisk */}
               <UserEmailField
@@ -495,6 +517,18 @@ export function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
               <div className="mt-4 p-4 bg-muted rounded-md">
                 <h3 className="text-lg font-medium mb-3">
                   SSO Profile Information
+                </h3>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <UserPositionField form={form} isLoading={isLoading} />
+                </div>
+              </div>
+            )}
+
+            {shouldShowStaffFields() && (
+              <div className="mt-4 p-4 bg-muted rounded-md">
+                <h3 className="text-lg font-medium mb-3">
+                  Staff Profile Information
                 </h3>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

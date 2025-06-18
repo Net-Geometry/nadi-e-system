@@ -20,7 +20,10 @@ export function useUserGroups() {
         .order("group_name", { ascending: true });
 
       if (error) throw error;
-      return data as UserGroup[];
+      return data.map((group) => ({
+        ...group,
+        id: group.id.toString(),
+      })) as UserGroup[];
     },
   });
 }
@@ -55,4 +58,11 @@ export function isSsoGroup(group?: UserGroup): boolean {
 
 export function isVendorGroup(group?: UserGroup): boolean {
   return !!group && group.group_name.toLowerCase().includes("vendor");
+}
+
+export function isStaffGroup(group?: UserGroup): boolean {
+  return (
+    !!group &&
+    (group.group_name.toLowerCase().includes("staff") || group.id === "6")
+  );
 }
