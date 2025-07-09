@@ -1,52 +1,23 @@
 import { supabase, BUCKET_NAME_SITE_CLAIM } from "@/integrations/supabase/client";
 
-export const uploadAttachment = async (
-  file: File,
-  tpDuspId: { parent_id: { name: string }; name: string }, // tp_dusp_id object
-  year: number,
-  refNo: string,
-  requestId: number,
-  claimTypeId: number // 1 for supporting document, 2 for summary report
-) => {
+
+export const deleteAttachment = async (fileId: number) => {
   try {
-    // Construct the file name and file path
-    const fileName = `support_${Date.now()}_${file.name}`;
-    const filePath = `${tpDuspId.parent_id.name}/${tpDuspId.name}/${year}/${refNo}_${fileName}`;
-
-    // Step 1: Upload file to Supabase storage
-    const { error: uploadError } = await supabase.storage
-      .from(BUCKET_NAME_SITE_CLAIM)
-      .upload(filePath, file);
-
-    if (uploadError) {
-      console.error("Error uploading file to storage:", uploadError);
-      throw new Error("Failed to upload file to storage");
-    }
-
-    // Step 2: Insert file metadata into nd_claim_attachment
-    const { error: dbError } = await supabase
+    // Step 1: Get file_path from nd_claim_attachment
+    const { data, error: fetchError } = await supabase
       .from("nd_claim_attachment")
-      .insert({
-        request_id: requestId,
-        claim_type_id: claimTypeId,
-        file_path: filePath,
-      });
+      .select("file_path")
+      .eq("id", fileId)
+      .single();
 
-    if (dbError) {
-      console.error("Error inserting into nd_claim_attachment:", dbError);
-      throw new Error("Failed to insert into nd_claim_attachment");
+    if (fetchError || !data?.file_path) {
+      console.error("Error fetching file_path:", fetchError);
+      throw new Error("Failed to fetch file_path from nd_claim_attachment");
     }
 
-    return { success: true };
-  } catch (error) {
-    console.error("Error in uploadAttachment function:", error);
-    return { success: false, error };
-  }
-};
+    const filePath = data.file_path;
 
-export const deleteAttachment = async (fileId: number, filePath: string) => {
-  try {
-    // Step 1: Delete file from Supabase storage
+    // Step 2: Delete file from Supabase storage
     const { error: storageError } = await supabase.storage
       .from(BUCKET_NAME_SITE_CLAIM)
       .remove([filePath]);
@@ -56,7 +27,7 @@ export const deleteAttachment = async (fileId: number, filePath: string) => {
       throw new Error("Failed to delete file from storage");
     }
 
-    // Step 2: Delete file metadata from nd_claim_attachment
+    // Step 3: Delete metadata from nd_claim_attachment
     const { error: dbError } = await supabase
       .from("nd_claim_attachment")
       .delete()
@@ -73,6 +44,7 @@ export const deleteAttachment = async (fileId: number, filePath: string) => {
     return { success: false, error };
   }
 };
+
 
 export const uploadSignDoc = async (
   file: File,
@@ -114,27 +86,6 @@ export const uploadSignDoc = async (
     return { success: true };
   } catch (error) {
     console.error("Error in uploadSignDoc function:", error);
-    return { success: false, error };
-  }
-};
-
-
-export const updateRemark = async (requestId: number, remark: string) => {
-  try {
-    // Update the remark in the nd_claim_request table
-    const { error: dbError } = await supabase
-      .from("nd_claim_request")
-      .update({ remark })
-      .eq("id", requestId);
-
-    if (dbError) {
-      console.error("Error updating remark in nd_claim_request:", dbError);
-      throw new Error("Failed to update remark in nd_claim_request");
-    }
-
-    return { success: true };
-  } catch (error) {
-    console.error("Error in updateRemark function:", error);
     return { success: false, error };
   }
 };

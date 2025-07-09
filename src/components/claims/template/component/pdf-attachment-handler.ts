@@ -177,3 +177,85 @@ export const generateFinalPdf = async (
     const mergedPdfBytes = await pdfDoc.save();
     return new Blob([mergedPdfBytes], { type: 'application/pdf' });
 };
+
+
+
+export interface AttachmentFileSource {
+    attachment_files: File[];
+    standard_code: string;
+    description?: string;
+}
+
+export async function generateFinalPdfFromFiles(
+    reportBlob: Blob,
+    sources: AttachmentFileSource[]
+): Promise<Blob> {
+    const pdfDoc = await PDFDocument.create();
+
+    // Add the report pages first
+    const reportArrayBuffer = await reportBlob.arrayBuffer();
+    const reportPdf = await PDFDocument.load(reportArrayBuffer);
+    const reportPages = await pdfDoc.copyPages(reportPdf, reportPdf.getPageIndices());
+    reportPages.forEach((page) => pdfDoc.addPage(page));
+
+    // Process each source and its attachment files
+    for (const source of sources) {
+        for (const file of source.attachment_files) {
+            try {
+                const fileArrayBuffer = await file.arrayBuffer();
+                
+                // Check if it's a PDF file
+                if (file.type === 'application/pdf') {
+                    const attachmentPdf = await PDFDocument.load(fileArrayBuffer);
+                    const attachmentPages = await pdfDoc.copyPages(attachmentPdf, attachmentPdf.getPageIndices());
+                    attachmentPages.forEach((page) => pdfDoc.addPage(page));
+                } else if (file.type.startsWith('image/')) {
+                    // Handle image files (PNG, JPEG, etc.)
+                    const page = pdfDoc.addPage();
+                    const { width, height } = page.getSize();
+                    
+                    let image;
+                    if (file.type === 'image/png') {
+                        image = await pdfDoc.embedPng(fileArrayBuffer);
+                    } else if (file.type === 'image/jpeg' || file.type === 'image/jpg') {
+                        image = await pdfDoc.embedJpg(fileArrayBuffer);
+                    } else {
+                        console.warn(`Unsupported image type: ${file.type}`);
+                        continue;
+                    }
+                    
+                    // Scale image to fit the page while maintaining aspect ratio
+                    const imageAspectRatio = image.width / image.height;
+                    const pageAspectRatio = width / height;
+                    
+                    let imageWidth, imageHeight;
+                    if (imageAspectRatio > pageAspectRatio) {
+                        imageWidth = width - 80; // 40px margin on each side
+                        imageHeight = imageWidth / imageAspectRatio;
+                    } else {
+                        imageHeight = height - 80; // 40px margin on top and bottom
+                        imageWidth = imageHeight * imageAspectRatio;
+                    }
+                    
+                    const x = (width - imageWidth) / 2;
+                    const y = (height - imageHeight) / 2;
+                    
+                    page.drawImage(image, {
+                        x: x,
+                        y: y,
+                        width: imageWidth,
+                        height: imageHeight,
+                    });
+                } else {
+                    console.warn(`Unsupported file type: ${file.type}`);
+                }
+            } catch (error) {
+                console.error(`Error processing file ${file.name}:`, error);
+            }
+        }
+    }
+
+    // Save the final PDF
+    const pdfBytes = await pdfDoc.save();
+    return new Blob([pdfBytes], { type: 'application/pdf' });
+}

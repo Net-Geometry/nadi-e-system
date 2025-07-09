@@ -17,7 +17,7 @@ export const useClaimRunningNum = (year: number, tpDuspId: string) => {
                 throw error;
             }
 
-             return data?.running_number ?? 1;
+            return (data?.running_number ?? 0) + 1;
         },
         enabled: !!year && !!tpDuspId,
     });

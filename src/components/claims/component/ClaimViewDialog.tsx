@@ -13,6 +13,19 @@ import { useNavigate } from "react-router-dom";
 import { ApplicationTab } from "./tab/ApplicationTab";
 import { useToast } from "@/hooks/use-toast";
 import DuspRejectDialog from "../dusp/DuspRejectDialog";
+import ApplicationEditTab from "./tab/ApplicationEditTab";
+// ...existing imports...
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import ReportEditTab from "./tab/ReportEditTab";
 
 interface ClaimViewPageProps {
   claimId: number; // Accept claimId as a prop
@@ -26,20 +39,75 @@ const ClaimViewPage: React.FC<ClaimViewPageProps> = ({ claimId }) => {
   const userGroup = parsedMetadata?.user_group;
   const userType = parsedMetadata?.user_type;
   const [activeTab, setActiveTab] = useState("general");
-  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false); // State for TpSubmitDialog
-  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false); // State for TpSubmitDialog
-  const [isDuspDialogOpen, setIsDuspDialogOpen] = useState(false); // State for DuspSubmitDialog
-  const [isUpdatePaymentDialogOpen, setIsUpdatePaymentDialogOpen] = useState(false); // State for DuspUpdatePaymentDialog
+  const [isSubmitDialogOpen, setIsSubmitDialogOpen] = useState(false);
+  const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
+  const [isDuspDialogOpen, setIsDuspDialogOpen] = useState(false);
+  const [isUpdatePaymentDialogOpen, setIsUpdatePaymentDialogOpen] = useState(false);
+
+  // New state for tracking edit changes
+  const [isEditChanged, setIsEditChanged] = useState(false);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [pendingTab, setPendingTab] = useState<string | null>(null);
 
   // Fetch claim data using the hook
   const { data: claimData, isLoading, error, refetch } = useFetchClaimById(claimId);
+
+  // Handle tab change with confirmation for unsaved changes
+  const handleTabChange = (newTab: string) => {
+    if ((activeTab === "application_edit" || activeTab === "report_edit") && isEditChanged) {
+      setPendingTab(newTab);
+      setShowConfirmDialog(true);
+    } else {
+      setActiveTab(newTab);
+    }
+  };
+
+  // Confirm tab change and discard changes
+  const confirmTabChange = () => {
+    if (pendingTab) {
+      setActiveTab(pendingTab);
+      setIsEditChanged(false);
+      setPendingTab(null);
+    }
+    setShowConfirmDialog(false);
+  };
+
+  // Cancel tab change
+  const cancelTabChange = () => {
+    setPendingTab(null);
+    setShowConfirmDialog(false);
+  };
+
+  // Handle back navigation with confirmation for unsaved changes
+  const handleBackClick = () => {
+    if ((activeTab === "application_edit" || activeTab === "report_edit") && isEditChanged) {
+      setPendingTab("back");
+      setShowConfirmDialog(true);
+    } else {
+      navigate(-1);
+    }
+  };
+
+  // Confirm back navigation
+  const confirmBackNavigation = () => {
+    if (pendingTab === "back") {
+      navigate(-1);
+    } else {
+      confirmTabChange();
+    }
+  };
+
+  // Handle successful submission
+  const handleSubmitSuccess = () => {
+    setActiveTab("application");
+  };
 
   return (
     <div className="space-y-6">
       <header className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Claim Details</h1>
-        <Button variant="outline" onClick={() => navigate(-1)}>
-          Back
+        <Button variant="outline" onClick={handleBackClick}>
+          Back to Claim Dashboard
         </Button>
       </header>
       {/* <pre>{JSON.stringify(claimData, null, 2)}</pre> */}
@@ -52,10 +120,20 @@ const ClaimViewPage: React.FC<ClaimViewPageProps> = ({ claimId }) => {
         ) : error ? (
           <p>Error loading claim data</p>
         ) : (
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <Tabs value={activeTab} onValueChange={handleTabChange}>
             <TabsList className="mb-4">
               <TabsTrigger value="general">General</TabsTrigger>
-              <TabsTrigger value="application">Application</TabsTrigger>
+              {(userGroup === 3 && claimData?.claim_status?.name === "DRAFTED") && (
+                <TabsTrigger value="application_edit">Claim Application (Draft)</TabsTrigger>
+
+              )}
+              {(userGroup === 3 && claimData?.claim_status?.name === "DRAFTED") && (
+                <TabsTrigger value="report_edit">Claim Reports and Attachments (Draft)</TabsTrigger>
+
+              )}
+              {claimData?.claim_status?.name !== "DRAFTED" && (
+                <TabsTrigger value="application">Application</TabsTrigger>
+              )}
               {(userGroup === 1 || userGroup === 2) && (
                 <TabsTrigger value="sign">Signed Document</TabsTrigger>
               )}
@@ -63,18 +141,42 @@ const ClaimViewPage: React.FC<ClaimViewPageProps> = ({ claimId }) => {
             </TabsList>
 
             <TabsContent value="general">
-              <GeneralTab claimData={claimData} />
+              <div className="border border-gray-300 rounded-md p-4 shadow-sm">
+                <GeneralTab claimData={claimData} />
+              </div>
             </TabsContent>
-            <TabsContent value="application">
-              <ApplicationTab claimData={claimData} refetch={refetch} />
-            </TabsContent>
+            {(userGroup === 3 && claimData?.claim_status?.name === "DRAFTED") && (
+              <TabsContent value="application_edit">
+                <div className="border border-gray-300 rounded-md p-4 shadow-sm">
+                  <ApplicationEditTab claimData={claimData} onDataChange={setIsEditChanged} refetch={refetch} />
+                </div>
+              </TabsContent>
+            )}
+            {(userGroup === 3 && claimData?.claim_status?.name === "DRAFTED") && (
+              <TabsContent value="report_edit">
+                <div className="border border-gray-300 rounded-md p-4 shadow-sm">
+                  <ReportEditTab claimData={claimData} onDataChange={setIsEditChanged} refetch={refetch} />
+                </div>
+              </TabsContent>
+            )}
+            {claimData?.claim_status?.name !== "DRAFTED" && (
+              <TabsContent value="application">
+                <div className="border border-gray-300 rounded-md p-4 shadow-sm">
+                  <ApplicationTab claimData={claimData} refetch={refetch} />
+                </div>
+              </TabsContent>
+            )}
             {(userGroup === 1 || userGroup === 2) && (
               <TabsContent value="sign">
-                <SignTab claimData={claimData} />
+                <div className="border border-gray-300 rounded-md p-4 shadow-sm">
+                  <SignTab claimData={claimData} />
+                </div>
               </TabsContent>
             )}
             <TabsContent value="log">
-              <LogTab claimData={claimData} />
+              <div className="border border-gray-300 rounded-md p-4 shadow-sm">
+                <LogTab claimData={claimData} />
+              </div>
             </TabsContent>
           </Tabs>
         )}
@@ -84,8 +186,8 @@ const ClaimViewPage: React.FC<ClaimViewPageProps> = ({ claimId }) => {
           {userGroup === 3 && claimData?.claim_status?.name === "DRAFTED" && (
             <Button
               variant="default"
-              onClick={() => setIsSubmitDialogOpen(true)} // Open TpSubmitDialog
-              disabled={!claimData} // Disable if claimData is not loaded
+              onClick={() => setIsSubmitDialogOpen(true)}
+              disabled={!claimData}
             >
               Submit to DUSP
             </Button>
@@ -94,12 +196,12 @@ const ClaimViewPage: React.FC<ClaimViewPageProps> = ({ claimId }) => {
           {userGroup === 1 && claimData?.claim_status?.name === "SUBMITTED" && (
             <div>
               <Button
-              className="mr-2"
+                className="mr-2"
                 variant="destructive"
                 onClick={() => {
-                  setIsRejectDialogOpen(true); // Open DuspSubmitDialog
+                  setIsRejectDialogOpen(true);
                 }}
-                disabled={!claimData} // Disable if claimData is not loaded
+                disabled={!claimData}
               >
                 Reject
               </Button>
@@ -124,9 +226,9 @@ const ClaimViewPage: React.FC<ClaimViewPageProps> = ({ claimId }) => {
                     setActiveTab("sign");
                     return;
                   }
-                  setIsDuspDialogOpen(true); // Open DuspSubmitDialog
+                  setIsDuspDialogOpen(true);
                 }}
-                disabled={!claimData} // Disable if claimData is not loaded
+                disabled={!claimData}
               >
                 Save and Submit
               </Button>
@@ -136,8 +238,8 @@ const ClaimViewPage: React.FC<ClaimViewPageProps> = ({ claimId }) => {
           {userGroup === 1 && claimData?.claim_status?.name === "PROCESSING" && (
             <Button
               variant="default"
-              onClick={() => setIsUpdatePaymentDialogOpen(true)} // Open DuspUpdatePaymentDialog
-              disabled={!claimData} // Disable if claimData is not loaded
+              onClick={() => setIsUpdatePaymentDialogOpen(true)}
+              disabled={!claimData}
             >
               Update Payment
             </Button>
@@ -145,39 +247,57 @@ const ClaimViewPage: React.FC<ClaimViewPageProps> = ({ claimId }) => {
         </div>
       </div>
 
-      {/* TpSubmitDialog */}
+      {/* Confirmation Dialog for Unsaved Changes */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Unsaved Changes</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to leave this page? Any unsaved changes might not be saved.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={cancelTabChange}>
+              Stay on Page
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmBackNavigation}>
+              Leave Page
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* ...existing dialogs... */}
       {claimData && (
         <TpSubmitDialog
           isOpen={isSubmitDialogOpen}
-          onClose={() => setIsSubmitDialogOpen(false)} // Close TpSubmitDialog
-          claim={claimData} // Pass claimData to TpSubmitDialog
+          onClose={() => setIsSubmitDialogOpen(false)}
+          onSuccess={handleSubmitSuccess} // Add success callback
+          claim={claimData}
         />
       )}
 
-      {/* DuspSubmitDialog */}
       {claimData && (
         <DuspSubmitDialog
           isOpen={isDuspDialogOpen}
-          onClose={() => setIsDuspDialogOpen(false)} // Close DuspSubmitDialog
-          claim={claimData} // Pass claimData to DuspSubmitDialog
+          onClose={() => setIsDuspDialogOpen(false)}
+          claim={claimData}
         />
       )}
 
-      {/* DuspRejectDialog */}
       {claimData && (
         <DuspRejectDialog
           isOpen={isRejectDialogOpen}
-          onClose={() => setIsRejectDialogOpen(false)} // Close DuspSubmitDialog
-          claim={claimData} // Pass claimData to DuspSubmitDialog
+          onClose={() => setIsRejectDialogOpen(false)}
+          claim={claimData}
         />
       )}
 
-      {/* DuspUpdatePaymentDialog */}
       {claimData && (
         <DuspUpdatePaymentDialog
           isOpen={isUpdatePaymentDialogOpen}
-          onClose={() => setIsUpdatePaymentDialogOpen(false)} // Close DuspUpdatePaymentDialog
-          claim={claimData} // Pass claimData to DuspUpdatePaymentDialog
+          onClose={() => setIsUpdatePaymentDialogOpen(false)}
+          claim={claimData}
         />
       )}
     </div>

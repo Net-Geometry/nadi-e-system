@@ -9,15 +9,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { uploadAttachment, deleteAttachment, updateRemark } from "@/components/claims/hook/upload-attachment";
-import { Download, Trash2, X } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { Download } from "lucide-react";
 import ViewSiteDialog from "../ViewSiteDialog";
 import FrontPage from "../../template/component/FrontPage";
 import Appendix from "../../template/component/Appendix";
-const fileInputLabelClass =
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 border border-[#5147dd] bg-background text-[#5147dd] hover:bg-[#5147dd]/10 hover:text-[#5147dd] h-6 px-4 py-2"
 
 type ClaimData = {
   id: number;
@@ -41,11 +36,13 @@ type ClaimData = {
         name: string;
         need_support_doc: boolean;
         need_summary_report: boolean;
+        need_appendix: boolean;
         status_item: boolean;
         remark: string | null;
         site_ids: number[];
-        suppport_doc_file: { id: number; file_path: string }[]; // Updated type
+        suppport_doc_file: { id: number; file_path: string }[];
         summary_report_file: { id: number; file_path: string } | null;
+        appendix_file: { id: number; file_path: string }[];
       };
     }[];
   }[];
@@ -57,33 +54,12 @@ type ApplicationTabProps = {
 };
 
 export function ApplicationTab({ claimData, refetch }: ApplicationTabProps) {
-  const { toast } = useToast();
-  const [editingRemark, setEditingRemark] = useState<{ itemId: number; remark: string | null } | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isViewSiteDialogOpen, setIsViewSiteDialogOpen] = useState(false);
   const [selectedSiteIds, setSelectedSiteIds] = useState<number[]>([]);
 
-  const handleUpdateRemark = async (itemId: number, remark: string) => {
-    try {
-      const result = await updateRemark(itemId, remark);
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Remark updated.",
-          variant: "default",
-        });
-        setEditingRemark(null);
-      } else {
-        alert("Failed to update remark.");
-      }
-      refetch();
-    } catch (error) {
-      console.error("Error updating remark:", error);
-    }
-  };
-
   const handleDownloadAllReports = async () => {
-    setIsDownloading(true); // Set loading state to true
+    setIsDownloading(true);
     try {
       const pdfDoc = await PDFDocument.create();
 
@@ -147,7 +123,7 @@ export function ApplicationTab({ claimData, refetch }: ApplicationTabProps) {
     } catch (error) {
       console.error("Error combining and downloading reports:", error);
     } finally {
-      setIsDownloading(false); // Reset loading state
+      setIsDownloading(false);
     }
   };
 
@@ -155,8 +131,6 @@ export function ApplicationTab({ claimData, refetch }: ApplicationTabProps) {
     <div>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-lg font-bold">Claim Lists</h2>
-        {/* <pre>{JSON.stringify(claimData, null, 2)}</pre> */}
-
         <Button
           variant="outline"
           onClick={handleDownloadAllReports}
@@ -177,8 +151,6 @@ export function ApplicationTab({ claimData, refetch }: ApplicationTabProps) {
         </Button>
       </div>
 
-      {/* <pre>{JSON.stringify(claimData, null, 2)}</pre> */}
-
       <Table className="border border-gray-300 w-full text-sm">
         <TableHeader>
           <TableRow>
@@ -187,6 +159,7 @@ export function ApplicationTab({ claimData, refetch }: ApplicationTabProps) {
             <TableHead className="px-4 py-2 border w-[120px]">Sites</TableHead>
             <TableHead className="px-4 py-2 text-center border w-[120px]">Summary Report</TableHead>
             <TableHead className="px-4 py-2 text-center border">Attachment</TableHead>
+            <TableHead className="px-4 py-2 text-center border">Appendix</TableHead>
             <TableHead className="px-4 py-2 text-center border w-[300px]">Remark</TableHead>
           </TableRow>
         </TableHeader>
@@ -211,8 +184,8 @@ export function ApplicationTab({ claimData, refetch }: ApplicationTabProps) {
                         <Button
                           variant="outline"
                           onClick={() => {
-                            setSelectedSiteIds(item.item.site_ids); // Pass the site_ids to the dialog
-                            setIsViewSiteDialogOpen(true); // Open the dialog
+                            setSelectedSiteIds(item.item.site_ids);
+                            setIsViewSiteDialogOpen(true);
                           }}
                           className="h-6"
                         >
@@ -250,93 +223,19 @@ export function ApplicationTab({ claimData, refetch }: ApplicationTabProps) {
                         {item.item.suppport_doc_file?.length > 0 ? (
                           <div className="flex flex-col gap-2">
                             {item.item.suppport_doc_file.map((file, idx) => (
-                              <div key={idx} className="flex items-center gap-2">
-                                <a
-                                  href={file.file_path}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-500 underline"
-                                >
-                                  View File
-                                </a>
-                                {(claimData.claim_status.name === "DRAFTED" &&
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6 text-red-600"
-                                    onClick={async () => {
-                                      try {
-                                        const result = await deleteAttachment(file.id, file.file_path);
-                                        if (result.success) {
-                                          toast({
-                                            title: "Success",
-                                            description: "Attachment deleted.",
-                                            variant: "default",
-                                          });
-                                          refetch(); // Refresh the data
-                                        } else {
-                                          alert("Failed to delete attachment.");
-                                        }
-                                      } catch (error) {
-                                        console.error("Error deleting attachment:", error);
-                                      }
-                                    }}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
-                              </div>
+                              <a
+                                key={idx}
+                                href={file.file_path}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 underline"
+                              >
+                                View File {idx + 1}
+                              </a>
                             ))}
                           </div>
                         ) : (
                           <span className="text-gray-500">No Files</span>
-                        )}
-                        {(claimData.claim_status.name === "DRAFTED" &&
-                          <div>
-                            <input
-                              type="file"
-                              id={`fileInput-${item.id}`}
-                              className="hidden"
-                              accept=".pdf,.doc,.docx"
-                              multiple
-                              onChange={async (e) => {
-                                if (e.target.files) {
-                                  const files = Array.from(e.target.files);
-                                  try {
-                                    for (const file of files) {
-                                      console.log("Uploading file:", item.id);
-                                      const result = await uploadAttachment(
-                                        file,
-                                        claimData.tp_dusp_id,
-                                        claimData.year,
-                                        claimData.ref_no,
-                                        item.id,
-                                        1 // Claim type ID for supporting documents
-                                      );
-                                      if (!result.success) {
-                                        alert(`Failed to upload file: ${file.name}`);
-                                      }
-                                    }
-                                    toast({
-                                      title: "Success",
-                                      description: "Attachments uploaded.",
-                                      variant: "default",
-                                    });
-                                    console.log("item.id", item.id);
-                                    refetch();
-                                  } catch (error) {
-                                    console.error("Error uploading attachments:", error);
-                                  }
-                                }
-                              }}
-                            />
-                            <label
-                              htmlFor={`fileInput-${item.id}`}
-                              className={fileInputLabelClass}
-                            >
-                              Upload File
-                            </label>
-                          </div>
                         )}
                       </div>
                     ) : (
@@ -344,65 +243,35 @@ export function ApplicationTab({ claimData, refetch }: ApplicationTabProps) {
                     )}
                   </TableCell>
                   <TableCell className="px-4 py-2 text-center border">
-                    {editingRemark?.itemId === item.id ? (
-                      <div className="flex flex-col gap-2">
-                        <Textarea
-                          value={editingRemark.remark ?? ""}
-                          onChange={(e) =>
-                            setEditingRemark({
-                              itemId: item.id,
-                              remark: e.target.value,
-                            })
-                          }
-                          className="border border-gray-300 rounded px-2 py-1 w-full"
-                        />
-                        <div className="flex justify-between items-center gap-2">
-                          <Button
-                            variant="destructive"
-                            size="icon"
-                            onClick={() => setEditingRemark(null)}
-                            className="h-8 w-8 p-0"
-                          >
-                            <X className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() =>
-                              handleUpdateRemark(item.id, editingRemark.remark ?? "")
-                            }
-                            className="flex-1"
-                          >
-                            Save
-                          </Button>
-                        </div>
-                      </div>
-                    ) : (
+                    {item.item.need_appendix ? (
                       <div className="flex flex-col items-center gap-2">
-                        <span className={
-                          claimData.claim_status.name === "DRAFTED"
-                            ? "border border-gray-300 rounded px-2 py-1 w-full"
-                            : ""
-                        }>  {item.item.remark?.trim() ? item.item.remark : "No Remark"}
-                        </span>
-                        {(claimData.claim_status.name === "DRAFTED" &&
-                          <Button
-                            variant="outline"
-                            onClick={() =>
-                              setEditingRemark({
-                                itemId: item.id,
-                                remark: item.item.remark,
-                              })
-                            }
-                            className="h-6"
-                          >
-                            {item.item.remark?.trim() ? "Update Remark" : "Add Remark"}
-                          </Button>
+                        {item.item.appendix_file?.length > 0 ? (
+                          <div className="flex flex-col gap-2">
+                            {item.item.appendix_file.map((file, idx) => (
+                              <a
+                                key={idx}
+                                href={file.file_path}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-500 underline"
+                              >
+                                View File {idx + 1}
+                              </a>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-500">No Files</span>
                         )}
                       </div>
+                    ) : (
+                      <span className="text-gray-500">Not Required</span>
                     )}
                   </TableCell>
-
-
+                  <TableCell className="px-4 py-2 text-center border">
+                    <span className="px-2 py-1 w-full">
+                      {item.item.remark?.trim() ? item.item.remark : "No Remark"}
+                    </span>
+                  </TableCell>
                 </TableRow>
               ))}
             </React.Fragment>
@@ -410,11 +279,11 @@ export function ApplicationTab({ claimData, refetch }: ApplicationTabProps) {
         </TableBody>
       </Table>
 
-      {/* View Site DIalog */}
+      {/* View Site Dialog */}
       <ViewSiteDialog
         isOpen={isViewSiteDialogOpen}
-        onClose={() => setIsViewSiteDialogOpen(false)} // Close the dialog
-        siteIds={selectedSiteIds} // Pass the selected site IDs
+        onClose={() => setIsViewSiteDialogOpen(false)}
+        siteIds={selectedSiteIds}
       />
     </div>
   );

@@ -20,11 +20,12 @@ type CategoryData = {
   item_ids: {
     id: number;
     name: string;
-    need_support_doc: boolean;
+    need_appendix: boolean;
     need_summary_report: boolean;
+    need_support_doc: boolean;
+    appendix_file: File[] | null; // New state for the appendix document
     summary_report_file: File | null; // New state for the support document
     suppport_doc_file: File[] | null; // New state for the summary report
-    status_item: boolean;
     remark: string;
     site_ids: number[];
   }[];
@@ -42,13 +43,12 @@ type FormData = {
   dusp_id: string;
   tp_name: string;
   dusp_name: string;
+  dusp_description: string; // Optional field for description
   dusp_logo: string;
 
   phase_id: number;
   category_ids: CategoryData[];
   is_finished_generate: boolean;
-
-
 };
 
 const INITIAL_DATA: FormData = {
@@ -63,6 +63,7 @@ const INITIAL_DATA: FormData = {
   dusp_id: null,
   tp_name: "",
   dusp_name: "",
+  dusp_description: "", // Initialize as empty string
   dusp_logo: "",
 
   phase_id: null,
@@ -79,6 +80,7 @@ const ClaimFormPage = () => {
     ...INITIAL_DATA,
     tp_name: "", // Initialize as empty
     dusp_name: "", // Initialize as empty
+    dusp_description: "", // Initialize as empty
     tp_dusp_id: "", // Initialize as null
     dusp_id: "",
     dusp_logo: "", // Initialize as empty
@@ -94,6 +96,7 @@ const ClaimFormPage = () => {
         ...prev,
         tp_name: duspTpData.name,
         dusp_name: duspTpData.parent_id?.name,
+        dusp_description: duspTpData.parent_id?.description,
         tp_dusp_id: duspTpData.id,
         dusp_id: duspTpData.parent_id?.id,
         dusp_logo: duspTpData.parent_id?.logo_url || "",
@@ -161,23 +164,23 @@ const ClaimFormPage = () => {
       }
     }
 
-    if (currentStepIndex === 1) {
-      if (!data.phase_id) {
-        showValidationError("Phase is required");
-        return;
-      }
-      if (data.category_ids.length === 0) {
-        showValidationError("At least one item is required");
-        return;
-      }
-    }
+    // if (currentStepIndex === 1) {
+    //   if (!data.phase_id) {
+    //     showValidationError("Phase is required");
+    //     return;
+    //   }
+    //   if (data.category_ids.length === 0) {
+    //     showValidationError("At least one item is required");
+    //     return;
+    //   }
+    // }
 
-    if (currentStepIndex === 2) {
-      if (!data.is_finished_generate) {
-        showValidationError("You must finish generating all reports before proceeding.");
-        return;
-      }
-    }
+    // if (currentStepIndex === 2) {
+    //   if (!data.is_finished_generate) {
+    //     showValidationError("You must finish generating all reports before proceeding.");
+    //     return;
+    //   }
+    // }
 
 
     if (!isLastStep) {
@@ -204,6 +207,7 @@ const ClaimFormPage = () => {
           ...prev,
           tp_name: duspTpData.name,
           dusp_name: duspTpData.parent_id?.name,
+          dusp_description: duspTpData.parent_id?.description,
           tp_dusp_id: duspTpData.id,
         }));
       }
@@ -276,9 +280,6 @@ const ClaimFormPage = () => {
       {/* Confirmation Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={(isOpen) => {
         setIsDialogOpen(isOpen);
-        if (!isOpen) {
-          setIsCheckboxChecked(false); // Reset checkbox state when dialog is closed
-        }
       }}>
         <DialogContent>
           <DialogHeader>
@@ -286,21 +287,9 @@ const ClaimFormPage = () => {
             <DialogDescription></DialogDescription>
           </DialogHeader>
           <p>Are you sure you want to create this draft claim?</p>
-          <p>Once created, the report cannot be regenerated</p>
-          <div className="flex items-center mt-4">
-            <input
-              type="checkbox"
-              id="confirm-checkbox"
-              className="mr-2"
-              onChange={(e) => setIsCheckboxChecked(e.target.checked)}
-            />
-            <label htmlFor="confirm-checkbox" className="text-sm text-gray-600">
-              I understand and confirm this action
-            </label>
-          </div>
+          <p>Once created, the draft claim can still be edited before final submission.</p>
           <DialogFooter>
             <Button variant="outline" onClick={() => {
-              setIsCheckboxChecked(false); // Reset the checkbox state
               setIsDialogOpen(false)
             }}>
               Cancel
@@ -308,7 +297,7 @@ const ClaimFormPage = () => {
             <Button
               variant="default"
               onClick={handleConfirm}
-              disabled={loading || !isCheckboxChecked} // Disable if loading or checkbox is not checked
+              disabled={loading} // Disable only if loading
             >
               {loading ? (
                 <div className="flex items-center gap-2">

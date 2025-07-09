@@ -12,7 +12,7 @@ const useClaimCategorySimple = () => {
         const { data, error } = await supabase
           .from("nd_claim_items")
           .select(
-            "id, name, need_support_doc, need_summary_report, category_id (id, name)"
+            "id, name, need_support_doc, need_summary_report, need_appendix, category_id (id, name)"
           )
           .order("id", { ascending: true })
           .eq("is_active", true); // Filter by active items

@@ -106,9 +106,9 @@ const SignTab: React.FC<SignTabProps> = ({ claimData }) => {
     };
 
 
-    const handleDeleteFile = async (fileId: number, filePath: string) => {
+    const handleDeleteFile = async (fileId: number) => {
         try {
-            const { success, error } = await deleteAttachment(fileId, filePath);
+            const { success, error } = await deleteAttachment(fileId);
 
             if (!success) {
                 console.error("Error deleting file:", error);
@@ -145,6 +145,7 @@ const SignTab: React.FC<SignTabProps> = ({ claimData }) => {
                     </Button>
                 )}
             </div>
+{/* <pre>{JSON.stringify(claimData.signed_documents, null, 2)}</pre> */}
 
             <Table className="border border-gray-300 w-full text-sm">
                 <TableHeader>
@@ -172,7 +173,7 @@ const SignTab: React.FC<SignTabProps> = ({ claimData }) => {
                                                 variant="ghost"
                                                 size="icon"
                                                 className="h-6 w-6 text-red-600"
-                                                onClick={() => handleDeleteFile(file.id, file.file_path)}
+                                                onClick={() => handleDeleteFile(file.id)}
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>

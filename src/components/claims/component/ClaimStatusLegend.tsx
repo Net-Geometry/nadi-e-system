@@ -28,7 +28,7 @@ const ClaimStatusDescriptionDialog: React.FC<ClaimStatusDescriptionDialogProps> 
     >([]);
     const [loading, setLoading] = useState<boolean>(true);
 
-    const statuses = ["DRAFTED", "SUBMITTED", "PROCESSING", "COMPLETED", "REJECTED"];
+    const statuses = ["DRAFTED", "SUBMITTED", "REJECTED", "PROCESSING", "COMPLETED"];
 
     useEffect(() => {
         const fetchDescriptions = async () => {

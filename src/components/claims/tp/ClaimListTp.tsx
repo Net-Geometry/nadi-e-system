@@ -233,7 +233,8 @@ export function ClaimListTp() {
                   {claim?.updated_at
                     ? new Date(new Date(claim.updated_at).getTime() + 8 * 60 * 60 * 1000).toLocaleString("en-GB")
                     : "N/A"}
-                </TableCell>                <TableCell>
+                </TableCell>
+                <TableCell>
                   <div className="flex gap-2">
                     <Tooltip>
                       <TooltipTrigger asChild>

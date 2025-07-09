@@ -3,11 +3,9 @@ import { BUCKET_NAME_SITE_CLAIM, supabase } from "@/integrations/supabase/client
 type ItemData = {
     id: number;
     name: string;
-    need_support_doc: boolean;
-    need_summary_report: boolean;
     summary_report_file: File | null;
     suppport_doc_file: File[] | null;
-    status_item: boolean;
+    appendix_file: File[] | null; // New state for the appendix document
     remark: string;
     site_ids: number[];
 };
@@ -30,6 +28,8 @@ type FormData = {
     phase_id: number;
     category_ids: CategoryData[];
     is_finished_generate: boolean;
+    start_date: string;
+    end_date: string;
 };
 
 export const insertClaimData = async (data: FormData) => {
@@ -56,7 +56,9 @@ export const insertClaimData = async (data: FormData) => {
                 created_by: createdBy,
                 tp_dusp_id: data.tp_dusp_id,
                 claim_type: data.claim_type,
-                updated_at: new Date(),
+                updated_at: new Date().toISOString(),
+                start_date: data.start_date,
+                end_date: data.end_date,
             })
             .select("id")
             .single();
@@ -76,7 +78,6 @@ export const insertClaimData = async (data: FormData) => {
                     .insert({
                         category_id: category.id,
                         item_id: item.id,
-                        status_item: item.status_item ?? false,
                         remark: item.remark,
                         site_ids: item.site_ids,
                         created_by: createdBy,
@@ -92,35 +93,35 @@ export const insertClaimData = async (data: FormData) => {
                 const requestId = claimRequest.id;
 
                 // Step 3.2: Upload summary_report_file to storage
-                if (item.summary_report_file) {
-                    const fileName = `summary_${Date.now()}_${item.summary_report_file.name}`;
-                    const filePath = `${data.dusp_name}/${data.tp_name}/${data.year}/${data.ref_no}_${fileName}`;
+                // if (item.summary_report_file) {
+                //     const fileName = `summary_${Date.now()}_${item.summary_report_file.name}`;
+                //     const filePath = `${data.dusp_name}/${data.tp_name}/${data.year}/${data.ref_no}_${fileName}`;
 
-                    const fileBlob = new Blob([item.summary_report_file], { type: "application/pdf" });
+                //     const fileBlob = new Blob([item.summary_report_file], { type: "application/pdf" });
 
-                    const { error: uploadError } = await supabase.storage
-                        .from(BUCKET_NAME_SITE_CLAIM)
-                        .upload(filePath, fileBlob);
+                //     const { error: uploadError } = await supabase.storage
+                //         .from(BUCKET_NAME_SITE_CLAIM)
+                //         .upload(filePath, fileBlob);
 
-                    if (uploadError) {
-                        console.error("Error uploading summary_report_file:", uploadError);
-                        throw new Error("Failed to upload summary_report_file");
-                    }
+                //     if (uploadError) {
+                //         console.error("Error uploading summary_report_file:", uploadError);
+                //         throw new Error("Failed to upload summary_report_file");
+                //     }
 
-                    // Insert into nd_claim_attachment
-                    const { error: attachmentError } = await supabase
-                        .from("nd_claim_attachment")
-                        .insert({
-                            request_id: requestId,
-                            claim_type_id: 2, // Summary report
-                            file_path: filePath,
-                        });
+                //     // Insert into nd_claim_attachment
+                //     const { error: attachmentError } = await supabase
+                //         .from("nd_claim_attachment")
+                //         .insert({
+                //             request_id: requestId,
+                //             claim_type_id: 2, // Summary report
+                //             file_path: filePath,
+                //         });
 
-                    if (attachmentError) {
-                        console.error("Error inserting summary_report_file into nd_claim_attachment:", attachmentError);
-                        throw new Error("Failed to insert summary_report_file into nd_claim_attachment");
-                    }
-                }
+                //     if (attachmentError) {
+                //         console.error("Error inserting summary_report_file into nd_claim_attachment:", attachmentError);
+                //         throw new Error("Failed to insert summary_report_file into nd_claim_attachment");
+                //     }
+                // }
 
                 // Step 3.3: Upload suppport_doc_file to storage
                 if (item.suppport_doc_file && item.suppport_doc_file.length > 0) {
@@ -151,6 +152,39 @@ export const insertClaimData = async (data: FormData) => {
                         if (attachmentError) {
                             console.error("Error inserting suppport_doc_file into nd_claim_attachment:", attachmentError);
                             throw new Error("Failed to insert suppport_doc_file into nd_claim_attachment");
+                        }
+                    }
+                }
+
+                // Step 3.4: Upload appendix_file to storage
+                if (item.appendix_file && item.appendix_file.length > 0) {
+                    for (const file of item.appendix_file) {
+                        const fileName = `appendix_${Date.now()}_${file.name}`;
+                        const filePath = `${data.dusp_name}/${data.tp_name}/${data.year}/${data.ref_no}_${fileName}`;
+
+                        const fileBlob = new Blob([file], { type: file.type });
+
+                        const { error: uploadError } = await supabase.storage
+                            .from(BUCKET_NAME_SITE_CLAIM)
+                            .upload(filePath, fileBlob);
+
+                        if (uploadError) {
+                            console.error("Error uploading appendix_file:", uploadError);
+                            throw new Error("Failed to upload appendix_file");
+                        }
+
+                        // Insert into nd_claim_attachment
+                        const { error: attachmentError } = await supabase
+                            .from("nd_claim_attachment")
+                            .insert({
+                                request_id: requestId,
+                                claim_type_id: 4, // Appendix document
+                                file_path: filePath,
+                            });
+
+                        if (attachmentError) {
+                            console.error("Error inserting appendix_file into nd_claim_attachment:", attachmentError);
+                            throw new Error("Failed to insert appendix_file into nd_claim_attachment");
                         }
                     }
                 }

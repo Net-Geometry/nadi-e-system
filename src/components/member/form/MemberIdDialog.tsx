@@ -1,10 +1,12 @@
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface MemberIdDialogProps {
   open: boolean;
@@ -20,29 +22,27 @@ export const MemberIdDialog = ({
   if (!membershipId) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[40vw] max-h-[50vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Membership Registration</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <p className="text-lg font-semibold text-center">
-            Successfully registered!
-          </p>
-          <p className="text-center">
-            Your Membership ID is <span className="font-bold">{membershipId}</span>.
-          </p>
-        </div>
-        <div className="flex justify-center mt-4">
-          <Button
-            type="button"
-            variant="default"
-            onClick={() => onOpenChange(false)}
-          >
+    <AlertDialog open={open} onOpenChange={onOpenChange}>
+      <AlertDialogContent className="sm:max-w-[40vw]">
+        <AlertDialogHeader>
+          <AlertDialogTitle>Membership Registration</AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="space-y-4">
+              <p className="text-lg font-semibold text-center">
+                Successfully registered!
+              </p>
+              <p className="text-center">
+                Your Membership ID is <span className="font-bold">{membershipId}</span>.
+              </p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogAction onClick={() => onOpenChange(false)}>
             Close
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 };
