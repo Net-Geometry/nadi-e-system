@@ -27,10 +27,10 @@ export const useBookingQueries = () => {
             queryFn: () => bookingClient.getBrands()
         })
 
-    const useTpsSites = (dusp_tp_id: string) => 
+    const useTpsSites = (dusp_tp_id: string, isdusp?: boolean) => 
         useQuery({
             queryKey: ["tpsSites", dusp_tp_id],
-            queryFn: () => bookingClient.getAllTpsSites(dusp_tp_id),
+            queryFn: () => bookingClient.getAllTpsSites(dusp_tp_id, isdusp),
             enabled: !!dusp_tp_id
         })
 

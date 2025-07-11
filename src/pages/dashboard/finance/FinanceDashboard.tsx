@@ -51,7 +51,9 @@ const FinanceDashboard = ({
     isTpSite,
     isTpAdmin,
     isTpOperations,
-    isTpFinance
+    isTpFinance,
+    isDusp,
+    duspOrganizationId
   } = useUserOrgId();
   // Tp manager site
   const { siteId: tpManagerSiteId, isLoading: tpManagerSiteIdLoading } = useTpManagerSiteId(isTpSite, tpSiteOrganizationId);
@@ -62,12 +64,14 @@ const FinanceDashboard = ({
       ? tpOperationsOrganizationId
       : isTpFinance
         ? tpFinanceOrganizationId
-        : null;
+        : isDusp
+          ? duspOrganizationId
+          : null;
 
   const { useTpsSites } = useBookingQueries();
-  const { data: tpsSites, isLoading: isTpsSitesLoading } = useTpsSites(selectedTpOrgId);
+  const { data: tpsSites, isLoading: isTpsSitesLoading } = useTpsSites(selectedTpOrgId, isDusp);
   const tpSiteIds = tpsSites?.map(tp => tp.id) ?? [];
-
+  
   const {
     useFinanceReportWithFilterAndPagination,
     useAllFinanceReports

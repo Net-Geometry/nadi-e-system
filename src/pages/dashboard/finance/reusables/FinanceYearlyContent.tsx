@@ -29,12 +29,14 @@ export const FinanceYearlyContent = () => {
         tpSiteOrganizationId,
         tpFinanceOrganizationId,
         tpOperationsOrganizationId,
+        duspOrganizationId,
         isSuperAdmin,
         isMember,
         isTpSite,
         isTpAdmin,
         isTpOperations,
-        isTpFinance
+        isTpFinance,
+        isDusp
     } = useUserOrgId();
     // Tp manager site
     const { siteId: tpManagerSiteId, isLoading: tpManagerSiteIdLoading } = useTpManagerSiteId(isTpSite, tpSiteOrganizationId);
@@ -45,7 +47,9 @@ export const FinanceYearlyContent = () => {
             ? tpOperationsOrganizationId
             : isTpFinance
                 ? tpFinanceOrganizationId
-                : null;
+                : isDusp
+                    ? duspOrganizationId
+                    : null;
 
     const { useTpsSites } = useBookingQueries();
     const { data: tpsSites, isLoading: isTpsSitesLoading } = useTpsSites(selectedTpOrgId);
@@ -240,7 +244,9 @@ export const FinanceYearlyContent = () => {
             <div className="flex items-center justify-between border-b border-gray-300 pb-4" id="header">
                 <h1 className="text-3xl font-black">Report Option</h1>
                 <div className="flex items-center gap-2">
-                    <Input onChange={handleSearch} className="w-[180px]" placeholder="Search site name" />
+                    { !!selectedTpOrgId && (
+                        <Input onChange={handleSearch} className="w-[180px]" placeholder="Search site name" />
+                    )}
                     <Select value={year} onValueChange={setYear} defaultValue={year}>
                         <SelectTrigger className="w-[180px]">
                             <SelectValue placeholder="Select year" />

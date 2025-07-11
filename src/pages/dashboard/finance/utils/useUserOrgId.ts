@@ -8,12 +8,14 @@ export const useUserOrgId = () => {
         tpSiteOrganizationId: null,
         tpFinanceOrganizationId: null,
         tpOperationsOrganizationId: null,
+        duspOrganizationId: null,
         isTpAdmin: false,
         isSuperAdmin: false,
         isTpSite: false,
         isTpFinance: false,
         isTpOperations: false,
-        isMember: false
+        isMember: false,
+        isDusp: false
     });
 
     useEffect(() => {
@@ -26,6 +28,12 @@ export const useUserOrgId = () => {
             parsedMetadata?.organization_id
                 ? parsedMetadata.organization_id
                 : null;
+        const duspOrganizationId = 
+            parsedMetadata?.user_group === 1 && 
+            parsedMetadata?.user_group_name === "DUSP" &&
+            parsedMetadata?.organization_id 
+                ? parsedMetadata.organization_id : 
+                null
         const tpSiteOrganizationId =
             parsedMetadata?.user_group === 9 &&
             parsedMetadata?.user_group_name === "Site" &&
@@ -55,12 +63,14 @@ export const useUserOrgId = () => {
             tpSiteOrganizationId,
             tpFinanceOrganizationId,
             tpOperationsOrganizationId,
+            duspOrganizationId,
             isTpAdmin: !!tpAdminOrganizationId,
             isSuperAdmin: parsedMetadata?.user_type === "super_admin",
             isTpSite: !!tpSiteOrganizationId,
             isTpFinance: !!tpFinanceOrganizationId,
             isTpOperations: !!tpOperationsOrganizationId,
-            isMember: parsedMetadata?.user_group === 7
+            isMember: parsedMetadata?.user_group === 7,
+            isDusp: !!duspOrganizationId
         });
     }, [userMetadata]);
 

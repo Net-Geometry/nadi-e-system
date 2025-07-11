@@ -47,10 +47,10 @@ import { toast } from "@/hooks/use-toast";
 type FinanceFormValues = {
     type: "income" | "expense";
     date: Date;
-    incomeType?: string;
+    incomeType: string;
     amount: number;
-    expenseType?: string;
-    description?: string;
+    expenseType: string;
+    description: string;
     imageFile?: File;
     docFile?: File;
 };
@@ -98,6 +98,9 @@ export const FinanceReportItemDialogForm = ({
 
     const onSubmit = async (values: FinanceFormValues) => {
         try {
+            if (!values.docFile && !values.imageFile) {
+                throw new Error("Please upload a file");
+            }
             const description = values.description ? values.description : "";
             const selectedAmountToDebit = values.type === "income" ? values.amount : 0;
             const selectedAmountToCredit = values.type === "expense" ? values.amount : 0;
@@ -136,11 +139,11 @@ export const FinanceReportItemDialogForm = ({
                 description: "Report item has been created successfully.",
                 variant: "success",
             })
-        } catch (error) {
+        } catch (error: Error | any) {
             console.error("Error creating report item:", error);
             toast({
                 title: "Error",
-                description: "An error occurred while creating the report item.",
+                description: `${error.message}`,
                 variant: "destructive",
             })
         }
@@ -269,6 +272,7 @@ export const FinanceReportItemDialogForm = ({
                                     <FormField
                                         control={form.control}
                                         name="incomeType"
+                                        rules={{ required: "Income Type is required" }}
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Income Type</FormLabel>
@@ -302,6 +306,7 @@ export const FinanceReportItemDialogForm = ({
                                     <FormField
                                         control={form.control}
                                         name="expenseType"
+                                        rules={{ required: "Expense Type is required" }}
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Expense Type</FormLabel>
@@ -335,6 +340,7 @@ export const FinanceReportItemDialogForm = ({
                                     <FormField
                                         control={form.control}
                                         name="description"
+                                        rules={{ required: "Description is required" }}
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormLabel>Other Type Description</FormLabel>

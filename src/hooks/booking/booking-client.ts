@@ -319,11 +319,30 @@ export const bookingClient = {
         return data;
     },
 
-    getAllTpsSites: async (dusp_tp_id: string) => {
-        const { data, error } = await supabase
+    getAllTpsSites: async (dusp_tp_id: string, isdusp?: boolean) => {
+        let query = supabase
             .from("nd_site_profile")
             .select("*")
-            .eq("dusp_tp_id", dusp_tp_id)
+
+        if (isdusp) {
+            const { data: childOrganizations, error: childError } = await supabase
+                .from("organizations")
+                .select("id")
+                .eq("parent_id", dusp_tp_id);
+
+            if (childError) throw childError;
+
+            const childOrganizationIds = childOrganizations.map((org) => org.id);
+
+            query = query.in("dusp_tp_id", [
+                dusp_tp_id,
+                ...childOrganizationIds,
+            ]);
+        } else {
+            query = query.eq("dusp_tp_id", dusp_tp_id)
+        }
+
+        const { data, error } = await query;
 
         if (error) throw error;
 

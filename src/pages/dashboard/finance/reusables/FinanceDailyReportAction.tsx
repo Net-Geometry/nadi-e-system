@@ -99,6 +99,9 @@ export const FinanceDailyReportAction = ({
 
     const onSubmit = async (values: FinanceFormValues) => {
         try {
+            if (!values.docFile && !values.imageFile) {
+                throw new Error("Please upload a file");
+            }
             const description = values.description ? values.description : "";
             const selectedAmountToDebit = values.type === "income" ? values.amount : 0;
             const selectedAmountToCredit = values.type === "expense" ? values.amount : 0;
@@ -284,6 +287,7 @@ export const FinanceDailyReportAction = ({
                             <FormField
                                 control={form.control}
                                 name="incomeType"
+                                rules={{ required: "Income Type is required" }}
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Income Type</FormLabel>
@@ -317,6 +321,7 @@ export const FinanceDailyReportAction = ({
                             <FormField
                                 control={form.control}
                                 name="expenseType"
+                                rules={{ required: "Expense Type is required" }}
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Expense Type</FormLabel>
@@ -350,6 +355,7 @@ export const FinanceDailyReportAction = ({
                             <FormField
                                 control={form.control}
                                 name="description"
+                                rules={{ required: "Description is required" }}
                                 render={({ field }) => (
                                     <FormItem>
                                         <FormLabel>Other Type Description</FormLabel>
